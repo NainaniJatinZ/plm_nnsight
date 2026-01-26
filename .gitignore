@@ -6,3 +6,4 @@ __pycache__/
 .plm_nn/
 plm_nnsight.py
 plm_nnsight.md
+copy_*
