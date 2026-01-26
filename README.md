@@ -51,7 +51,9 @@ The notebook auto-detects Colab and installs everything for you.
 
 - Python 3.9+
 - CUDA-capable GPU recommended (CPU works but is slow)
-- ~4GB GPU memory for ESM2-650M
+- **GPU memory**: ~16GB recommended for full tutorial with ESM2-650M
+  - Free Colab (15GB): Works with memory cleanup cells included in notebook
+  - Limited VRAM: Uncomment the smaller model option (ESM2-8M) in the notebook
 
 ## Resources
 
