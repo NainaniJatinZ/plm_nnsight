@@ -5,11 +5,12 @@ import torch
 import random
 import numpy as np
 from IPython import get_ipython
+from typing import Union, Optional, Literal
 from huggingface_hub import hf_hub_download
 from .sae_model_interprot import SparseAutoencoder
+from .sae_model_interplm import AutoEncoder, load_sae_from_hf as load_interplm_sae
 from safetensors.torch import load_file
 from transformers import AutoTokenizer, EsmForMaskedLM
-from esm import FastaBatchedDataset, pretrained
 
 VERBOSE = False
 
@@ -44,10 +45,10 @@ def activate_autoreload():
         print("`get_ipython` not available. This script is not running in IPython.")
 
 # Call the function during script initialization
-activate_autoreload()
+# activate_autoreload()
 
 # ---------------------------------------------------------------------------
-# GPU house‑keeping
+# GPU house‑keeping
 # ---------------------------------------------------------------------------
 
 def cleanup_cuda() -> None:
@@ -62,7 +63,7 @@ def cleanup_cuda() -> None:
 # ---------------------------------------------------------------------------
 
 def norm_sum_mult(t1_LL: torch.Tensor, t2_LL: torch.Tensor) -> torch.Tensor:  # noqa: N802
-    """∑(a·b) / ∑(a·a) – used for contact‑map recovery metrics."""
+    """∑(a·b) / ∑(a·a) – used for contact‑map recovery metrics."""
     return (t1_LL * t2_LL).sum() / (t1_LL * t1_LL).sum()
 
 
@@ -99,7 +100,11 @@ def load_esm(model_size, WEIGHTS_DIR='/work/pi_jensen_umass_edu/jnainani_umass_e
 
 
 def load_sae_prot(ESM_DIM=1280, SAE_DIM=4096, LAYER=24, device="cuda"):
-    """Load a Sparse Autoencoder trained for a specific ESM layer."""
+    """Load a Sparse Autoencoder trained for a specific ESM layer (InterProt).
+
+    This is the original InterProt SAE loader for ESM2-650M model.
+    Available layers: 4, 8, 12, 16, 20, 24, 28, 32
+    """
     checkpoint_path = hf_hub_download(
     repo_id="liambai/InterProt-ESM2-SAEs",
     filename=f"esm2_plm{ESM_DIM}_l{LAYER}_sae{SAE_DIM}.safetensors"
@@ -108,6 +113,167 @@ def load_sae_prot(ESM_DIM=1280, SAE_DIM=4096, LAYER=24, device="cuda"):
     sae_model.load_state_dict(load_file(checkpoint_path))
     sae_model.to(device)
     return sae_model
+
+
+# ---------------------------------------------------------------------------
+# SAE Model Configuration
+# ---------------------------------------------------------------------------
+
+# Available SAE configurations per model
+SAE_CONFIG = {
+    "esm2-8m": {
+        "default_backend": "interplm",
+        "esm_dim": 320,
+        "num_layers": 6,
+        "interplm_layers": [1, 2, 3, 4, 5, 6],
+        "interprot_layers": [],  # InterProt not available for 8M
+    },
+    "esm2-650m": {
+        "default_backend": "interprot",  # Default for 650M is InterProt
+        "esm_dim": 1280,
+        "num_layers": 33,
+        "interplm_layers": [1, 9, 18, 24, 30, 33],
+        "interprot_layers": [4, 8, 12, 16, 20, 24, 28, 32],
+        "interprot_sae_dim": 4096,
+    },
+}
+
+# Model name aliases for convenience
+MODEL_ALIASES = {
+    "8m": "esm2-8m",
+    "esm2_8m": "esm2-8m",
+    "esm2-8m": "esm2-8m",
+    "facebook/esm2_t6_8m_ur50d": "esm2-8m",
+    "650m": "esm2-650m",
+    "esm2_650m": "esm2-650m",
+    "esm2-650m": "esm2-650m",
+    "facebook/esm2_t33_650m_ur50d": "esm2-650m",
+}
+
+
+def get_sae_info(model_name: str) -> dict:
+    """Get SAE configuration info for a given model.
+
+    Args:
+        model_name: ESM model identifier (e.g., "esm2-650m", "8m", "facebook/esm2_t6_8M_UR50D")
+
+    Returns:
+        dict with keys: default_backend, esm_dim, available_layers (by backend)
+    """
+    normalized = MODEL_ALIASES.get(model_name.lower(), model_name.lower())
+    if normalized not in SAE_CONFIG:
+        raise ValueError(f"Unknown model: {model_name}. Supported: {list(SAE_CONFIG.keys())}")
+
+    config = SAE_CONFIG[normalized]
+    return {
+        "model": normalized,
+        "default_backend": config["default_backend"],
+        "esm_dim": config["esm_dim"],
+        "num_layers": config["num_layers"],
+        "interplm_layers": config["interplm_layers"],
+        "interprot_layers": config.get("interprot_layers", []),
+    }
+
+
+def load_sae(
+    model_name: str = "esm2-650m",
+    layer: int = 24,
+    backend: Optional[Literal["interprot", "interplm", "auto"]] = "auto",
+    device: Optional[str] = None,
+    download_dir: Optional[str] = None,
+) -> Union[SparseAutoencoder, AutoEncoder]:
+    """
+    Load an SAE for the specified ESM model and layer.
+
+    Automatically selects the best SAE backend based on model:
+    - ESM2-650M: Uses InterProt SAE (default), InterPLM also available
+    - ESM2-8M: Uses InterPLM SAE (InterProt not available)
+
+    Args:
+        model_name: ESM model identifier. Options:
+            - "esm2-650m", "650m", "facebook/esm2_t33_650M_UR50D" (default)
+            - "esm2-8m", "8m", "facebook/esm2_t6_8M_UR50D"
+        layer: Layer index for SAE. Available layers depend on model and backend:
+            - 650M + InterProt: 4, 8, 12, 16, 20, 24, 28, 32
+            - 650M + InterPLM: 1, 9, 18, 24, 30, 33
+            - 8M + InterPLM: 1, 2, 3, 4, 5, 6
+        backend: SAE backend to use:
+            - "auto" (default): Use model's default (InterProt for 650M, InterPLM for 8M)
+            - "interprot": Adams et al. SAE (650M only)
+            - "interplm": Simon et al. SAE (8M and 650M)
+        device: Target device ("cuda", "cpu", or None for auto-detect)
+        download_dir: Directory for downloading SAE weights (HuggingFace cache if None)
+
+    Returns:
+        Loaded SAE model (SparseAutoencoder for InterProt, AutoEncoder for InterPLM)
+
+    Examples:
+        # Default: 650M with InterProt SAE at layer 24
+        sae = load_sae()
+
+        # 8M model (automatically uses InterPLM)
+        sae = load_sae("8m", layer=3)
+
+        # 650M with InterPLM backend
+        sae = load_sae("650m", layer=24, backend="interplm")
+    """
+    if device is None:
+        device = get_device()
+
+    # Normalize model name
+    normalized = MODEL_ALIASES.get(model_name.lower(), model_name.lower())
+    if normalized not in SAE_CONFIG:
+        raise ValueError(
+            f"Unknown model: {model_name}. Supported: {list(MODEL_ALIASES.keys())}"
+        )
+
+    config = SAE_CONFIG[normalized]
+
+    # Determine backend
+    if backend == "auto":
+        backend = config["default_backend"]
+
+    # Validate backend for this model
+    if backend == "interprot" and not config.get("interprot_layers"):
+        raise ValueError(
+            f"InterProt SAE not available for {normalized}. Use backend='interplm'."
+        )
+
+    # Validate layer
+    if backend == "interprot":
+        available_layers = config["interprot_layers"]
+        if layer not in available_layers:
+            raise ValueError(
+                f"Layer {layer} not available for {normalized} with InterProt. "
+                f"Available: {available_layers}"
+            )
+        # Load InterProt SAE
+        log(f"Loading InterProt SAE for {normalized}, layer {layer}")
+        return load_sae_prot(
+            ESM_DIM=config["esm_dim"],
+            SAE_DIM=config.get("interprot_sae_dim", 4096),
+            LAYER=layer,
+            device=device,
+        )
+
+    elif backend == "interplm":
+        available_layers = config["interplm_layers"]
+        if layer not in available_layers:
+            raise ValueError(
+                f"Layer {layer} not available for {normalized} with InterPLM. "
+                f"Available: {available_layers}"
+            )
+        # Load InterPLM SAE
+        log(f"Loading InterPLM SAE for {normalized}, layer {layer}")
+        return load_interplm_sae(
+            plm_model=normalized,
+            plm_layer=layer,
+            download_dir=download_dir,
+        )
+
+    else:
+        raise ValueError(f"Unknown backend: {backend}. Use 'interprot', 'interplm', or 'auto'.")
+
 
 AA_vocab = "ACDEFGHIKLMNPQRSTVWY"
 unusual_AA ="OU" #Pyrrolysine O and selenocysteine U

@@ -20,45 +20,101 @@ import torch
 
 from IPython.display import HTML, display
 
-def activate_autoreload():
-    try:
-        ipython = get_ipython()
-        if ipython is not None:
-            ipython.magic("load_ext autoreload")
-            ipython.magic("autoreload 2")
-            print("In IPython")
-            print("Set autoreload")
-        else:
-            print("Not in IPython")
-    except NameError:
-        print("`get_ipython` not available. This script is not running in IPython.")
+# def activate_autoreload():
+#     try:
+#         ipython = get_ipython()
+#         if ipython is not None:
+#             ipython.magic("load_ext autoreload")
+#             ipython.magic("autoreload 2")
+#             print("In IPython")
+#             print("Set autoreload")
+#         else:
+#             print("Not in IPython")
+#     except NameError:
+#         print("`get_ipython` not available. This script is not running in IPython.")
 
-# Call the function during script initialization
-activate_autoreload()
+# # Call the function during script initialization
+# activate_autoreload()
 
 def cleanup_cuda():
     gc.collect()
     torch.cuda.empty_cache()
 
-def get_single_chain_afdb_structure(uniprot_id: str, PDB_DIR="pdbs"):
+def _pick_pdb_url(entry: dict):
     """
-    Downloads/loads an AlphaFold PDB from the EBI site for the given UniProt ID,
-    returning the Bio.PDB structure object for the first model.
+    AFDB API fields are changing (old and new schemas are both in the wild),
+    so we search for any http(s) string that looks like a PDB URL.
     """
+    # common historical names
+    for k in ["pdbUrl", "pdb_url", "pdb", "pdbFileUrl", "pdbFileURL"]:
+        v = entry.get(k)
+        if isinstance(v, str) and v.startswith("http") and (".pdb" in v or v.endswith(".pdb.gz")):
+            return v
+
+    # fallback: scan all fields
+    for k, v in entry.items():
+        if isinstance(v, str) and v.startswith("http") and (".pdb" in v or v.endswith(".pdb.gz")):
+            return v
+
+    return None
+
+
+def get_single_chain_afdb_structure(uniprot_id: str, PDB_DIR: str = "pdbs"):
+    """
+    Download/loads an AlphaFold structure for a UniProt accession via the AFDB API,
+    then returns the Bio.PDB structure object for the first model.
+
+    Uses the AFDB API endpoint keyed on UniProt accessions.
+    """
+    import gzip
+
+    uniprot_id = uniprot_id.strip()
     os.makedirs(PDB_DIR, exist_ok=True)
-    pdb_file_path = os.path.join(PDB_DIR, f"AF-{uniprot_id}-F1-model_v4.pdb")
-    if not os.path.exists(pdb_file_path):
-        afdb_url = f"https://alphafold.ebi.ac.uk/files/AF-{uniprot_id}-F1-model_v4.pdb"
-        try:
-            response = requests.get(afdb_url)
-            response.raise_for_status()
-            with open(pdb_file_path, "w") as pdb_file:
-                pdb_file.write(response.text)
-        except requests.RequestException:
-            print("Error downloading PDB file from AlphaFold")
-            return None
+
+    api_url = f"https://alphafold.ebi.ac.uk/api/prediction/{uniprot_id}"
+    headers = {"User-Agent": "python-requests (afdb downloader)"}
+
+    r = requests.get(api_url, headers=headers, timeout=30)
+    if r.status_code != 200:
+        print(f"[AFDB] API lookup failed for {uniprot_id}: HTTP {r.status_code}")
+        return None
+
+    data = r.json()
+    # API often returns a list of entries
+    entries = data if isinstance(data, list) else [data]
+    if not entries:
+        print(f"[AFDB] No entries returned for {uniprot_id}")
+        return None
+
+    # pick the first entry (usually only one); if multiple, take the first with a PDB URL
+    pdb_url = None
+    for e in entries:
+        u = _pick_pdb_url(e)
+        if u:
+            pdb_url = u
+            break
+    if not pdb_url:
+        print(f"[AFDB] No PDB URL found in API response for {uniprot_id}")
+        print("Keys returned:", sorted(entries[0].keys()))
+        return None
+
+    # download the pdb (or pdb.gz)
+    out_path = os.path.join(PDB_DIR, f"AF-{uniprot_id}-F1-model.pdb")
+    pr = requests.get(pdb_url, headers=headers, timeout=60)
+    if pr.status_code != 200:
+        print(f"[AFDB] PDB download failed: HTTP {pr.status_code}")
+        print("Tried URL:", pdb_url)
+        return None
+
+    content = pr.content
+    if pdb_url.endswith(".gz"):
+        content = gzip.decompress(content)
+
+    with open(out_path, "wb") as f:
+        f.write(content)
+
     parser = PDBParser(QUIET=True)
-    structure = parser.get_structure("af", pdb_file_path)
+    structure = parser.get_structure("af", out_path)
     return structure[0]  # Return the first model
 
 def get_single_chain_pdb_structure(pdb_id: str, chain_id: str, PDB_DIR="pdbs"):
