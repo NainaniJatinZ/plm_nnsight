@@ -1,0 +1,1320 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ESM2 Attention & Contact Visualization</title>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pako/2.1.0/pako.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #1a1a1a;
+            color: #e0e0e0;
+            overflow: hidden;
+        }
+
+        #app {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+
+        /* Header */
+        #header {
+            background: #2a2a2a;
+            padding: 12px 20px;
+            border-bottom: 2px solid #3a3a3a;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-shrink: 0;
+        }
+
+        #header-left {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+        }
+
+        #head-info {
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        .effect-positive { color: #4fc3f7; }
+        .effect-negative { color: #f48fb1; }
+
+        /* Mode toggle */
+        .mode-toggle {
+            display: flex;
+            background: #1a1a1a;
+            border-radius: 6px;
+            overflow: hidden;
+        }
+
+        .mode-btn {
+            padding: 6px 16px;
+            border: none;
+            background: transparent;
+            color: #999;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+
+        .mode-btn:hover {
+            background: #333;
+        }
+
+        .mode-btn.active {
+            background: #4fc3f7;
+            color: #fff;
+        }
+
+        /* Main content */
+        #main {
+            display: flex;
+            flex: 1;
+            min-height: 0;
+            gap: 12px;
+            padding: 12px;
+        }
+
+        /* Left panel - attention matrices */
+        #left-panel {
+            flex: 2;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            min-width: 0;
+        }
+
+        .matrix-container {
+            flex: 1;
+            background: #2a2a2a;
+            border-radius: 8px;
+            padding: 12px;
+            display: flex;
+            flex-direction: column;
+            min-height: 0;
+        }
+
+        .matrix-header {
+            font-size: 14px;
+            font-weight: 500;
+            margin-bottom: 8px;
+            color: #ccc;
+        }
+
+        .canvas-wrapper {
+            position: relative;
+            flex: 1;
+            min-height: 0;
+            overflow: hidden;
+            border-radius: 4px;
+            background: #1a1a1a;
+            padding-bottom: 25px;
+            padding-left: 35px;
+        }
+
+        canvas {
+            display: block;
+            cursor: crosshair;
+            position: absolute;
+            top: 0;
+            left: 35px;
+        }
+
+        /* Right panel - contact maps + info */
+        #right-panel {
+            flex: 1.5;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            min-width: 0;
+        }
+
+        #info-panel {
+            flex: 1;
+            background: #2a2a2a;
+            border-radius: 8px;
+            padding: 16px;
+            overflow-y: auto;
+        }
+
+        .info-section {
+            margin-bottom: 16px;
+        }
+
+        .info-section h3 {
+            font-size: 14px;
+            color: #999;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 4px 0;
+            font-size: 13px;
+        }
+
+        .info-label {
+            color: #999;
+        }
+
+        .info-value {
+            color: #e0e0e0;
+            font-family: 'Courier New', monospace;
+        }
+
+        /* Region controls */
+        .region-control {
+            margin-bottom: 12px;
+        }
+
+        .region-control label {
+            display: block;
+            font-size: 12px;
+            color: #999;
+            margin-bottom: 4px;
+        }
+
+        .region-inputs {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .region-inputs input {
+            width: 60px;
+            padding: 4px 8px;
+            background: #1a1a1a;
+            border: 1px solid #3a3a3a;
+            border-radius: 4px;
+            color: #e0e0e0;
+            font-size: 13px;
+        }
+
+        .preset-btn {
+            padding: 4px 12px;
+            background: #3a3a3a;
+            border: 1px solid #4a4a4a;
+            border-radius: 4px;
+            color: #e0e0e0;
+            cursor: pointer;
+            font-size: 12px;
+            transition: background 0.2s;
+        }
+
+        .preset-btn:hover {
+            background: #4a4a4a;
+        }
+
+        .preset-btn.active {
+            background: #4fc3f7;
+            border-color: #4fc3f7;
+            color: #fff;
+        }
+
+        /* Head selector */
+        #head-selector {
+            background: #2a2a2a;
+            border-top: 2px solid #3a3a3a;
+            padding: 8px 12px;
+            overflow-x: auto;
+            overflow-y: hidden;
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+
+        .head-tab {
+            display: inline-block;
+            padding: 6px 14px;
+            margin-right: 6px;
+            background: #1a1a1a;
+            border: 1px solid #3a3a3a;
+            border-radius: 4px;
+            color: #999;
+            cursor: pointer;
+            font-size: 13px;
+            font-family: 'Courier New', monospace;
+            transition: all 0.2s;
+        }
+
+        .head-tab:hover {
+            background: #333;
+            border-color: #4a4a4a;
+        }
+
+        .head-tab.active {
+            background: #4fc3f7;
+            border-color: #4fc3f7;
+            color: #fff;
+        }
+
+        /* Loading */
+        #loading {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(26, 26, 26, 0.95);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            z-index: 1000;
+        }
+
+        #loading.hidden {
+            display: none;
+        }
+
+        /* Scrollbars */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #1a1a1a;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #4a4a4a;
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #5a5a5a;
+        }
+
+        /* Color legend */
+        .color-legend {
+            margin-top: 12px;
+            padding: 12px;
+            background: #1a1a1a;
+            border-radius: 4px;
+        }
+
+        .legend-title {
+            font-size: 12px;
+            color: #999;
+            margin-bottom: 8px;
+        }
+
+        .legend-gradient {
+            height: 20px;
+            border-radius: 3px;
+            margin-bottom: 4px;
+        }
+
+        .legend-labels {
+            display: flex;
+            justify-content: space-between;
+            font-size: 11px;
+            color: #777;
+            font-family: 'Courier New', monospace;
+        }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <div id="loading">Loading visualization data...</div>
+
+        <div id="header">
+            <div id="header-left">
+                <div id="head-info">
+                    <span id="head-label">Layer 0, Head 0</span>
+                    <span id="effect-label" class="effect-positive">Effect: +0.000</span>
+                </div>
+                <div class="mode-toggle">
+                    <button class="mode-btn active" data-mode="clean">Clean</button>
+                    <button class="mode-btn" data-mode="corrupt">Corrupt</button>
+                    <button class="mode-btn" data-mode="diff">Diff</button>
+                </div>
+            </div>
+            <div id="protein-info">Protein: <span id="protein-name"></span></div>
+        </div>
+
+        <div id="main">
+            <div id="left-panel">
+                <div class="matrix-container">
+                    <div class="matrix-header">Attention: Region 1 → Region 2</div>
+                    <div class="canvas-wrapper" id="attn1-wrapper">
+                        <canvas id="attn1-canvas"></canvas>
+                    </div>
+                </div>
+                <div class="matrix-container">
+                    <div class="matrix-header">Attention: Region 2 → Region 1</div>
+                    <div class="canvas-wrapper" id="attn2-wrapper">
+                        <canvas id="attn2-canvas"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <div id="right-panel">
+                <div class="matrix-container">
+                    <div class="matrix-header">Contact Map: Region 1 × Region 2</div>
+                    <div class="canvas-wrapper" id="contact1-wrapper">
+                        <canvas id="contact1-canvas"></canvas>
+                    </div>
+                </div>
+
+                <div class="matrix-container">
+                    <div class="matrix-header">Contact Map: Region 2 × Region 1</div>
+                    <div class="canvas-wrapper" id="contact2-wrapper">
+                        <canvas id="contact2-canvas"></canvas>
+                    </div>
+                </div>
+
+                <div id="info-panel">
+                    <div class="info-section">
+                        <h3>Hover Info</h3>
+                        <div class="info-row">
+                            <span class="info-label">Position:</span>
+                            <span class="info-value" id="hover-pos">-</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Value:</span>
+                            <span class="info-value" id="hover-val">-</span>
+                        </div>
+                    </div>
+
+                    <div class="info-section">
+                        <h3>Metrics</h3>
+                        <div class="info-row">
+                            <span class="info-label">Clean:</span>
+                            <span class="info-value" id="metric-clean">-</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Corrupt:</span>
+                            <span class="info-value" id="metric-corrupt">-</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Gap:</span>
+                            <span class="info-value" id="metric-gap">-</span>
+                        </div>
+                    </div>
+
+                    <div class="info-section">
+                        <h3>Region Controls</h3>
+                        <div class="region-control">
+                            <label>Region 1 (ss1 + left flank)</label>
+                            <div class="region-inputs">
+                                <input type="number" id="r1-start" />
+                                <span>to</span>
+                                <input type="number" id="r1-end" />
+                            </div>
+                        </div>
+                        <div class="region-control">
+                            <label>Region 2 (ss2 + right flank)</label>
+                            <div class="region-inputs">
+                                <input type="number" id="r2-start" />
+                                <span>to</span>
+                                <input type="number" id="r2-end" />
+                            </div>
+                        </div>
+                        <div style="display: flex; gap: 4px; flex-wrap: wrap; margin-top: 8px;">
+                            <button class="preset-btn" data-preset="segments">Segments Only</button>
+                            <button class="preset-btn active" data-preset="clean">Clean Flanks</button>
+                            <button class="preset-btn" data-preset="corrupt">Corrupt Flanks</button>
+                        </div>
+                    </div>
+
+                    <div class="color-legend">
+                        <div class="legend-title">Color Scale</div>
+                        <div class="legend-gradient" id="legend-gradient"></div>
+                        <div class="legend-labels">
+                            <span id="legend-min">0.0</span>
+                            <span id="legend-max">1.0</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="head-selector"></div>
+    </div>
+
+    <script type="module">
+        // =====================================================================
+        // DataManager - Load and decode visualization data
+        // =====================================================================
+        class DataManager {
+            constructor() {
+                this.data = null;
+                this.headCache = new Map();
+                this.cacheLimit = 5;
+            }
+
+            async load(url = 'viz_data.json.gz') {
+                const response = await fetch(url);
+                const buffer = await response.arrayBuffer();
+                const decompressed = pako.inflate(buffer, { to: 'string' });
+                this.data = JSON.parse(decompressed);
+                return this.data;
+            }
+
+            getMetadata() {
+                return this.data.metadata;
+            }
+
+            getSequences() {
+                return this.data.sequences;
+            }
+
+            getHeadList() {
+                return this.data.heads.map((h, i) => ({
+                    index: i,
+                    layer: h.layer,
+                    head: h.head,
+                    effect: h.effect
+                }));
+            }
+
+            getHeadData(index) {
+                // Check cache
+                if (this.headCache.has(index)) {
+                    return this.headCache.get(index);
+                }
+
+                const head = this.data.heads[index];
+                const seqLen = this.data.metadata.seq_length;
+
+                // Decode sparse matrices to dense
+                const headData = {
+                    layer: head.layer,
+                    head: head.head,
+                    effect: head.effect,
+                    clean_attn: this.sparseToDense(head.clean_attn, seqLen, seqLen),
+                    corrupt_attn: this.sparseToDense(head.corrupt_attn, seqLen, seqLen)
+                };
+
+                // Update cache
+                this.headCache.set(index, headData);
+                if (this.headCache.size > this.cacheLimit) {
+                    const firstKey = this.headCache.keys().next().value;
+                    this.headCache.delete(firstKey);
+                }
+
+                return headData;
+            }
+
+            getContacts() {
+                const seqLen = this.data.metadata.seq_length;
+                return {
+                    clean: this.sparseToDense(this.data.contacts.clean, seqLen, seqLen),
+                    corrupt: this.sparseToDense(this.data.contacts.corrupt, seqLen, seqLen),
+                    original: this.sparseToDense(this.data.contacts.original, seqLen, seqLen)
+                };
+            }
+
+            sparseToDense(sparse, rows, cols) {
+                const dense = new Float32Array(rows * cols);
+                for (const [r, rowData] of Object.entries(sparse)) {
+                    const row = parseInt(r);
+                    for (const [c, val] of Object.entries(rowData)) {
+                        const col = parseInt(c);
+                        dense[row * cols + col] = val;
+                    }
+                }
+                return dense;
+            }
+        }
+
+        // =====================================================================
+        // RegionExtractor - Extract submatrices for visualization
+        // =====================================================================
+        class RegionExtractor {
+            constructor(metadata) {
+                this.metadata = metadata;
+                this.seqLen = metadata.seq_length;
+                this.segment = metadata.segment;
+
+                // Default regions (clean flanks)
+                this.setRegions(
+                    this.segment.ss1_start - metadata.clean_flank,
+                    this.segment.ss1_end,
+                    this.segment.ss2_start,
+                    this.segment.ss2_end + metadata.clean_flank
+                );
+            }
+
+            setRegions(r1Start, r1End, r2Start, r2End) {
+                this.r1Start = Math.max(0, r1Start);
+                this.r1End = Math.min(this.seqLen, r1End);
+                this.r2Start = Math.max(0, r2Start);
+                this.r2End = Math.min(this.seqLen, r2End);
+            }
+
+            extractMatrix1(fullAttn) {
+                // Matrix 1: rows = region1, cols = region2
+                const rows = this.r1End - this.r1Start;
+                const cols = this.r2End - this.r2Start;
+                const result = new Float32Array(rows * cols);
+
+                for (let i = 0; i < rows; i++) {
+                    for (let j = 0; j < cols; j++) {
+                        const srcRow = this.r1Start + i;
+                        const srcCol = this.r2Start + j;
+                        result[i * cols + j] = fullAttn[srcRow * this.seqLen + srcCol];
+                    }
+                }
+
+                return { data: result, rows, cols };
+            }
+
+            extractMatrix2(fullAttn) {
+                // Matrix 2: rows = region2, cols = region1
+                const rows = this.r2End - this.r2Start;
+                const cols = this.r1End - this.r1Start;
+                const result = new Float32Array(rows * cols);
+
+                for (let i = 0; i < rows; i++) {
+                    for (let j = 0; j < cols; j++) {
+                        const srcRow = this.r2Start + i;
+                        const srcCol = this.r1Start + j;
+                        result[i * cols + j] = fullAttn[srcRow * this.seqLen + srcCol];
+                    }
+                }
+
+                return { data: result, rows, cols };
+            }
+
+            extractContact1(fullContact) {
+                // Contact1: rows = region1, cols = region2 (same as attn1)
+                const rows = this.r1End - this.r1Start;
+                const cols = this.r2End - this.r2Start;
+                const result = new Float32Array(rows * cols);
+
+                for (let i = 0; i < rows; i++) {
+                    for (let j = 0; j < cols; j++) {
+                        const srcRow = this.r1Start + i;
+                        const srcCol = this.r2Start + j;
+                        result[i * cols + j] = fullContact[srcRow * this.seqLen + srcCol];
+                    }
+                }
+
+                return { data: result, rows, cols };
+            }
+
+            extractContact2(fullContact) {
+                // Contact2: rows = region2, cols = region1 (same as attn2)
+                const rows = this.r2End - this.r2Start;
+                const cols = this.r1End - this.r1Start;
+                const result = new Float32Array(rows * cols);
+
+                for (let i = 0; i < rows; i++) {
+                    for (let j = 0; j < cols; j++) {
+                        const srcRow = this.r2Start + i;
+                        const srcCol = this.r1Start + j;
+                        result[i * cols + j] = fullContact[srcRow * this.seqLen + srcCol];
+                    }
+                }
+
+                return { data: result, rows, cols };
+            }
+
+            getRegionBounds() {
+                return {
+                    r1: { start: this.r1Start, end: this.r1End },
+                    r2: { start: this.r2Start, end: this.r2End }
+                };
+            }
+        }
+
+        // =====================================================================
+        // AxisRenderer - SVG-based axis labels for matrices
+        // =====================================================================
+        class AxisRenderer {
+            constructor(wrapperId, orientation, getBounds) {
+                this.wrapper = document.getElementById(wrapperId);
+                this.orientation = orientation; // 'horizontal' or 'vertical'
+                this.getBounds = getBounds; // Function that returns {start, end}
+
+                // Create SVG overlay
+                this.svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+                this.svg.style.position = 'absolute';
+                this.svg.style.pointerEvents = 'none';
+                this.svg.style.zIndex = '10';
+
+                if (orientation === 'horizontal') {
+                    this.svg.style.bottom = '-25px';
+                    this.svg.style.left = '0';
+                    this.svg.style.width = '100%';
+                    this.svg.style.height = '25px';
+                } else {
+                    this.svg.style.left = '-35px';
+                    this.svg.style.top = '0';
+                    this.svg.style.width = '35px';
+                    this.svg.style.height = '100%';
+                }
+
+                this.wrapper.style.position = 'relative';
+                this.wrapper.appendChild(this.svg);
+            }
+
+            render(numCells, wrapperSize) {
+                // Clear existing labels
+                this.svg.innerHTML = '';
+
+                const bounds = this.getBounds();
+                const cellSize = wrapperSize / numCells;
+
+                // Show every Nth label based on available space
+                const minLabelSpacing = 40; // pixels
+                const step = Math.max(1, Math.ceil(minLabelSpacing / cellSize));
+
+                for (let i = 0; i < numCells; i += step) {
+                    const pos = bounds.start + i;
+                    const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                    text.textContent = pos;
+                    text.setAttribute('fill', '#999');
+                    text.setAttribute('font-size', '10px');
+                    text.setAttribute('font-family', 'monospace');
+
+                    if (this.orientation === 'horizontal') {
+                        text.setAttribute('x', i * cellSize + cellSize / 2);
+                        text.setAttribute('y', '15');
+                        text.setAttribute('text-anchor', 'middle');
+                    } else {
+                        text.setAttribute('x', '30');
+                        text.setAttribute('y', i * cellSize + cellSize / 2);
+                        text.setAttribute('text-anchor', 'end');
+                        text.setAttribute('dominant-baseline', 'middle');
+                    }
+
+                    this.svg.appendChild(text);
+                }
+            }
+        }
+
+        // =====================================================================
+        // MatrixRenderer - Canvas-based matrix visualization
+        // =====================================================================
+        class MatrixRenderer {
+            constructor(canvasId, wrapperId, axisConfig = null) {
+                this.canvas = document.getElementById(canvasId);
+                this.wrapper = document.getElementById(wrapperId);
+                this.ctx = this.canvas.getContext('2d', { alpha: false });
+
+                this.matrix = null;
+                this.rows = 0;
+                this.cols = 0;
+                this.colormap = null;
+                this.zoom = 1.0;
+                this.offsetX = 0;
+                this.offsetY = 0;
+
+                this.hoverCallback = null;
+                this.clickCallback = null;
+
+                // Initialize axis renderers if config provided
+                this.xAxis = null;
+                this.yAxis = null;
+
+                if (axisConfig) {
+                    if (axisConfig.xAxis) {
+                        this.xAxis = new AxisRenderer(
+                            wrapperId,
+                            'horizontal',
+                            axisConfig.xAxis.getBounds
+                        );
+                    }
+                    if (axisConfig.yAxis) {
+                        this.yAxis = new AxisRenderer(
+                            wrapperId,
+                            'vertical',
+                            axisConfig.yAxis.getBounds
+                        );
+                    }
+                }
+
+                // Create highlight canvas
+                this.highlightCell = null;
+                this.highlightCanvas = document.createElement('canvas');
+                this.highlightCtx = this.highlightCanvas.getContext('2d');
+                this.highlightCanvas.style.position = 'absolute';
+                this.highlightCanvas.style.top = '0';
+                this.highlightCanvas.style.left = '0';
+                this.highlightCanvas.style.pointerEvents = 'none';
+                this.highlightCanvas.style.zIndex = '5';
+                this.wrapper.appendChild(this.highlightCanvas);
+
+                this.setupEventListeners();
+                this.resize();
+
+                window.addEventListener('resize', () => this.resize());
+            }
+
+            setupEventListeners() {
+                // Mouse move for hover
+                this.canvas.addEventListener('mousemove', (e) => {
+                    const rect = this.canvas.getBoundingClientRect();
+                    const x = e.clientX - rect.left;
+                    const y = e.clientY - rect.top;
+                    const cell = this.pixelToCell(x, y);
+
+                    if (cell && this.hoverCallback) {
+                        const value = this.matrix[cell.row * this.cols + cell.col];
+                        this.hoverCallback(cell.row, cell.col, value);
+                    }
+                });
+
+                // Click for selection
+                this.canvas.addEventListener('click', (e) => {
+                    const rect = this.canvas.getBoundingClientRect();
+                    const x = e.clientX - rect.left;
+                    const y = e.clientY - rect.top;
+                    const cell = this.pixelToCell(x, y);
+
+                    if (cell && this.clickCallback) {
+                        this.clickCallback(cell.row, cell.col);
+                    }
+                });
+
+                // Wheel for zoom
+                this.canvas.addEventListener('wheel', (e) => {
+                    e.preventDefault();
+                    const delta = e.deltaY > 0 ? 0.9 : 1.1;
+                    this.zoom = Math.max(1.0, Math.min(20.0, this.zoom * delta));
+                    this.render();
+                });
+            }
+
+            resize() {
+                const rect = this.wrapper.getBoundingClientRect();
+                this.canvas.width = rect.width;
+                this.canvas.height = rect.height;
+                this.highlightCanvas.width = rect.width;
+                this.highlightCanvas.height = rect.height;
+                this.render();
+                this.renderHighlight();
+            }
+
+            setMatrix(matrix, rows, cols) {
+                this.matrix = matrix;
+                this.rows = rows;
+                this.cols = cols;
+                this.zoom = 1.0;
+                this.offsetX = 0;
+                this.offsetY = 0;
+                this.render();
+            }
+
+            setColormap(colormap) {
+                this.colormap = colormap;
+                this.render();
+            }
+
+            setHighlight(cell) {
+                this.highlightCell = cell;
+                this.renderHighlight();
+            }
+
+            clearHighlight() {
+                this.highlightCell = null;
+                this.renderHighlight();
+            }
+
+            renderHighlight() {
+                // Clear highlight canvas
+                this.highlightCtx.clearRect(0, 0, this.highlightCanvas.width, this.highlightCanvas.height);
+
+                if (!this.highlightCell || !this.matrix) return;
+
+                const cellWidth = (this.highlightCanvas.width / this.cols) * this.zoom;
+                const cellHeight = (this.highlightCanvas.height / this.rows) * this.zoom;
+
+                const { row, col } = this.highlightCell;
+
+                // Ensure cell is in bounds
+                if (row < 0 || row >= this.rows || col < 0 || col >= this.cols) return;
+
+                // Draw semi-transparent overlay rectangle
+                this.highlightCtx.strokeStyle = '#4fc3f7';
+                this.highlightCtx.lineWidth = 2;
+                this.highlightCtx.strokeRect(
+                    col * cellWidth + this.offsetX,
+                    row * cellHeight + this.offsetY,
+                    cellWidth,
+                    cellHeight
+                );
+
+                // Draw crosshairs
+                this.highlightCtx.strokeStyle = 'rgba(79, 195, 247, 0.3)';
+                this.highlightCtx.lineWidth = 1;
+
+                // Vertical line
+                this.highlightCtx.beginPath();
+                this.highlightCtx.moveTo(col * cellWidth + this.offsetX + cellWidth / 2, 0);
+                this.highlightCtx.lineTo(col * cellWidth + this.offsetX + cellWidth / 2, this.highlightCanvas.height);
+                this.highlightCtx.stroke();
+
+                // Horizontal line
+                this.highlightCtx.beginPath();
+                this.highlightCtx.moveTo(0, row * cellHeight + this.offsetY + cellHeight / 2);
+                this.highlightCtx.lineTo(this.highlightCanvas.width, row * cellHeight + this.offsetY + cellHeight / 2);
+                this.highlightCtx.stroke();
+            }
+
+            pixelToCell(px, py) {
+                const cellWidth = (this.canvas.width / this.cols) * this.zoom;
+                const cellHeight = (this.canvas.height / this.rows) * this.zoom;
+
+                const col = Math.floor((px - this.offsetX) / cellWidth);
+                const row = Math.floor((py - this.offsetY) / cellHeight);
+
+                if (row >= 0 && row < this.rows && col >= 0 && col < this.cols) {
+                    return { row, col };
+                }
+                return null;
+            }
+
+            render() {
+                if (!this.matrix || !this.colormap) return;
+
+                const w = this.canvas.width;
+                const h = this.canvas.height;
+
+                // Clear
+                this.ctx.fillStyle = '#1a1a1a';
+                this.ctx.fillRect(0, 0, w, h);
+
+                const cellWidth = (w / this.cols) * this.zoom;
+                const cellHeight = (h / this.rows) * this.zoom;
+
+                // Render cells
+                for (let i = 0; i < this.rows; i++) {
+                    for (let j = 0; j < this.cols; j++) {
+                        const value = this.matrix[i * this.cols + j];
+                        const color = this.colormap(value);
+
+                        this.ctx.fillStyle = color;
+                        this.ctx.fillRect(
+                            j * cellWidth + this.offsetX,
+                            i * cellHeight + this.offsetY,
+                            cellWidth + 1,
+                            cellHeight + 1
+                        );
+                    }
+                }
+
+                // Update axes if present
+                if (this.xAxis) {
+                    this.xAxis.render(this.cols, w);
+                }
+                if (this.yAxis) {
+                    this.yAxis.render(this.rows, h);
+                }
+
+                // Re-render highlight on top
+                this.renderHighlight();
+            }
+        }
+
+        // =====================================================================
+        // Colormaps
+        // =====================================================================
+        function createCleanCorruptColormap() {
+            // White at 0.0 → Deep purple at 1.0
+            const scale = d3.scaleSequential()
+                .domain([0, 1])
+                .interpolator(d3.interpolate('#ffffff', '#5e35b1'));
+            return (value) => scale(value);
+        }
+
+        function createDivergingColormap() {
+            // Centered at 0.0: Red (-1) → White (0) → Blue (+1)
+            const scale = d3.scaleSequential(d3.interpolateRdBu).domain([1, -1]);
+            return (value) => scale(value);
+        }
+
+        // =====================================================================
+        // HighlightCoordinator - Cross-matrix highlighting
+        // =====================================================================
+        class HighlightCoordinator {
+            constructor(renderers) {
+                this.renderers = renderers; // {attn1, attn2, contact1, contact2}
+                this.currentHighlight = null; // {source, row, col}
+            }
+
+            setHighlight(source, row, col) {
+                if (this.currentHighlight?.source === source &&
+                    this.currentHighlight?.row === row &&
+                    this.currentHighlight?.col === col) {
+                    return; // No change
+                }
+
+                this.currentHighlight = { source, row, col };
+
+                // Determine corresponding cells in other matrices
+                const highlights = this.computeCorrespondences(source, row, col);
+
+                // Update all renderers
+                Object.entries(this.renderers).forEach(([name, renderer]) => {
+                    renderer.setHighlight(highlights[name]);
+                });
+            }
+
+            clearHighlight() {
+                this.currentHighlight = null;
+                Object.values(this.renderers).forEach(r => r.clearHighlight());
+            }
+
+            computeCorrespondences(source, row, col) {
+                // attn1[i,j] (r1→r2) corresponds to:
+                //   - attn2[j,i] (r2→r1)
+                //   - contact1[i,j] (r1×r2)
+                //   - contact2[j,i] (r2×r1)
+
+                const result = {
+                    attn1: null,
+                    attn2: null,
+                    contact1: null,
+                    contact2: null
+                };
+
+                if (source === 'attn1') {
+                    result.attn1 = { row, col };
+                    result.attn2 = { row: col, col: row }; // Transpose
+                    result.contact1 = { row, col };
+                    result.contact2 = { row: col, col: row };
+                } else if (source === 'attn2') {
+                    result.attn1 = { row: col, col: row };
+                    result.attn2 = { row, col };
+                    result.contact1 = { row: col, col: row };
+                    result.contact2 = { row, col };
+                } else if (source === 'contact1') {
+                    result.attn1 = { row, col };
+                    result.attn2 = { row: col, col: row };
+                    result.contact1 = { row, col };
+                    result.contact2 = { row: col, col: row };
+                } else if (source === 'contact2') {
+                    result.attn1 = { row: col, col: row };
+                    result.attn2 = { row, col };
+                    result.contact1 = { row: col, col: row };
+                    result.contact2 = { row, col };
+                }
+
+                return result;
+            }
+        }
+
+        // =====================================================================
+        // App State
+        // =====================================================================
+        class App {
+            constructor() {
+                this.dataManager = new DataManager();
+                this.regionExtractor = null;
+                this.currentHeadIndex = 0;
+                this.currentMode = 'clean';
+
+                // Create renderers with axis configurations
+                this.attn1Renderer = new MatrixRenderer('attn1-canvas', 'attn1-wrapper', {
+                    xAxis: { getBounds: () => this.regionExtractor.getRegionBounds().r2 },
+                    yAxis: { getBounds: () => this.regionExtractor.getRegionBounds().r1 }
+                });
+
+                this.attn2Renderer = new MatrixRenderer('attn2-canvas', 'attn2-wrapper', {
+                    xAxis: { getBounds: () => this.regionExtractor.getRegionBounds().r1 },
+                    yAxis: { getBounds: () => this.regionExtractor.getRegionBounds().r2 }
+                });
+
+                this.contact1Renderer = new MatrixRenderer('contact1-canvas', 'contact1-wrapper', {
+                    xAxis: { getBounds: () => this.regionExtractor.getRegionBounds().r2 },
+                    yAxis: { getBounds: () => this.regionExtractor.getRegionBounds().r1 }
+                });
+
+                this.contact2Renderer = new MatrixRenderer('contact2-canvas', 'contact2-wrapper', {
+                    xAxis: { getBounds: () => this.regionExtractor.getRegionBounds().r1 },
+                    yAxis: { getBounds: () => this.regionExtractor.getRegionBounds().r2 }
+                });
+
+                // Create highlight coordinator
+                this.highlightCoordinator = new HighlightCoordinator({
+                    attn1: this.attn1Renderer,
+                    attn2: this.attn2Renderer,
+                    contact1: this.contact1Renderer,
+                    contact2: this.contact2Renderer
+                });
+
+                this.cleanCorruptColormap = createCleanCorruptColormap();
+                this.divergingColormap = createDivergingColormap();
+            }
+
+            async init() {
+                // Load data
+                await this.dataManager.load();
+                const metadata = this.dataManager.getMetadata();
+
+                // Initialize region extractor
+                this.regionExtractor = new RegionExtractor(metadata);
+
+                // Update UI
+                document.getElementById('protein-name').textContent = metadata.protein;
+                document.getElementById('metric-clean').textContent = metadata.clean_metric.toFixed(4);
+                document.getElementById('metric-corrupt').textContent = metadata.corrupt_metric.toFixed(4);
+                document.getElementById('metric-gap').textContent = (metadata.clean_metric - metadata.corrupt_metric).toFixed(4);
+
+                // Setup region controls
+                this.setupRegionControls();
+
+                // Setup head selector
+                this.setupHeadSelector();
+
+                // Setup mode toggle
+                this.setupModeToggle();
+
+                // Setup hover callbacks
+                this.setupHoverCallbacks();
+
+                // Render first head
+                this.renderHead(0);
+
+                // Hide loading
+                document.getElementById('loading').classList.add('hidden');
+            }
+
+            setupRegionControls() {
+                const metadata = this.dataManager.getMetadata();
+                const bounds = this.regionExtractor.getRegionBounds();
+
+                // Initialize inputs
+                document.getElementById('r1-start').value = bounds.r1.start;
+                document.getElementById('r1-end').value = bounds.r1.end;
+                document.getElementById('r2-start').value = bounds.r2.start;
+                document.getElementById('r2-end').value = bounds.r2.end;
+
+                // Input change listeners
+                const updateRegions = () => {
+                    const r1Start = parseInt(document.getElementById('r1-start').value);
+                    const r1End = parseInt(document.getElementById('r1-end').value);
+                    const r2Start = parseInt(document.getElementById('r2-start').value);
+                    const r2End = parseInt(document.getElementById('r2-end').value);
+
+                    this.regionExtractor.setRegions(r1Start, r1End, r2Start, r2End);
+                    this.renderHead(this.currentHeadIndex);
+
+                    // Clear preset selection
+                    document.querySelectorAll('.preset-btn').forEach(btn => btn.classList.remove('active'));
+                };
+
+                document.getElementById('r1-start').addEventListener('change', updateRegions);
+                document.getElementById('r1-end').addEventListener('change', updateRegions);
+                document.getElementById('r2-start').addEventListener('change', updateRegions);
+                document.getElementById('r2-end').addEventListener('change', updateRegions);
+
+                // Preset buttons
+                document.querySelectorAll('.preset-btn').forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        const preset = btn.dataset.preset;
+                        const seg = metadata.segment;
+
+                        let r1Start, r1End, r2Start, r2End;
+
+                        if (preset === 'segments') {
+                            r1Start = seg.ss1_start;
+                            r1End = seg.ss1_end;
+                            r2Start = seg.ss2_start;
+                            r2End = seg.ss2_end;
+                        } else if (preset === 'clean') {
+                            r1Start = seg.ss1_start - metadata.clean_flank;
+                            r1End = seg.ss1_end;
+                            r2Start = seg.ss2_start;
+                            r2End = seg.ss2_end + metadata.clean_flank;
+                        } else if (preset === 'corrupt') {
+                            r1Start = seg.ss1_start - metadata.corrupt_flank;
+                            r1End = seg.ss1_end;
+                            r2Start = seg.ss2_start;
+                            r2End = seg.ss2_end + metadata.corrupt_flank;
+                        }
+
+                        this.regionExtractor.setRegions(r1Start, r1End, r2Start, r2End);
+
+                        document.getElementById('r1-start').value = r1Start;
+                        document.getElementById('r1-end').value = r1End;
+                        document.getElementById('r2-start').value = r2Start;
+                        document.getElementById('r2-end').value = r2End;
+
+                        this.renderHead(this.currentHeadIndex);
+
+                        // Update active state
+                        document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
+                        btn.classList.add('active');
+                    });
+                });
+            }
+
+            setupHeadSelector() {
+                const headList = this.dataManager.getHeadList();
+                const selector = document.getElementById('head-selector');
+
+                headList.forEach((h, i) => {
+                    const tab = document.createElement('button');
+                    tab.className = 'head-tab';
+                    if (i === 0) tab.classList.add('active');
+
+                    const sign = h.effect >= 0 ? '+' : '';
+                    tab.textContent = `L${h.layer}H${h.head} (${sign}${h.effect.toFixed(2)})`;
+                    tab.dataset.index = i;
+
+                    tab.addEventListener('click', () => {
+                        document.querySelectorAll('.head-tab').forEach(t => t.classList.remove('active'));
+                        tab.classList.add('active');
+                        this.renderHead(i);
+                    });
+
+                    selector.appendChild(tab);
+                });
+            }
+
+            setupModeToggle() {
+                document.querySelectorAll('.mode-btn').forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+                        btn.classList.add('active');
+                        this.currentMode = btn.dataset.mode;
+                        this.renderHead(this.currentHeadIndex);
+                    });
+                });
+            }
+
+            setupHoverCallbacks() {
+                this.attn1Renderer.hoverCallback = (row, col, value) => {
+                    const bounds = this.regionExtractor.getRegionBounds();
+                    const actualRow = bounds.r1.start + row;
+                    const actualCol = bounds.r2.start + col;
+                    document.getElementById('hover-pos').textContent = `(${actualRow}, ${actualCol})`;
+                    document.getElementById('hover-val').textContent = value.toFixed(4);
+                    this.highlightCoordinator.setHighlight('attn1', row, col);
+                };
+
+                this.attn2Renderer.hoverCallback = (row, col, value) => {
+                    const bounds = this.regionExtractor.getRegionBounds();
+                    const actualRow = bounds.r2.start + row;
+                    const actualCol = bounds.r1.start + col;
+                    document.getElementById('hover-pos').textContent = `(${actualRow}, ${actualCol})`;
+                    document.getElementById('hover-val').textContent = value.toFixed(4);
+                    this.highlightCoordinator.setHighlight('attn2', row, col);
+                };
+
+                this.contact1Renderer.hoverCallback = (row, col, value) => {
+                    const bounds = this.regionExtractor.getRegionBounds();
+                    const actualRow = bounds.r1.start + row;
+                    const actualCol = bounds.r2.start + col;
+                    document.getElementById('hover-pos').textContent = `(${actualRow}, ${actualCol})`;
+                    document.getElementById('hover-val').textContent = value.toFixed(4);
+                    this.highlightCoordinator.setHighlight('contact1', row, col);
+                };
+
+                this.contact2Renderer.hoverCallback = (row, col, value) => {
+                    const bounds = this.regionExtractor.getRegionBounds();
+                    const actualRow = bounds.r2.start + row;
+                    const actualCol = bounds.r1.start + col;
+                    document.getElementById('hover-pos').textContent = `(${actualRow}, ${actualCol})`;
+                    document.getElementById('hover-val').textContent = value.toFixed(4);
+                    this.highlightCoordinator.setHighlight('contact2', row, col);
+                };
+
+                // Clear highlights when mouse leaves any matrix
+                [this.attn1Renderer, this.attn2Renderer,
+                 this.contact1Renderer, this.contact2Renderer].forEach(renderer => {
+                    renderer.canvas.addEventListener('mouseleave', () => {
+                        this.highlightCoordinator.clearHighlight();
+                    });
+                });
+            }
+
+            renderHead(headIndex) {
+                this.currentHeadIndex = headIndex;
+                const headData = this.dataManager.getHeadData(headIndex);
+                const contacts = this.dataManager.getContacts();
+
+                // Update header
+                document.getElementById('head-label').textContent = `Layer ${headData.layer}, Head ${headData.head}`;
+                const effectLabel = document.getElementById('effect-label');
+                const sign = headData.effect >= 0 ? '+' : '';
+                effectLabel.textContent = `Effect: ${sign}${headData.effect.toFixed(3)}`;
+                effectLabel.className = headData.effect >= 0 ? 'effect-positive' : 'effect-negative';
+
+                // Get matrices based on mode
+                let attn1Full, attn2Full, contactFull;
+
+                if (this.currentMode === 'clean') {
+                    attn1Full = headData.clean_attn;
+                    attn2Full = headData.clean_attn;
+                    contactFull = contacts.clean;
+                } else if (this.currentMode === 'corrupt') {
+                    attn1Full = headData.corrupt_attn;
+                    attn2Full = headData.corrupt_attn;
+                    contactFull = contacts.corrupt;
+                } else { // diff
+                    const seqLen = this.dataManager.getMetadata().seq_length;
+                    attn1Full = new Float32Array(seqLen * seqLen);
+                    attn2Full = new Float32Array(seqLen * seqLen);
+                    contactFull = new Float32Array(seqLen * seqLen);
+
+                    for (let i = 0; i < seqLen * seqLen; i++) {
+                        attn1Full[i] = headData.clean_attn[i] - headData.corrupt_attn[i];
+                        attn2Full[i] = headData.clean_attn[i] - headData.corrupt_attn[i];
+                        contactFull[i] = contacts.clean[i] - contacts.corrupt[i];
+                    }
+                }
+
+                // Extract regions
+                const matrix1 = this.regionExtractor.extractMatrix1(attn1Full);
+                const matrix2 = this.regionExtractor.extractMatrix2(attn2Full);
+                const contact1 = this.regionExtractor.extractContact1(contactFull);
+                const contact2 = this.regionExtractor.extractContact2(contactFull);
+
+                // Set colormaps
+                const colormap = this.currentMode === 'diff' ? this.divergingColormap : this.cleanCorruptColormap;
+                this.attn1Renderer.setColormap(colormap);
+                this.attn2Renderer.setColormap(colormap);
+                this.contact1Renderer.setColormap(colormap);
+                this.contact2Renderer.setColormap(colormap);
+
+                // Update legend
+                if (this.currentMode === 'diff') {
+                    document.getElementById('legend-gradient').style.background = 'linear-gradient(to right, #d73027, #ffffff, #4575b4)';
+                    document.getElementById('legend-min').textContent = '-1.0';
+                    document.getElementById('legend-max').textContent = '+1.0';
+                } else {
+                    document.getElementById('legend-gradient').style.background = 'linear-gradient(to right, #ffffff, #5e35b1)';
+                    document.getElementById('legend-min').textContent = '0.0';
+                    document.getElementById('legend-max').textContent = '1.0';
+                }
+
+                // Render
+                this.attn1Renderer.setMatrix(matrix1.data, matrix1.rows, matrix1.cols);
+                this.attn2Renderer.setMatrix(matrix2.data, matrix2.rows, matrix2.cols);
+                this.contact1Renderer.setMatrix(contact1.data, contact1.rows, contact1.cols);
+                this.contact2Renderer.setMatrix(contact2.data, contact2.rows, contact2.cols);
+            }
+        }
+
+        // =====================================================================
+        // Initialize
+        // =====================================================================
+        const app = new App();
+        app.init().catch(err => {
+            document.getElementById('loading').textContent = `Error: ${err.message}`;
+            console.error(err);
+        });
+    </script>
+</body>
+</html>

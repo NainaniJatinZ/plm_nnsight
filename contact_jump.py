@@ -344,4 +344,26 @@ plt.suptitle(f"Top {top_k} Attention Heads: Clean vs Corrupt", y=1.02)
 plt.tight_layout()
 plt.show()
 
+# =============================================================================
+# Export Visualization Data
+# =============================================================================
 # %%
+from export_viz_data import export_visualization_data
+
+export_visualization_data(
+    clean_attn_LBHLL=clean_attn_LBHLL,
+    corrupt_attn_LBHLL=corrupt_attn_LBHLL,
+    effects_LH=effects_LH,
+    clean_contacts_AA=clean_contacts_AA,
+    corrupt_contacts_AA=corrupt_contacts_AA,
+    orig_contacts_AA=orig_contacts_AA,
+    segment=segment,
+    sequences={'full': sequence_S, 'clean': clean_seq_S, 'corrupt': corrupt_seq_S},
+    protein=protein,
+    config=config,
+    output_path="reports/viz_data.json.gz"
+)
+print(f"✓ Exported visualization data to reports/viz_data.json.gz")
+
+# %%
+

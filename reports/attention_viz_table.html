@@ -1,0 +1,1199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ESM2 Attention & Contact Visualization (Table View)</title>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pako/2.1.0/pako.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #1a1a1a;
+            color: #e0e0e0;
+            overflow: hidden;
+        }
+
+        #app {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+
+        /* Header */
+        #header {
+            background: #2a2a2a;
+            padding: 12px 20px;
+            border-bottom: 2px solid #3a3a3a;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-shrink: 0;
+        }
+
+        #header-left {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+        }
+
+        #head-info {
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        /* Zoom controls */
+        .zoom-controls {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            background: #1a1a1a;
+            padding: 4px 8px;
+            border-radius: 6px;
+        }
+
+        .zoom-btn {
+            padding: 4px 12px;
+            background: #3a3a3a;
+            border: 1px solid #4a4a4a;
+            border-radius: 4px;
+            color: #e0e0e0;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background 0.2s;
+        }
+
+        .zoom-btn:hover {
+            background: #4a4a4a;
+        }
+
+        .zoom-level {
+            font-size: 12px;
+            color: #999;
+            font-family: 'Courier New', monospace;
+            min-width: 50px;
+            text-align: center;
+        }
+
+        .effect-positive { color: #4fc3f7; }
+        .effect-negative { color: #f48fb1; }
+
+        /* Mode toggle */
+        .mode-toggle {
+            display: flex;
+            background: #1a1a1a;
+            border-radius: 6px;
+            overflow: hidden;
+        }
+
+        .mode-btn {
+            padding: 6px 16px;
+            border: none;
+            background: transparent;
+            color: #999;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+
+        .mode-btn:hover {
+            background: #333;
+        }
+
+        .mode-btn.active {
+            background: #4fc3f7;
+            color: #fff;
+        }
+
+        /* Main content */
+        #main {
+            display: flex;
+            flex: 1;
+            min-height: 0;
+            gap: 12px;
+            padding: 12px;
+            overflow: auto;
+        }
+
+        /* Panels */
+        #left-panel {
+            flex: 2;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            min-width: 0;
+        }
+
+        #right-panel {
+            flex: 1.5;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            min-width: 0;
+        }
+
+        .matrix-container {
+            flex: 1;
+            background: #2a2a2a;
+            border-radius: 8px;
+            padding: 12px;
+            display: flex;
+            flex-direction: column;
+            min-height: 0;
+            overflow: auto;
+        }
+
+        .matrix-header {
+            font-size: 14px;
+            font-weight: 500;
+            margin-bottom: 8px;
+            color: #ccc;
+        }
+
+        .table-wrapper {
+            flex: 1;
+            overflow: auto;
+            background: #1a1a1a;
+            border-radius: 4px;
+        }
+
+        /* Matrix Table Styling */
+        .matrix-table {
+            border-collapse: collapse;
+            border-spacing: 0;
+            font-family: 'Courier New', monospace;
+            font-size: 10px;
+        }
+
+        .matrix-table th {
+            background: #2a2a2a;
+            color: #999;
+            font-weight: 600;
+            padding: 4px 6px;
+            text-align: center;
+            position: sticky;
+            z-index: 10;
+            border: 1px solid #3a3a3a;
+        }
+
+        .matrix-table thead th {
+            top: 0;
+        }
+
+        .matrix-table tbody th {
+            left: 0;
+            position: sticky;
+        }
+
+        :root {
+            --cell-size: 12px;
+        }
+
+        .matrix-table td {
+            width: var(--cell-size);
+            height: var(--cell-size);
+            min-width: var(--cell-size);
+            min-height: var(--cell-size);
+            padding: 0;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            cursor: crosshair;
+            transition: transform 0.1s, border-color 0.1s;
+            position: relative;
+        }
+
+        .matrix-table td:hover {
+            transform: scale(1.5);
+            border-color: #4fc3f7;
+            border-width: 2px;
+            z-index: 100;
+            position: relative;
+        }
+
+        .matrix-table td.highlighted {
+            border: 2px solid #4fc3f7;
+            box-shadow: 0 0 4px #4fc3f7;
+            z-index: 50;
+            position: relative;
+        }
+
+        /* Info panel */
+        #info-panel {
+            flex: 1;
+            background: #2a2a2a;
+            border-radius: 8px;
+            padding: 16px;
+            overflow-y: auto;
+        }
+
+        .info-section {
+            margin-bottom: 16px;
+        }
+
+        .info-section h3 {
+            font-size: 14px;
+            color: #999;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 4px 0;
+            font-size: 13px;
+        }
+
+        .info-label {
+            color: #999;
+        }
+
+        .info-value {
+            color: #e0e0e0;
+            font-family: 'Courier New', monospace;
+        }
+
+        /* Region controls */
+        .region-control {
+            margin-bottom: 12px;
+        }
+
+        .region-control label {
+            display: block;
+            font-size: 12px;
+            color: #999;
+            margin-bottom: 4px;
+        }
+
+        .region-inputs {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .region-inputs input {
+            width: 60px;
+            padding: 4px 8px;
+            background: #1a1a1a;
+            border: 1px solid #3a3a3a;
+            border-radius: 4px;
+            color: #e0e0e0;
+            font-size: 13px;
+        }
+
+        .preset-btn {
+            padding: 4px 12px;
+            background: #3a3a3a;
+            border: 1px solid #4a4a4a;
+            border-radius: 4px;
+            color: #e0e0e0;
+            cursor: pointer;
+            font-size: 12px;
+            transition: background 0.2s;
+        }
+
+        .preset-btn:hover {
+            background: #4a4a4a;
+        }
+
+        .preset-btn.active {
+            background: #4fc3f7;
+            border-color: #4fc3f7;
+            color: #fff;
+        }
+
+        /* Head selector */
+        #head-selector {
+            background: #2a2a2a;
+            border-top: 2px solid #3a3a3a;
+            padding: 8px 12px;
+            overflow-x: auto;
+            overflow-y: hidden;
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+
+        .head-tab {
+            display: inline-block;
+            padding: 6px 14px;
+            margin-right: 6px;
+            background: #1a1a1a;
+            border: 1px solid #3a3a3a;
+            border-radius: 4px;
+            color: #999;
+            cursor: pointer;
+            font-size: 13px;
+            font-family: 'Courier New', monospace;
+            transition: all 0.2s;
+        }
+
+        .head-tab:hover {
+            background: #333;
+            border-color: #4a4a4a;
+        }
+
+        .head-tab.active {
+            background: #4fc3f7;
+            border-color: #4fc3f7;
+            color: #fff;
+        }
+
+        /* Loading */
+        #loading {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(26, 26, 26, 0.95);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            z-index: 1000;
+        }
+
+        #loading.hidden {
+            display: none;
+        }
+
+        /* Color legend */
+        .color-legend {
+            margin-top: 12px;
+            padding: 12px;
+            background: #1a1a1a;
+            border-radius: 4px;
+        }
+
+        .legend-title {
+            font-size: 12px;
+            color: #999;
+            margin-bottom: 8px;
+        }
+
+        .legend-gradient {
+            height: 20px;
+            border-radius: 3px;
+            margin-bottom: 4px;
+        }
+
+        .legend-labels {
+            display: flex;
+            justify-content: space-between;
+            font-size: 11px;
+            color: #777;
+            font-family: 'Courier New', monospace;
+        }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <div id="loading">Loading visualization data...</div>
+
+        <div id="header">
+            <div id="header-left">
+                <div id="head-info">
+                    <span id="head-label">Layer 0, Head 0</span>
+                    <span id="effect-label" class="effect-positive">Effect: +0.000</span>
+                </div>
+                <div class="mode-toggle">
+                    <button class="mode-btn active" data-mode="clean">Clean</button>
+                    <button class="mode-btn" data-mode="corrupt">Corrupt</button>
+                    <button class="mode-btn" data-mode="diff">Diff</button>
+                </div>
+                <div class="zoom-controls">
+                    <button class="zoom-btn" id="zoom-out">−</button>
+                    <span class="zoom-level" id="zoom-level">100%</span>
+                    <button class="zoom-btn" id="zoom-in">+</button>
+                    <button class="zoom-btn" id="zoom-reset">Reset</button>
+                </div>
+            </div>
+            <div id="protein-info">Protein: <span id="protein-name"></span></div>
+        </div>
+
+        <div id="main">
+            <div id="left-panel">
+                <div class="matrix-container">
+                    <div class="matrix-header">Attention: Region 1 → Region 2</div>
+                    <div class="table-wrapper" id="attn1-wrapper"></div>
+                </div>
+                <div class="matrix-container">
+                    <div class="matrix-header">Attention: Region 2 → Region 1</div>
+                    <div class="table-wrapper" id="attn2-wrapper"></div>
+                </div>
+            </div>
+
+            <div id="right-panel">
+                <div class="matrix-container">
+                    <div class="matrix-header">Contact Map: Region 1 × Region 2</div>
+                    <div class="table-wrapper" id="contact1-wrapper"></div>
+                </div>
+
+                <div class="matrix-container">
+                    <div class="matrix-header">Contact Map: Region 2 × Region 1</div>
+                    <div class="table-wrapper" id="contact2-wrapper"></div>
+                </div>
+
+                <div id="info-panel">
+                    <div class="info-section">
+                        <h3>Hover Info</h3>
+                        <div class="info-row">
+                            <span class="info-label">Position:</span>
+                            <span class="info-value" id="hover-pos">-</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Value:</span>
+                            <span class="info-value" id="hover-val">-</span>
+                        </div>
+                    </div>
+
+                    <div class="info-section">
+                        <h3>Metrics</h3>
+                        <div class="info-row">
+                            <span class="info-label">Clean:</span>
+                            <span class="info-value" id="metric-clean">-</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Corrupt:</span>
+                            <span class="info-value" id="metric-corrupt">-</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Gap:</span>
+                            <span class="info-value" id="metric-gap">-</span>
+                        </div>
+                    </div>
+
+                    <div class="info-section">
+                        <h3>Region Controls</h3>
+                        <div class="region-control">
+                            <label>Region 1 (ss1 + left flank)</label>
+                            <div class="region-inputs">
+                                <input type="number" id="r1-start" />
+                                <span>to</span>
+                                <input type="number" id="r1-end" />
+                            </div>
+                        </div>
+                        <div class="region-control">
+                            <label>Region 2 (ss2 + right flank)</label>
+                            <div class="region-inputs">
+                                <input type="number" id="r2-start" />
+                                <span>to</span>
+                                <input type="number" id="r2-end" />
+                            </div>
+                        </div>
+                        <div style="display: flex; gap: 4px; flex-wrap: wrap; margin-top: 8px;">
+                            <button class="preset-btn" data-preset="segments">Segments Only</button>
+                            <button class="preset-btn active" data-preset="clean">Clean Flanks</button>
+                            <button class="preset-btn" data-preset="corrupt">Corrupt Flanks</button>
+                        </div>
+                    </div>
+
+                    <div class="color-legend">
+                        <div class="legend-title">Color Scale</div>
+                        <div class="legend-gradient" id="legend-gradient"></div>
+                        <div class="legend-labels">
+                            <span id="legend-min">0.0</span>
+                            <span id="legend-max">1.0</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="head-selector"></div>
+    </div>
+
+    <script type="module">
+        // =====================================================================
+        // DataManager - Load and decode visualization data
+        // =====================================================================
+        class DataManager {
+            constructor() {
+                this.data = null;
+                this.headCache = new Map();
+                this.cacheLimit = 5;
+            }
+
+            async load(url = 'viz_data.json.gz') {
+                const response = await fetch(url);
+                const buffer = await response.arrayBuffer();
+                const decompressed = pako.inflate(buffer, { to: 'string' });
+                this.data = JSON.parse(decompressed);
+                return this.data;
+            }
+
+            getMetadata() {
+                return this.data.metadata;
+            }
+
+            getSequences() {
+                return this.data.sequences;
+            }
+
+            getHeadList() {
+                return this.data.heads.map((h, i) => ({
+                    index: i,
+                    layer: h.layer,
+                    head: h.head,
+                    effect: h.effect
+                }));
+            }
+
+            getHeadData(index) {
+                if (this.headCache.has(index)) {
+                    return this.headCache.get(index);
+                }
+
+                const head = this.data.heads[index];
+                const seqLen = this.data.metadata.seq_length;
+
+                const headData = {
+                    layer: head.layer,
+                    head: head.head,
+                    effect: head.effect,
+                    clean_attn: this.sparseToDense(head.clean_attn, seqLen, seqLen),
+                    corrupt_attn: this.sparseToDense(head.corrupt_attn, seqLen, seqLen)
+                };
+
+                this.headCache.set(index, headData);
+                if (this.headCache.size > this.cacheLimit) {
+                    const firstKey = this.headCache.keys().next().value;
+                    this.headCache.delete(firstKey);
+                }
+
+                return headData;
+            }
+
+            getContacts() {
+                const seqLen = this.data.metadata.seq_length;
+                return {
+                    clean: this.sparseToDense(this.data.contacts.clean, seqLen, seqLen),
+                    corrupt: this.sparseToDense(this.data.contacts.corrupt, seqLen, seqLen),
+                    original: this.sparseToDense(this.data.contacts.original, seqLen, seqLen)
+                };
+            }
+
+            sparseToDense(sparse, rows, cols) {
+                const dense = new Float32Array(rows * cols);
+                for (const [r, rowData] of Object.entries(sparse)) {
+                    const row = parseInt(r);
+                    for (const [c, val] of Object.entries(rowData)) {
+                        const col = parseInt(c);
+                        dense[row * cols + col] = val;
+                    }
+                }
+                return dense;
+            }
+        }
+
+        // =====================================================================
+        // RegionExtractor - Extract submatrices for visualization
+        // =====================================================================
+        class RegionExtractor {
+            constructor(metadata) {
+                this.metadata = metadata;
+                this.seqLen = metadata.seq_length;
+                this.segment = metadata.segment;
+
+                this.setRegions(
+                    this.segment.ss1_start - metadata.clean_flank,
+                    this.segment.ss1_end,
+                    this.segment.ss2_start,
+                    this.segment.ss2_end + metadata.clean_flank
+                );
+            }
+
+            setRegions(r1Start, r1End, r2Start, r2End) {
+                this.r1Start = Math.max(0, r1Start);
+                this.r1End = Math.min(this.seqLen, r1End);
+                this.r2Start = Math.max(0, r2Start);
+                this.r2End = Math.min(this.seqLen, r2End);
+            }
+
+            extractMatrix1(fullAttn) {
+                const rows = this.r1End - this.r1Start;
+                const cols = this.r2End - this.r2Start;
+                const result = new Float32Array(rows * cols);
+
+                for (let i = 0; i < rows; i++) {
+                    for (let j = 0; j < cols; j++) {
+                        const srcRow = this.r1Start + i;
+                        const srcCol = this.r2Start + j;
+                        result[i * cols + j] = fullAttn[srcRow * this.seqLen + srcCol];
+                    }
+                }
+
+                return { data: result, rows, cols };
+            }
+
+            extractMatrix2(fullAttn) {
+                const rows = this.r2End - this.r2Start;
+                const cols = this.r1End - this.r1Start;
+                const result = new Float32Array(rows * cols);
+
+                for (let i = 0; i < rows; i++) {
+                    for (let j = 0; j < cols; j++) {
+                        const srcRow = this.r2Start + i;
+                        const srcCol = this.r1Start + j;
+                        result[i * cols + j] = fullAttn[srcRow * this.seqLen + srcCol];
+                    }
+                }
+
+                return { data: result, rows, cols };
+            }
+
+            extractContact1(fullContact) {
+                const rows = this.r1End - this.r1Start;
+                const cols = this.r2End - this.r2Start;
+                const result = new Float32Array(rows * cols);
+
+                for (let i = 0; i < rows; i++) {
+                    for (let j = 0; j < cols; j++) {
+                        const srcRow = this.r1Start + i;
+                        const srcCol = this.r2Start + j;
+                        result[i * cols + j] = fullContact[srcRow * this.seqLen + srcCol];
+                    }
+                }
+
+                return { data: result, rows, cols };
+            }
+
+            extractContact2(fullContact) {
+                const rows = this.r2End - this.r2Start;
+                const cols = this.r1End - this.r1Start;
+                const result = new Float32Array(rows * cols);
+
+                for (let i = 0; i < rows; i++) {
+                    for (let j = 0; j < cols; j++) {
+                        const srcRow = this.r2Start + i;
+                        const srcCol = this.r1Start + j;
+                        result[i * cols + j] = fullContact[srcRow * this.seqLen + srcCol];
+                    }
+                }
+
+                return { data: result, rows, cols };
+            }
+
+            getRegionBounds() {
+                return {
+                    r1: { start: this.r1Start, end: this.r1End },
+                    r2: { start: this.r2Start, end: this.r2End }
+                };
+            }
+        }
+
+        // =====================================================================
+        // TableRenderer - HTML table-based matrix visualization
+        // =====================================================================
+        class TableRenderer {
+            constructor(wrapperId, rowBounds, colBounds, getSequence) {
+                this.wrapper = document.getElementById(wrapperId);
+                this.rowBounds = rowBounds; // Function returning {start, end}
+                this.colBounds = colBounds; // Function returning {start, end}
+                this.getSequence = getSequence; // Function returning sequence string
+                this.table = null;
+                this.colormap = null;
+                this.hoverCallback = null;
+            }
+
+            render(matrix, rows, cols) {
+                // Clear wrapper
+                this.wrapper.innerHTML = '';
+
+                // Create table
+                this.table = document.createElement('table');
+                this.table.className = 'matrix-table';
+
+                const rowBounds = this.rowBounds();
+                const colBounds = this.colBounds();
+                const sequence = this.getSequence();
+
+                // Create header row with column labels
+                const thead = document.createElement('thead');
+                const headerRow = document.createElement('tr');
+
+                // Corner cell
+                const cornerTh = document.createElement('th');
+                headerRow.appendChild(cornerTh);
+
+                // Column headers with amino acid letters
+                for (let j = 0; j < cols; j++) {
+                    const th = document.createElement('th');
+                    const pos = colBounds.start + j;
+                    const aa = sequence[pos] || '?';
+                    th.textContent = `${pos}:${aa}`;
+                    th.title = `Position ${pos}: ${aa}`;
+                    headerRow.appendChild(th);
+                }
+                thead.appendChild(headerRow);
+                this.table.appendChild(thead);
+
+                // Create body with data rows
+                const tbody = document.createElement('tbody');
+                for (let i = 0; i < rows; i++) {
+                    const tr = document.createElement('tr');
+
+                    // Row header with amino acid letter
+                    const rowTh = document.createElement('th');
+                    const pos = rowBounds.start + i;
+                    const aa = sequence[pos] || '?';
+                    rowTh.textContent = `${pos}:${aa}`;
+                    rowTh.title = `Position ${pos}: ${aa}`;
+                    tr.appendChild(rowTh);
+
+                    // Data cells
+                    for (let j = 0; j < cols; j++) {
+                        const td = document.createElement('td');
+                        const value = matrix[i * cols + j];
+
+                        td.dataset.row = i;
+                        td.dataset.col = j;
+                        td.dataset.value = value.toFixed(4);
+
+                        if (this.colormap) {
+                            td.style.backgroundColor = this.colormap(value);
+                        }
+
+                        // Add hover callback
+                        if (this.hoverCallback) {
+                            td.addEventListener('mouseenter', () => {
+                                this.hoverCallback(i, j, value);
+                            });
+                        }
+
+                        tr.appendChild(td);
+                    }
+
+                    tbody.appendChild(tr);
+                }
+                this.table.appendChild(tbody);
+
+                this.wrapper.appendChild(this.table);
+            }
+
+            setColormap(colormap) {
+                this.colormap = colormap;
+            }
+
+            highlightCell(row, col) {
+                if (!this.table) return;
+
+                // Remove previous highlights
+                this.table.querySelectorAll('td.highlighted').forEach(td => {
+                    td.classList.remove('highlighted');
+                });
+
+                // Add highlight to specified cell
+                if (row !== null && col !== null) {
+                    const cell = this.table.querySelector(`td[data-row="${row}"][data-col="${col}"]`);
+                    if (cell) {
+                        cell.classList.add('highlighted');
+                    }
+                }
+            }
+
+            clearHighlight() {
+                if (!this.table) return;
+                this.table.querySelectorAll('td.highlighted').forEach(td => {
+                    td.classList.remove('highlighted');
+                });
+            }
+        }
+
+        // =====================================================================
+        // Colormaps
+        // =====================================================================
+        function createCleanCorruptColormap() {
+            const scale = d3.scaleSequential()
+                .domain([0, 1])
+                .interpolator(d3.interpolate('#ffffff', '#5e35b1'));
+            return (value) => scale(value);
+        }
+
+        function createDivergingColormap() {
+            const scale = d3.scaleSequential(d3.interpolateRdBu).domain([1, -1]);
+            return (value) => scale(value);
+        }
+
+        // =====================================================================
+        // HighlightCoordinator - Cross-matrix highlighting
+        // =====================================================================
+        class HighlightCoordinator {
+            constructor(renderers) {
+                this.renderers = renderers;
+            }
+
+            setHighlight(source, row, col) {
+                const highlights = this.computeCorrespondences(source, row, col);
+
+                Object.entries(this.renderers).forEach(([name, renderer]) => {
+                    const h = highlights[name];
+                    if (h) {
+                        renderer.highlightCell(h.row, h.col);
+                    }
+                });
+            }
+
+            clearHighlight() {
+                Object.values(this.renderers).forEach(r => r.clearHighlight());
+            }
+
+            computeCorrespondences(source, row, col) {
+                const result = {
+                    attn1: null,
+                    attn2: null,
+                    contact1: null,
+                    contact2: null
+                };
+
+                if (source === 'attn1') {
+                    result.attn1 = { row, col };
+                    result.attn2 = { row: col, col: row };
+                    result.contact1 = { row, col };
+                    result.contact2 = { row: col, col: row };
+                } else if (source === 'attn2') {
+                    result.attn1 = { row: col, col: row };
+                    result.attn2 = { row, col };
+                    result.contact1 = { row: col, col: row };
+                    result.contact2 = { row, col };
+                } else if (source === 'contact1') {
+                    result.attn1 = { row, col };
+                    result.attn2 = { row: col, col: row };
+                    result.contact1 = { row, col };
+                    result.contact2 = { row: col, col: row };
+                } else if (source === 'contact2') {
+                    result.attn1 = { row: col, col: row };
+                    result.attn2 = { row, col };
+                    result.contact1 = { row: col, col: row };
+                    result.contact2 = { row, col };
+                }
+
+                return result;
+            }
+        }
+
+        // =====================================================================
+        // App State
+        // =====================================================================
+        class App {
+            constructor() {
+                this.dataManager = new DataManager();
+                this.regionExtractor = null;
+                this.currentHeadIndex = 0;
+                this.currentMode = 'clean';
+                this.cellSize = 12; // Default cell size in pixels
+
+                this.cleanCorruptColormap = createCleanCorruptColormap();
+                this.divergingColormap = createDivergingColormap();
+            }
+
+            async init() {
+                await this.dataManager.load();
+                const metadata = this.dataManager.getMetadata();
+
+                this.regionExtractor = new RegionExtractor(metadata);
+
+                // Get sequence for display
+                const getSequence = () => this.dataManager.getSequences().full;
+
+                // Create renderers
+                this.attn1Renderer = new TableRenderer(
+                    'attn1-wrapper',
+                    () => this.regionExtractor.getRegionBounds().r1,
+                    () => this.regionExtractor.getRegionBounds().r2,
+                    getSequence
+                );
+
+                this.attn2Renderer = new TableRenderer(
+                    'attn2-wrapper',
+                    () => this.regionExtractor.getRegionBounds().r2,
+                    () => this.regionExtractor.getRegionBounds().r1,
+                    getSequence
+                );
+
+                this.contact1Renderer = new TableRenderer(
+                    'contact1-wrapper',
+                    () => this.regionExtractor.getRegionBounds().r1,
+                    () => this.regionExtractor.getRegionBounds().r2,
+                    getSequence
+                );
+
+                this.contact2Renderer = new TableRenderer(
+                    'contact2-wrapper',
+                    () => this.regionExtractor.getRegionBounds().r2,
+                    () => this.regionExtractor.getRegionBounds().r1,
+                    getSequence
+                );
+
+                // Create highlight coordinator
+                this.highlightCoordinator = new HighlightCoordinator({
+                    attn1: this.attn1Renderer,
+                    attn2: this.attn2Renderer,
+                    contact1: this.contact1Renderer,
+                    contact2: this.contact2Renderer
+                });
+
+                // Update UI
+                document.getElementById('protein-name').textContent = metadata.protein;
+                document.getElementById('metric-clean').textContent = metadata.clean_metric.toFixed(4);
+                document.getElementById('metric-corrupt').textContent = metadata.corrupt_metric.toFixed(4);
+                document.getElementById('metric-gap').textContent = (metadata.clean_metric - metadata.corrupt_metric).toFixed(4);
+
+                this.setupRegionControls();
+                this.setupHeadSelector();
+                this.setupModeToggle();
+                this.setupHoverCallbacks();
+                this.setupZoomControls();
+
+                this.renderHead(0);
+
+                document.getElementById('loading').classList.add('hidden');
+            }
+
+            setupZoomControls() {
+                const updateZoom = () => {
+                    document.documentElement.style.setProperty('--cell-size', `${this.cellSize}px`);
+                    const percent = Math.round((this.cellSize / 12) * 100);
+                    document.getElementById('zoom-level').textContent = `${percent}%`;
+                };
+
+                document.getElementById('zoom-in').addEventListener('click', () => {
+                    this.cellSize = Math.min(24, this.cellSize + 2);
+                    updateZoom();
+                });
+
+                document.getElementById('zoom-out').addEventListener('click', () => {
+                    this.cellSize = Math.max(6, this.cellSize - 2);
+                    updateZoom();
+                });
+
+                document.getElementById('zoom-reset').addEventListener('click', () => {
+                    this.cellSize = 12;
+                    updateZoom();
+                });
+
+                updateZoom();
+            }
+
+            setupRegionControls() {
+                const metadata = this.dataManager.getMetadata();
+                const bounds = this.regionExtractor.getRegionBounds();
+
+                document.getElementById('r1-start').value = bounds.r1.start;
+                document.getElementById('r1-end').value = bounds.r1.end;
+                document.getElementById('r2-start').value = bounds.r2.start;
+                document.getElementById('r2-end').value = bounds.r2.end;
+
+                const updateRegions = () => {
+                    const r1Start = parseInt(document.getElementById('r1-start').value);
+                    const r1End = parseInt(document.getElementById('r1-end').value);
+                    const r2Start = parseInt(document.getElementById('r2-start').value);
+                    const r2End = parseInt(document.getElementById('r2-end').value);
+
+                    this.regionExtractor.setRegions(r1Start, r1End, r2Start, r2End);
+                    this.renderHead(this.currentHeadIndex);
+
+                    document.querySelectorAll('.preset-btn').forEach(btn => btn.classList.remove('active'));
+                };
+
+                document.getElementById('r1-start').addEventListener('change', updateRegions);
+                document.getElementById('r1-end').addEventListener('change', updateRegions);
+                document.getElementById('r2-start').addEventListener('change', updateRegions);
+                document.getElementById('r2-end').addEventListener('change', updateRegions);
+
+                document.querySelectorAll('.preset-btn').forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        const preset = btn.dataset.preset;
+                        const seg = metadata.segment;
+
+                        let r1Start, r1End, r2Start, r2End;
+
+                        if (preset === 'segments') {
+                            r1Start = seg.ss1_start;
+                            r1End = seg.ss1_end;
+                            r2Start = seg.ss2_start;
+                            r2End = seg.ss2_end;
+                        } else if (preset === 'clean') {
+                            r1Start = seg.ss1_start - metadata.clean_flank;
+                            r1End = seg.ss1_end;
+                            r2Start = seg.ss2_start;
+                            r2End = seg.ss2_end + metadata.clean_flank;
+                        } else if (preset === 'corrupt') {
+                            r1Start = seg.ss1_start - metadata.corrupt_flank;
+                            r1End = seg.ss1_end;
+                            r2Start = seg.ss2_start;
+                            r2End = seg.ss2_end + metadata.corrupt_flank;
+                        }
+
+                        this.regionExtractor.setRegions(r1Start, r1End, r2Start, r2End);
+
+                        document.getElementById('r1-start').value = r1Start;
+                        document.getElementById('r1-end').value = r1End;
+                        document.getElementById('r2-start').value = r2Start;
+                        document.getElementById('r2-end').value = r2End;
+
+                        this.renderHead(this.currentHeadIndex);
+
+                        document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
+                        btn.classList.add('active');
+                    });
+                });
+            }
+
+            setupHeadSelector() {
+                const headList = this.dataManager.getHeadList();
+                const selector = document.getElementById('head-selector');
+
+                headList.forEach((h, i) => {
+                    const tab = document.createElement('button');
+                    tab.className = 'head-tab';
+                    if (i === 0) tab.classList.add('active');
+
+                    const sign = h.effect >= 0 ? '+' : '';
+                    tab.textContent = `L${h.layer}H${h.head} (${sign}${h.effect.toFixed(2)})`;
+                    tab.dataset.index = i;
+
+                    tab.addEventListener('click', () => {
+                        document.querySelectorAll('.head-tab').forEach(t => t.classList.remove('active'));
+                        tab.classList.add('active');
+                        this.renderHead(i);
+                    });
+
+                    selector.appendChild(tab);
+                });
+            }
+
+            setupModeToggle() {
+                document.querySelectorAll('.mode-btn').forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+                        btn.classList.add('active');
+                        this.currentMode = btn.dataset.mode;
+                        this.renderHead(this.currentHeadIndex);
+                    });
+                });
+            }
+
+            setupHoverCallbacks() {
+                this.attn1Renderer.hoverCallback = (row, col, value) => {
+                    const bounds = this.regionExtractor.getRegionBounds();
+                    const actualRow = bounds.r1.start + row;
+                    const actualCol = bounds.r2.start + col;
+                    document.getElementById('hover-pos').textContent = `(${actualRow}, ${actualCol})`;
+                    document.getElementById('hover-val').textContent = value.toFixed(4);
+                    this.highlightCoordinator.setHighlight('attn1', row, col);
+                };
+
+                this.attn2Renderer.hoverCallback = (row, col, value) => {
+                    const bounds = this.regionExtractor.getRegionBounds();
+                    const actualRow = bounds.r2.start + row;
+                    const actualCol = bounds.r1.start + col;
+                    document.getElementById('hover-pos').textContent = `(${actualRow}, ${actualCol})`;
+                    document.getElementById('hover-val').textContent = value.toFixed(4);
+                    this.highlightCoordinator.setHighlight('attn2', row, col);
+                };
+
+                this.contact1Renderer.hoverCallback = (row, col, value) => {
+                    const bounds = this.regionExtractor.getRegionBounds();
+                    const actualRow = bounds.r1.start + row;
+                    const actualCol = bounds.r2.start + col;
+                    document.getElementById('hover-pos').textContent = `(${actualRow}, ${actualCol})`;
+                    document.getElementById('hover-val').textContent = value.toFixed(4);
+                    this.highlightCoordinator.setHighlight('contact1', row, col);
+                };
+
+                this.contact2Renderer.hoverCallback = (row, col, value) => {
+                    const bounds = this.regionExtractor.getRegionBounds();
+                    const actualRow = bounds.r2.start + row;
+                    const actualCol = bounds.r1.start + col;
+                    document.getElementById('hover-pos').textContent = `(${actualRow}, ${actualCol})`;
+                    document.getElementById('hover-val').textContent = value.toFixed(4);
+                    this.highlightCoordinator.setHighlight('contact2', row, col);
+                };
+            }
+
+            renderHead(headIndex) {
+                this.currentHeadIndex = headIndex;
+                const headData = this.dataManager.getHeadData(headIndex);
+                const contacts = this.dataManager.getContacts();
+
+                // Update header
+                document.getElementById('head-label').textContent = `Layer ${headData.layer}, Head ${headData.head}`;
+                const effectLabel = document.getElementById('effect-label');
+                const sign = headData.effect >= 0 ? '+' : '';
+                effectLabel.textContent = `Effect: ${sign}${headData.effect.toFixed(3)}`;
+                effectLabel.className = headData.effect >= 0 ? 'effect-positive' : 'effect-negative';
+
+                // Get matrices based on mode
+                let attn1Full, attn2Full, contactFull;
+
+                if (this.currentMode === 'clean') {
+                    attn1Full = headData.clean_attn;
+                    attn2Full = headData.clean_attn;
+                    contactFull = contacts.clean;
+                } else if (this.currentMode === 'corrupt') {
+                    attn1Full = headData.corrupt_attn;
+                    attn2Full = headData.corrupt_attn;
+                    contactFull = contacts.corrupt;
+                } else {
+                    const seqLen = this.dataManager.getMetadata().seq_length;
+                    attn1Full = new Float32Array(seqLen * seqLen);
+                    attn2Full = new Float32Array(seqLen * seqLen);
+                    contactFull = new Float32Array(seqLen * seqLen);
+
+                    for (let i = 0; i < seqLen * seqLen; i++) {
+                        attn1Full[i] = headData.clean_attn[i] - headData.corrupt_attn[i];
+                        attn2Full[i] = headData.clean_attn[i] - headData.corrupt_attn[i];
+                        contactFull[i] = contacts.clean[i] - contacts.corrupt[i];
+                    }
+                }
+
+                // Extract regions
+                const matrix1 = this.regionExtractor.extractMatrix1(attn1Full);
+                const matrix2 = this.regionExtractor.extractMatrix2(attn2Full);
+                const contact1 = this.regionExtractor.extractContact1(contactFull);
+                const contact2 = this.regionExtractor.extractContact2(contactFull);
+
+                // Set colormaps
+                const colormap = this.currentMode === 'diff' ? this.divergingColormap : this.cleanCorruptColormap;
+                this.attn1Renderer.setColormap(colormap);
+                this.attn2Renderer.setColormap(colormap);
+                this.contact1Renderer.setColormap(colormap);
+                this.contact2Renderer.setColormap(colormap);
+
+                // Update legend
+                if (this.currentMode === 'diff') {
+                    document.getElementById('legend-gradient').style.background = 'linear-gradient(to right, #d73027, #ffffff, #4575b4)';
+                    document.getElementById('legend-min').textContent = '-1.0';
+                    document.getElementById('legend-max').textContent = '+1.0';
+                } else {
+                    document.getElementById('legend-gradient').style.background = 'linear-gradient(to right, #ffffff, #5e35b1)';
+                    document.getElementById('legend-min').textContent = '0.0';
+                    document.getElementById('legend-max').textContent = '1.0';
+                }
+
+                // Render
+                this.attn1Renderer.render(matrix1.data, matrix1.rows, matrix1.cols);
+                this.attn2Renderer.render(matrix2.data, matrix2.rows, matrix2.cols);
+                this.contact1Renderer.render(contact1.data, contact1.rows, contact1.cols);
+                this.contact2Renderer.render(contact2.data, contact2.rows, contact2.cols);
+            }
+        }
+
+        // =====================================================================
+        // Initialize
+        // =====================================================================
+        const app = new App();
+        app.init().catch(err => {
+            document.getElementById('loading').textContent = `Error: ${err.message}`;
+            console.error(err);
+        });
+    </script>
+</body>
+</html>

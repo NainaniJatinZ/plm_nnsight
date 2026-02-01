@@ -94,6 +94,16 @@ Current matplotlib heatmaps are inadequate for 379×379 attention matrices. We n
 - **Token annotations**: Show which tokens are masked, contact region, or flank
 - **Region highlighting**: Mark the ss1 (177-187) and ss2 (311-321) segments
 
+#### feature requests / thoughts: 
+- three modes: clean, corr, diff 
+- we want ability to pull out specific attention patterns, hopefully sorted by the direct effect. 
+- contact maps of the corresponding mode should be active always on the side with the same dimensions as the attention head 
+- whatever kind of highlighting we do by default and inside the interface, should be applied equally to both attn and contact viz 
+- when a cell is selected in the contact map, the same cell should be highlighted in the attn. and vice versa 
+- bidirectional - contact maps are usually similar around the side of diagonals - contact(r1, r2) == contact(r2, r1) but the same cant be guaranteed about the attn patterns even if they are bidirectional. How should we deal with that? do we want to show two matrices? like top one showing region1, region2 and bottom showing region2, region1? 
+- the matrix will usually be 400 x 400, so idk the best way to kind of display it, we can have a smaller section by default - like in our task a lot of the tokens are masked anyways. maybe we can define region1 and 2 by start and end and keep the default values be the unmasked residues?
+
+
 ### 2. Interpret Direct Effect Heads
 
 For each top head, understand:
