@@ -22,6 +22,7 @@
 from __future__ import annotations
 import gc
 import json
+import os
 import torch
 import matplotlib.pyplot as plt
 from dataclasses import dataclass
@@ -53,6 +54,85 @@ def log_memory(label=""):
 def clear_memory():
     gc.collect()
     torch.cuda.empty_cache()
+
+def get_cache_path(protein: str, clean_flank: int, corrupt_flank: int) -> str:
+    """Get path for cached metrics."""
+    import os
+    cache_dir = "reports/cache"
+    os.makedirs(cache_dir, exist_ok=True)
+    return f"{cache_dir}/{protein}_c{clean_flank}_x{corrupt_flank}_metrics.pt"
+
+def save_metrics_cache(
+    protein: str,
+    clean_flank: int,
+    corrupt_flank: int,
+    metrics: dict[str, torch.Tensor],
+) -> None:
+    """
+    Save all head metrics to cache file.
+
+    Args:
+        protein: Protein ID
+        clean_flank: Clean flank size
+        corrupt_flank: Corrupt flank size
+        metrics: Dict of metric_name -> (num_layers, num_heads) tensor
+    """
+    cache_path = get_cache_path(protein, clean_flank, corrupt_flank)
+    cache_data = {
+        "protein": protein,
+        "clean_flank": clean_flank,
+        "corrupt_flank": corrupt_flank,
+        "metrics": metrics,
+    }
+    torch.save(cache_data, cache_path)
+    print(f"✓ Saved metrics cache to {cache_path}")
+    print(f"  Cached metrics: {', '.join(metrics.keys())}")
+
+def load_metrics_cache(protein: str, clean_flank: int, corrupt_flank: int) -> dict[str, torch.Tensor] | None:
+    """
+    Load cached metrics if they exist.
+
+    Returns:
+        Dict of metric_name -> (num_layers, num_heads) tensor, or None if cache doesn't exist
+    """
+    import os
+    cache_path = get_cache_path(protein, clean_flank, corrupt_flank)
+
+    if not os.path.exists(cache_path):
+        return None
+
+    try:
+        cache_data = torch.load(cache_path)
+        print(f"✓ Loaded metrics cache from {cache_path}")
+        print(f"  Cached metrics: {', '.join(cache_data['metrics'].keys())}")
+        return cache_data["metrics"]
+    except Exception as e:
+        print(f"⚠ Failed to load cache: {e}")
+        return None
+
+def compute_diff_metrics_torch(clean_attn_LL: torch.Tensor, corrupt_attn_LL: torch.Tensor) -> dict[str, float]:
+    """
+    Compute multiple metrics quantifying attention pattern differences.
+
+    For attention matrices (probability distributions), L1 norm is most interpretable.
+
+    Args:
+        clean_attn_LL: Clean attention matrix (seq_len, seq_len)
+        corrupt_attn_LL: Corrupt attention matrix (seq_len, seq_len)
+
+    Returns:
+        Dict of metric_name -> value:
+        - diff_l1: Sum of absolute differences (total variation distance)
+        - diff_max: Maximum absolute difference (worst-case deviation)
+        - diff_l2: Frobenius norm (L2) for comparison
+    """
+    diff = clean_attn_LL - corrupt_attn_LL
+
+    return {
+        "diff_l1": torch.sum(torch.abs(diff)).item(),
+        "diff_max": torch.max(torch.abs(diff)).item(),
+        "diff_l2": torch.sqrt(torch.sum(diff ** 2)).item(),
+    }
 
 # =============================================================================
 # Core Functions
@@ -100,7 +180,10 @@ def patching_metric(pred_contacts_AA: torch.Tensor, orig_contacts_AA: torch.Tens
     orig_seg = orig_contacts_AA[segment.ss1_start:segment.ss1_end, segment.ss2_start:segment.ss2_end]
     return (torch.sum(pred_seg * orig_seg) / torch.sum(orig_seg * orig_seg)).item()
 
-def plot_contact_map(contacts_AA: torch.Tensor, title: str):
+PLOT_DIR = "reports/outputs"
+os.makedirs(PLOT_DIR, exist_ok=True)
+
+def plot_contact_map(contacts_AA: torch.Tensor, title: str, filename: str | None = None):
     plt.figure(figsize=(6, 6))
     plt.imshow(contacts_AA, cmap='viridis', aspect='equal')
     plt.colorbar(label="Contact Probability")
@@ -108,7 +191,10 @@ def plot_contact_map(contacts_AA: torch.Tensor, title: str):
     plt.xlabel("Residue Index")
     plt.ylabel("Residue Index")
     plt.tight_layout()
-    plt.show()
+    if filename:
+        plt.savefig(f"{PLOT_DIR}/{filename}", dpi=150, bbox_inches='tight')
+        print(f"  Saved plot to {PLOT_DIR}/{filename}")
+    plt.close()
 
 # =============================================================================
 # Model Setup
@@ -146,7 +232,7 @@ print(f"Contact segment: [{segment.ss1_start}:{segment.ss1_end}] x [{segment.ss2
 # %%
 # Original (full sequence)
 orig_contacts_AA = compute_contact_map(esm_model, tokenizer, sequence_S, device)
-plot_contact_map(orig_contacts_AA, f"{protein} - Full Sequence")
+# plot_contact_map(orig_contacts_AA, f"{protein} - Full Sequence")
 
 # %%
 # Clean (larger flank - higher metric)
@@ -254,116 +340,292 @@ print(f"  Gap: {clean_metric - corrupt_metric:.4f}")
 # For each head, replace clean attention with corrupt attention and measure effect
 # Normalized effect: (noised_metric - clean_metric) / (corrupt_metric - clean_metric)
 # %%
-print(f"\nRunning attention patching over {NUM_LAYERS} layers x {NUM_HEADS} heads...")
 
-effects_LH = torch.zeros(NUM_LAYERS, NUM_HEADS)
+# Configuration: which metrics to calculate
+FORCE_RECALC = False  # Set to True to force recalculation of all metrics
+REQUIRED_METRICS = {"effect", "diff_l1", "diff_max", "diff_l2"}
 
-for layer_idx in range(NUM_LAYERS):
-    for head_idx in range(NUM_HEADS):
-        # Create patched attention: replace one head with corrupt version
-        patched_attn_LBHLL = []
-        for l in range(NUM_LAYERS):
-            if l == layer_idx:
-                # Copy clean attention and replace this head with corrupt
-                patched = clean_attn_LBHLL[l].clone()
-                patched[:, head_idx, :, :] = corrupt_attn_LBHLL[l][:, head_idx, :, :]
-                patched_attn_LBHLL.append(patched)
-            else:
-                patched_attn_LBHLL.append(clean_attn_LBHLL[l])
+# Try to load from cache first
+cached_metrics = load_metrics_cache(protein, config["clean_flank"], config["corrupt_flank"])
 
-        # Compute contacts with patched attention
-        patched_contacts_AA = compute_contacts_from_attention(
-            patched_attn_LBHLL,
-            clean_inputs_BL['input_ids'],
-            clean_inputs_BL['attention_mask'],
-            esm_model.esm.contact_head,
-            device=device,
-        )[0].detach().cpu()
-
-        # Compute normalized effect
-        patched_metric = patching_metric(patched_contacts_AA, orig_contacts_AA, segment)
-        if abs(corrupt_metric - clean_metric) > 1e-6:
-            effect = (patched_metric - clean_metric) / (corrupt_metric - clean_metric)
+if not FORCE_RECALC and cached_metrics is not None and set(cached_metrics.keys()) >= REQUIRED_METRICS:
+    # Cache has all required metrics
+    head_metrics = cached_metrics
+    print(f"\n✓ Using all cached metrics: {', '.join(cached_metrics.keys())}")
+else:
+    # Determine what needs to be calculated
+    if cached_metrics is not None and not FORCE_RECALC:
+        missing_metrics = REQUIRED_METRICS - set(cached_metrics.keys())
+        print(f"\n⚠ Cache missing metrics: {', '.join(missing_metrics)}")
+        print("  Will calculate missing metrics and merge with cached ones")
+        head_metrics = cached_metrics.copy()
+    else:
+        if FORCE_RECALC:
+            print(f"\n🔄 Force recalculation enabled")
         else:
-            effect = 0.0
-        effects_LH[layer_idx, head_idx] = effect
+            print(f"\n💾 No cache found")
+        print(f"  Calculating all metrics: {', '.join(REQUIRED_METRICS)}")
+        head_metrics = {}
 
-    if (layer_idx + 1) % 5 == 0:
-        print(f"  Processed layer {layer_idx + 1}/{NUM_LAYERS}")
+    # Determine which metrics to calculate
+    to_calculate = REQUIRED_METRICS - set(head_metrics.keys()) if not FORCE_RECALC else REQUIRED_METRICS
 
-print("Done!")
+    # Initialize tensors for metrics we need to calculate
+    for metric_name in to_calculate:
+        head_metrics[metric_name] = torch.zeros(NUM_LAYERS, NUM_HEADS)
 
-# %%
-# Plot effect heatmap
-plt.figure(figsize=(12, 8))
-plt.imshow(effects_LH.numpy(), cmap='RdBu_r', aspect='auto', vmin=-1, vmax=1)
-plt.colorbar(label="Normalized Effect (0=clean, 1=corrupt)")
-plt.xlabel("Head")
-plt.ylabel("Layer")
-plt.title(f"Attention Head Effects on Contact Prediction\n{protein}: flank {config['corrupt_flank']}→{config['clean_flank']}")
-plt.tight_layout()
-plt.show()
+    # Separate cheap (diff-based) from expensive (patching-based) metrics
+    cheap_metrics = to_calculate & {"diff_l1", "diff_max", "diff_l2"}
+    expensive_metrics = to_calculate & {"effect"}  # Add other patching metrics here
+
+    if cheap_metrics:
+        print(f"  Calculating cheap metrics from attention: {', '.join(cheap_metrics)}")
+        for layer_idx in range(NUM_LAYERS):
+            for head_idx in range(NUM_HEADS):
+                clean_head_LL = clean_attn_LBHLL[layer_idx][0, head_idx]
+                corrupt_head_LL = corrupt_attn_LBHLL[layer_idx][0, head_idx]
+                diff_metrics = compute_diff_metrics_torch(clean_head_LL, corrupt_head_LL)
+
+                for metric_name in cheap_metrics:
+                    head_metrics[metric_name][layer_idx, head_idx] = diff_metrics[metric_name]
+
+            if (layer_idx + 1) % 10 == 0:
+                print(f"    Processed {layer_idx + 1}/{NUM_LAYERS} layers")
+
+    if expensive_metrics:
+        print(f"  Calculating expensive metrics via patching: {', '.join(expensive_metrics)}")
+        print(f"    This requires {NUM_LAYERS * NUM_HEADS} forward passes (may take several minutes)...")
+
+        for layer_idx in range(NUM_LAYERS):
+            for head_idx in range(NUM_HEADS):
+                # Create patched attention: replace one head with corrupt version
+                patched_attn_LBHLL = []
+                for l in range(NUM_LAYERS):
+                    if l == layer_idx:
+                        # Copy clean attention and replace this head with corrupt
+                        patched = clean_attn_LBHLL[l].clone()
+                        patched[:, head_idx, :, :] = corrupt_attn_LBHLL[l][:, head_idx, :, :]
+                        patched_attn_LBHLL.append(patched)
+                    else:
+                        patched_attn_LBHLL.append(clean_attn_LBHLL[l])
+
+                # Compute contacts with patched attention
+                patched_contacts_AA = compute_contacts_from_attention(
+                    patched_attn_LBHLL,
+                    clean_inputs_BL['input_ids'],
+                    clean_inputs_BL['attention_mask'],
+                    esm_model.esm.contact_head,
+                    device=device,
+                )[0].detach().cpu()
+
+                # Compute normalized effect
+                patched_metric = patching_metric(patched_contacts_AA, orig_contacts_AA, segment)
+                if abs(corrupt_metric - clean_metric) > 1e-6:
+                    effect = (patched_metric - clean_metric) / (corrupt_metric - clean_metric)
+                else:
+                    effect = 0.0
+                head_metrics["effect"][layer_idx, head_idx] = effect
+
+            if (layer_idx + 1) % 5 == 0:
+                print(f"    Processed layer {layer_idx + 1}/{NUM_LAYERS}")
+
+    print("Done!")
+
+    # Save updated cache
+    save_metrics_cache(protein, config["clean_flank"], config["corrupt_flank"], head_metrics)
 
 # %%
 # Find top heads by absolute effect
+effects_LH = head_metrics["effect"]
 effects_flat = effects_LH.flatten()
 top_k = 6
 top_indices = effects_flat.abs().argsort(descending=True)[:top_k]
 
-print(f"\nTop {top_k} heads by absolute effect:")
+print(f"\nTop {top_k} heads by absolute effect (direct):")
 top_heads = []
 for idx in top_indices:
     layer = idx // NUM_HEADS
     head = idx % NUM_HEADS
     effect = effects_LH[layer, head].item()
-    print(f"  Layer {layer:2d}, Head {head:2d}: effect = {effect:+.4f}")
+    diff_l1 = head_metrics["diff_l1"][layer, head].item()
+    print(f"  Layer {layer:2d}, Head {head:2d}: effect = {effect:+.4f}, diff_l1 = {diff_l1:.4f}")
     top_heads.append((layer.item(), head.item(), effect))
 
+# =============================================================================
+# Indirect Effect Analysis
+# =============================================================================
+# The direct effect (above) patches attention into the contact head directly.
+# The indirect effect measures how changing attention at one layer propagates
+# through the model to affect downstream layers' attention AND contact prediction.
+#
+# Key insight: attention.self.output[1] (attn probs) is a dead-end output.
+# Setting it doesn't change model computation. We must intervene on output[0]
+# (the context vector = attn_probs @ V), which flows through the residual stream.
+#
+# Recipe (single trace with tracer.cache):
+#   1. Access V from .value.output (child module — hooks before parent)
+#   2. Access attention probs from .output[1], patch one head
+#   3. Recompute context = patched_attn @ V (proxy math inside trace)
+#   4. Set output[0] = new_context (flows through residual stream)
+#   5. Capture downstream attention with tracer.cache()
+#   6. Build full attention stack for contact prediction
 # %%
-# Plot attention patterns for top heads (clean vs corrupt)
-fig, axes = plt.subplots(top_k, 2, figsize=(12, 3 * top_k))
+HEAD_DIM = esm_model.config.hidden_size // NUM_HEADS
+B = clean_attn_LBHLL[0].shape[0]  # 1
+L = clean_attn_LBHLL[0].shape[-1]  # seq_len with special tokens
 
-for i, (layer, head, effect) in enumerate(top_heads):
-    # Clean attention
-    ax_clean = axes[i, 0]
-    clean_pattern_LL = clean_attn_LBHLL[layer][0, head].numpy()
-    im = ax_clean.imshow(clean_pattern_LL, cmap='viridis', aspect='equal')
-    ax_clean.set_title(f"L{layer}H{head} Clean (effect={effect:+.3f})")
-    ax_clean.set_xlabel("Key")
-    ax_clean.set_ylabel("Query")
+# %%
+def indirect_effect_single_head(
+    model,
+    clean_inputs_BL: dict,
+    corrupt_head_attn_LL: torch.Tensor,
+    patch_layer: int,
+    patch_head: int,
+    device: str,
+) -> list[torch.Tensor]:
+    """
+    Perform indirect effect patching for a single head in a single trace.
 
-    # Corrupt attention
-    ax_corrupt = axes[i, 1]
-    corrupt_pattern_LL = corrupt_attn_LBHLL[layer][0, head].numpy()
-    ax_corrupt.imshow(corrupt_pattern_LL, cmap='viridis', aspect='equal')
-    ax_corrupt.set_title(f"L{layer}H{head} Corrupt")
-    ax_corrupt.set_xlabel("Key")
-    ax_corrupt.set_ylabel("Query")
+    Accesses V (child) and attention probs (parent) in the same trace,
+    patches one head, recomputes context, and captures downstream attention.
+    Uses tracer.cache() which works reliably even in complex traces
+    (unlike .save() loops — see test_nnsight_gotcha.py).
 
-plt.suptitle(f"Top {top_k} Attention Heads: Clean vs Corrupt", y=1.02)
+    Args:
+        corrupt_head_attn_LL: Corrupt attention for the target head, shape (1, L, L)
+        patch_layer: Layer to intervene at
+        patch_head: Head to replace with corrupt attention
+
+    Returns:
+        downstream_attn: list of attention tensors for layers patch_layer+1..end
+    """
+    with model.trace() as tracer:
+        with tracer.invoke(**{**clean_inputs_BL, "output_attentions": True}):
+            # Child module first: get V (value projection)
+            v_raw = model.esm.encoder.layer[patch_layer].attention.self.value.output
+            v_heads = v_raw.reshape(B, L, NUM_HEADS, HEAD_DIM).transpose(1, 2)
+
+            # Parent module: get live attention probs, patch one head
+            orig_attn = model.esm.encoder.layer[patch_layer].attention.self.output[1]
+            patched_attn = orig_attn.clone()
+            patched_attn[:, patch_head, :, :] = corrupt_head_attn_LL.to(device)
+
+            # Recompute context with patched attention
+            new_ctx = torch.matmul(patched_attn, v_heads)
+            new_ctx = new_ctx.transpose(1, 2).contiguous().reshape(B, L, -1)
+
+            # Set context vector — this propagates through the residual stream
+            model.esm.encoder.layer[patch_layer].attention.self.output[0][:] = new_ctx
+
+            # Capture all downstream attention
+            downstream_cache = tracer.cache(
+                modules=[model.esm.encoder.layer[i].attention.self
+                         for i in range(patch_layer + 1, NUM_LAYERS)]
+            )
+
+    downstream_attn = []
+    for i in range(patch_layer + 1, NUM_LAYERS):
+        key = f"model.esm.encoder.layer.{i}.attention.self"
+        downstream_attn.append(downstream_cache[key].output[1].detach().cpu())
+
+    return downstream_attn
+
+# %%
+# Compute indirect effects for all heads
+# For each head: patch it, get downstream attention, compute contacts, measure effect
+FORCE_INDIRECT_RECALC = False
+INDIRECT_CACHE_KEY = "indirect_effect"
+
+if not FORCE_INDIRECT_RECALC and INDIRECT_CACHE_KEY in head_metrics:
+    print(f"\n✓ Using cached indirect effects")
+    indirect_effects_LH = head_metrics[INDIRECT_CACHE_KEY]
+else:
+    print(f"\nComputing indirect effects for all {NUM_LAYERS * NUM_HEADS} heads...")
+    print(f"  Each head requires 1 trace (V + intervention + downstream capture)")
+    indirect_effects_LH = torch.zeros(NUM_LAYERS, NUM_HEADS)
+
+    for layer_idx in range(NUM_LAYERS):
+        for head_idx in range(NUM_HEADS):
+            # Get corrupt attention for just this head
+            corrupt_head_attn_LL = corrupt_attn_LBHLL[layer_idx][:, head_idx, :, :]
+
+            # Single trace: access V, patch attention, set output[0], capture downstream
+            downstream_attn = indirect_effect_single_head(
+                model, clean_inputs_BL,
+                corrupt_head_attn_LL,
+                layer_idx, head_idx, device,
+            )
+
+            # Build full attention list for contact prediction:
+            # - Layers 0..patch_layer: clean attention (unaffected)
+            # - Layer patch_layer: patched attention (clean with one corrupt head)
+            # - Layers patch_layer+1..end: downstream attention (from intervention)
+            patched_full_attn = list(clean_attn_LBHLL[:layer_idx])
+
+            # The patched layer itself
+            patched_layer_attn = clean_attn_LBHLL[layer_idx].clone()
+            patched_layer_attn[:, head_idx, :, :] = corrupt_attn_LBHLL[layer_idx][:, head_idx, :, :]
+            patched_full_attn.append(patched_layer_attn)
+
+            # Downstream layers from the intervention
+            patched_full_attn.extend(downstream_attn)
+
+            # Compute contacts with the full (indirectly patched) attention
+            indirect_contacts_AA = compute_contacts_from_attention(
+                patched_full_attn,
+                clean_inputs_BL['input_ids'],
+                clean_inputs_BL['attention_mask'],
+                esm_model.esm.contact_head,
+                device=device,
+            )[0].detach().cpu()
+
+            # Normalized effect
+            indirect_metric = patching_metric(indirect_contacts_AA, orig_contacts_AA, segment)
+            if abs(corrupt_metric - clean_metric) > 1e-6:
+                effect = (indirect_metric - clean_metric) / (corrupt_metric - clean_metric)
+            else:
+                effect = 0.0
+            indirect_effects_LH[layer_idx, head_idx] = effect
+
+        if (layer_idx + 1) % 5 == 0:
+            print(f"    Processed layer {layer_idx + 1}/{NUM_LAYERS}")
+
+    print("Done!")
+    head_metrics[INDIRECT_CACHE_KEY] = indirect_effects_LH
+    save_metrics_cache(protein, config["clean_flank"], config["corrupt_flank"], head_metrics)
+
+# %%
+# Compare direct vs indirect effects
+print(f"\nTop {top_k} heads by absolute indirect effect:")
+indirect_flat = indirect_effects_LH.flatten()
+indirect_top_indices = indirect_flat.abs().argsort(descending=True)[:top_k]
+
+for idx in indirect_top_indices:
+    layer = idx // NUM_HEADS
+    head = idx % NUM_HEADS
+    ind_eff = indirect_effects_LH[layer, head].item()
+    dir_eff = effects_LH[layer, head].item()
+    print(f"  Layer {layer:2d}, Head {head:2d}: indirect = {ind_eff:+.4f}, direct = {dir_eff:+.4f}")
+
+# %%
+# Plot direct vs indirect effect heatmaps side by side
+fig, axes = plt.subplots(1, 2, figsize=(20, 8))
+
+im0 = axes[0].imshow(effects_LH.numpy(), cmap='RdBu_r', aspect='auto', vmin=-1, vmax=1)
+axes[0].set_xlabel("Head")
+axes[0].set_ylabel("Layer")
+axes[0].set_title(f"Direct Effect (contact head only)\n{protein}: flank {config['corrupt_flank']}→{config['clean_flank']}")
+plt.colorbar(im0, ax=axes[0], label="Normalized Effect")
+
+im1 = axes[1].imshow(indirect_effects_LH.numpy(), cmap='RdBu_r', aspect='auto', vmin=-1, vmax=1)
+axes[1].set_xlabel("Head")
+axes[1].set_ylabel("Layer")
+axes[1].set_title(f"Indirect Effect (through model)\n{protein}: flank {config['corrupt_flank']}→{config['clean_flank']}")
+plt.colorbar(im1, ax=axes[1], label="Normalized Effect")
+
 plt.tight_layout()
-plt.show()
-
-# =============================================================================
-# Export Visualization Data
-# =============================================================================
-# %%
-from export_viz_data import export_visualization_data
-
-export_visualization_data(
-    clean_attn_LBHLL=clean_attn_LBHLL,
-    corrupt_attn_LBHLL=corrupt_attn_LBHLL,
-    effects_LH=effects_LH,
-    clean_contacts_AA=clean_contacts_AA,
-    corrupt_contacts_AA=corrupt_contacts_AA,
-    orig_contacts_AA=orig_contacts_AA,
-    segment=segment,
-    sequences={'full': sequence_S, 'clean': clean_seq_S, 'corrupt': corrupt_seq_S},
-    protein=protein,
-    config=config,
-    output_path="reports/viz_data.json.gz"
-)
-print(f"✓ Exported visualization data to reports/viz_data.json.gz")
+plt.savefig(f"{PLOT_DIR}/{protein}_direct_vs_indirect.png", dpi=150, bbox_inches='tight')
+print(f"  Saved to {PLOT_DIR}/{protein}_direct_vs_indirect.png")
+plt.close()
 
 # %%
-
