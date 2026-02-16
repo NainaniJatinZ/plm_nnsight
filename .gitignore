@@ -9,3 +9,7 @@ plm_nnsight.md
 copy_*
 pdbs/
 *.gz
+.claude
+CLAUDE.md
+testing
+*.pt 

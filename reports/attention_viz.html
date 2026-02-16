@@ -459,7 +459,7 @@
                 this.cacheLimit = 5;
             }
 
-            async load(url = 'viz_data.json.gz') {
+            async load(url = 'viz_data_meta.json.gz') {
                 const response = await fetch(url);
                 const buffer = await response.arrayBuffer();
                 const decompressed = pako.inflate(buffer, { to: 'string' });
@@ -484,22 +484,30 @@
                 }));
             }
 
-            getHeadData(index) {
+            async getHeadData(index) {
                 // Check cache
                 if (this.headCache.has(index)) {
                     return this.headCache.get(index);
                 }
 
-                const head = this.data.heads[index];
+                const headMeta = this.data.heads[index];
                 const seqLen = this.data.metadata.seq_length;
+
+                // Load individual head file
+                const headUrl = `${this.data.metadata.heads_dir}/${headMeta.filename}`;
+                const response = await fetch(headUrl);
+                const buffer = await response.arrayBuffer();
+                const decompressed = pako.inflate(buffer, { to: 'string' });
+                const headFile = JSON.parse(decompressed);
 
                 // Decode sparse matrices to dense
                 const headData = {
-                    layer: head.layer,
-                    head: head.head,
-                    effect: head.effect,
-                    clean_attn: this.sparseToDense(head.clean_attn, seqLen, seqLen),
-                    corrupt_attn: this.sparseToDense(head.corrupt_attn, seqLen, seqLen)
+                    layer: headFile.layer,
+                    head: headFile.head,
+                    effect: headFile.metrics.effect,
+                    metrics: headFile.metrics,
+                    clean_attn: this.sparseToDense(headFile.clean_attn, seqLen, seqLen),
+                    corrupt_attn: this.sparseToDense(headFile.corrupt_attn, seqLen, seqLen)
                 };
 
                 // Update cache
@@ -1083,7 +1091,7 @@
                 this.setupHoverCallbacks();
 
                 // Render first head
-                this.renderHead(0);
+                await this.renderHead(0);
 
                 // Hide loading
                 document.getElementById('loading').classList.add('hidden');
@@ -1100,14 +1108,14 @@
                 document.getElementById('r2-end').value = bounds.r2.end;
 
                 // Input change listeners
-                const updateRegions = () => {
+                const updateRegions = async () => {
                     const r1Start = parseInt(document.getElementById('r1-start').value);
                     const r1End = parseInt(document.getElementById('r1-end').value);
                     const r2Start = parseInt(document.getElementById('r2-start').value);
                     const r2End = parseInt(document.getElementById('r2-end').value);
 
                     this.regionExtractor.setRegions(r1Start, r1End, r2Start, r2End);
-                    this.renderHead(this.currentHeadIndex);
+                    await this.renderHead(this.currentHeadIndex);
 
                     // Clear preset selection
                     document.querySelectorAll('.preset-btn').forEach(btn => btn.classList.remove('active'));
@@ -1120,7 +1128,7 @@
 
                 // Preset buttons
                 document.querySelectorAll('.preset-btn').forEach(btn => {
-                    btn.addEventListener('click', () => {
+                    btn.addEventListener('click', async () => {
                         const preset = btn.dataset.preset;
                         const seg = metadata.segment;
 
@@ -1150,7 +1158,7 @@
                         document.getElementById('r2-start').value = r2Start;
                         document.getElementById('r2-end').value = r2End;
 
-                        this.renderHead(this.currentHeadIndex);
+                        await this.renderHead(this.currentHeadIndex);
 
                         // Update active state
                         document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
@@ -1172,10 +1180,10 @@
                     tab.textContent = `L${h.layer}H${h.head} (${sign}${h.effect.toFixed(2)})`;
                     tab.dataset.index = i;
 
-                    tab.addEventListener('click', () => {
+                    tab.addEventListener('click', async () => {
                         document.querySelectorAll('.head-tab').forEach(t => t.classList.remove('active'));
                         tab.classList.add('active');
-                        this.renderHead(i);
+                        await this.renderHead(i);
                     });
 
                     selector.appendChild(tab);
@@ -1184,11 +1192,11 @@
 
             setupModeToggle() {
                 document.querySelectorAll('.mode-btn').forEach(btn => {
-                    btn.addEventListener('click', () => {
+                    btn.addEventListener('click', async () => {
                         document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
                         btn.classList.add('active');
                         this.currentMode = btn.dataset.mode;
-                        this.renderHead(this.currentHeadIndex);
+                        await this.renderHead(this.currentHeadIndex);
                     });
                 });
             }
@@ -1239,9 +1247,9 @@
                 });
             }
 
-            renderHead(headIndex) {
+            async renderHead(headIndex) {
                 this.currentHeadIndex = headIndex;
-                const headData = this.dataManager.getHeadData(headIndex);
+                const headData = await this.dataManager.getHeadData(headIndex);
                 const contacts = this.dataManager.getContacts();
 
                 // Update header

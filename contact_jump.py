@@ -628,4 +628,208 @@ plt.savefig(f"{PLOT_DIR}/{protein}_direct_vs_indirect.png", dpi=150, bbox_inches
 print(f"  Saved to {PLOT_DIR}/{protein}_direct_vs_indirect.png")
 plt.close()
 
+# =============================================================================
+# Circuit Discovery: Greedy Unpatching by Indirect Effect
+# =============================================================================
+# Start: clean input, ALL heads patched to corrupt attention → ~corrupt metric
+# Greedily unpatch heads → track faithfulness recovery.
+#
+# Three sorting criteria compared:
+#   - |indirect|: absolute value (largest effect first)
+#   - positive:   most positive indirect effect first (heads that help clean)
+#   - negative:   most negative indirect effect first (heads that hurt clean)
+#
+# "Unpatch" = remove the intervention, let the head do its normal forward pass.
+# Intervention at patched heads: output[0] = corrupt_attn @ V (propagates).
+# %%
+
+import csv
+
+indirect_flat = indirect_effects_LH.flatten()
+total_heads = NUM_LAYERS * NUM_HEADS  # 660
+
+# Three sort orders
+sort_configs = {
+    "abs": indirect_flat.abs().argsort(descending=True),
+    "pos": indirect_flat.argsort(descending=True),
+    "neg": indirect_flat.argsort(descending=False),
+}
+sorted_heads_by_config = {}
+for name, indices in sort_configs.items():
+    sorted_heads_by_config[name] = [(idx.item() // NUM_HEADS, idx.item() % NUM_HEADS) for idx in indices]
+
+# k values: fine near start and around expected threshold (100-300), coarser at tail
+k_values = list(range(0, min(31, total_heads)))           # 0..30 by 1
+k_values += list(range(35, min(101, total_heads), 5))     # 35,40,...,100
+k_values += list(range(102, min(351, total_heads), 5))    # 102,105,...,350 (fine around threshold)
+k_values += list(range(360, total_heads, 20))             # 360,380,...
+k_values.append(total_heads)
+k_values = sorted(set(k_values))
+
+FORCE_CIRCUIT_RECALC = True
+
+
+def run_circuit_experiment(sorted_heads_list, cache_key, label):
+    """Run greedy unpatching experiment for a given head ordering."""
+    if not FORCE_CIRCUIT_RECALC and cache_key in head_metrics:
+        print(f"\n  [{label}] Using cached scores")
+        cached = head_metrics[cache_key]
+        return [int(k) for k in cached["k_values"].tolist()], cached["scores"].tolist()
+
+    print(f"\n  [{label}] Running {len(k_values)} k-values...")
+    scores = []
+
+    for k_idx, k in enumerate(k_values):
+        unpatched_set = set(sorted_heads_list[:k])
+
+        with model.trace() as tracer:
+            with tracer.invoke(**{**clean_inputs_BL, "output_attentions": True}):
+                # Cache BEFORE interventions (tracer.cache skips already-hooked modules)
+                attn_cache = tracer.cache(
+                    modules=[model.esm.encoder.layer[i].attention.self for i in range(NUM_LAYERS)]
+                )
+
+                for layer_idx in range(NUM_LAYERS):
+                    heads_to_patch = [h for h in range(NUM_HEADS) if (layer_idx, h) not in unpatched_set]
+
+                    if not heads_to_patch:
+                        continue
+
+                    v_raw = model.esm.encoder.layer[layer_idx].attention.self.value.output
+                    v_heads = v_raw.reshape(B, L, NUM_HEADS, HEAD_DIM).transpose(1, 2)
+
+                    attn_probs = model.esm.encoder.layer[layer_idx].attention.self.output[1]
+                    patched_attn = attn_probs.clone()
+                    for h in heads_to_patch:
+                        patched_attn[:, h, :, :] = corrupt_attn_LBHLL[layer_idx][:, h, :, :].to(device)
+
+                    new_ctx = torch.matmul(patched_attn, v_heads)
+                    new_ctx = new_ctx.transpose(1, 2).contiguous().reshape(B, L, -1)
+                    model.esm.encoder.layer[layer_idx].attention.self.output[0][:] = new_ctx
+
+        attn_list = []
+        for i in range(NUM_LAYERS):
+            key = f"model.esm.encoder.layer.{i}.attention.self"
+            layer_attn = attn_cache[key].output[1].detach().cpu()
+            heads_patched = [h for h in range(NUM_HEADS) if (i, h) not in unpatched_set]
+            for h in heads_patched:
+                layer_attn[:, h, :, :] = corrupt_attn_LBHLL[i][:, h, :, :]
+            attn_list.append(layer_attn)
+
+        contacts_AA = compute_contacts_from_attention(
+            attn_list, clean_inputs_BL['input_ids'], clean_inputs_BL['attention_mask'],
+            esm_model.esm.contact_head, device=device,
+        )[0].detach().cpu()
+
+        score = patching_metric(contacts_AA, orig_contacts_AA, segment)
+        scores.append(score)
+
+        if k <= 10 or k_idx % 20 == 0:
+            faith = (score - corrupt_metric) / (clean_metric - corrupt_metric) if abs(clean_metric - corrupt_metric) > 1e-6 else 0.0
+            print(f"    k={k:4d}: faithfulness={faith:.2%}")
+
+    head_metrics[cache_key] = {
+        "k_values": torch.tensor(k_values, dtype=torch.float32),
+        "scores": torch.tensor(scores, dtype=torch.float32),
+    }
+    save_metrics_cache(protein, config["clean_flank"], config["corrupt_flank"], head_metrics)
+    print(f"    Done!")
+    return list(k_values), scores
+
+
+# Run all three experiments
+print(f"Circuit discovery: {len(k_values)} k-values, 3 sort orders")
+print(f"  Baseline: clean={clean_metric:.4f}, corrupt={corrupt_metric:.4f}, gap={clean_metric - corrupt_metric:.4f}")
+
+circuit_results = {}
+for sort_name, sort_label in [("abs", "|indirect|"), ("pos", "positive IE"), ("neg", "negative IE")]:
+    ck = f"circuit_{sort_name}"
+    kv, sc = run_circuit_experiment(sorted_heads_by_config[sort_name], ck, sort_label)
+    faith = [(s - corrupt_metric) / (clean_metric - corrupt_metric) if abs(clean_metric - corrupt_metric) > 1e-6 else 0.0 for s in sc]
+    crossed = None
+    for k_val, f_val in zip(kv, faith):
+        if f_val >= 0.7:
+            crossed = k_val
+            break
+    circuit_results[sort_name] = {"k": kv, "scores": sc, "faith": faith, "crossed_k": crossed}
+
+# %%
+# Plot all three curves
+colors = {"abs": "tab:blue", "pos": "tab:green", "neg": "tab:red"}
+labels = {"abs": "Sort by |indirect|", "pos": "Sort by positive IE", "neg": "Sort by negative IE"}
+
+fig, ax = plt.subplots(figsize=(10, 6))
+
+for sort_name in ["abs", "pos", "neg"]:
+    res = circuit_results[sort_name]
+    ax.plot(res["k"], res["faith"], '-o', color=colors[sort_name], markersize=2,
+            linewidth=1.5, label=labels[sort_name])
+
+    crossed = res["crossed_k"]
+    if crossed is not None:
+        ax.axvline(x=crossed, color=colors[sort_name], linestyle=':', linewidth=0.8, alpha=0.5)
+        # Stagger annotation y-positions to avoid overlap
+        y_offset = {"abs": 0.55, "pos": 0.45, "neg": 0.35}[sort_name]
+        ax.annotate(f"k={crossed}", xy=(crossed, 0.7),
+                    xytext=(crossed + total_heads * 0.03, y_offset),
+                    arrowprops=dict(arrowstyle='->', color=colors[sort_name], lw=0.8),
+                    fontsize=9, color=colors[sort_name])
+
+ax.axhline(y=0.7, color='gray', linestyle='--', linewidth=1, label="70% threshold")
+ax.axhline(y=1.0, color='gray', linestyle=':', linewidth=0.8, alpha=0.4)
+ax.axhline(y=0.0, color='gray', linestyle=':', linewidth=0.8, alpha=0.4)
+ax.set_xlabel("Top-k heads unpatched", fontsize=12)
+ax.set_ylabel("Faithfulness\n(score − corrupt) / (clean − corrupt)", fontsize=12)
+ax.set_title(f"Circuit Faithfulness: Greedy Unpatching\n{protein}: flank {config['corrupt_flank']}→{config['clean_flank']}", fontsize=13)
+ax.legend(loc="lower right")
+ax.set_ylim(-0.1, 1.15)
+ax.grid(True, alpha=0.3)
+
+plt.tight_layout()
+plt.savefig(f"{PLOT_DIR}/{protein}_circuit_faithfulness.png", dpi=150, bbox_inches='tight')
+print(f"  Saved to {PLOT_DIR}/{protein}_circuit_faithfulness.png")
+plt.close()
+
+# %%
+# Save circuit heads to CSV and print summary
+csv_path = f"{PLOT_DIR}/{protein}_circuit_heads.csv"
+with open(csv_path, "w", newline="") as f:
+    writer = csv.writer(f)
+    writer.writerow(["sort_order", "rank", "layer", "head", "indirect_effect", "direct_effect", "abs_indirect"])
+
+    for sort_name, sort_label in [("abs", "|indirect|"), ("pos", "positive IE"), ("neg", "negative IE")]:
+        res = circuit_results[sort_name]
+        crossed = res["crossed_k"]
+
+        if crossed is not None:
+            heads_list = sorted_heads_by_config[sort_name][:crossed]
+            print(f"\n{sort_label}: 70% at k={crossed} ({crossed/total_heads:.1%} of {total_heads} heads)")
+            for rank, (l, h) in enumerate(heads_list):
+                ind = indirect_effects_LH[l, h].item()
+                dir_ = effects_LH[l, h].item()
+                writer.writerow([sort_name, rank + 1, l, h, f"{ind:.6f}", f"{dir_:.6f}", f"{abs(ind):.6f}"])
+        else:
+            print(f"\n{sort_label}: never reached 70%")
+
+print(f"\n  Circuit heads saved to {csv_path}")
+
+# Print the |indirect| circuit heads table
+crossed_k = circuit_results["abs"]["crossed_k"]
+if crossed_k is not None:
+    circuit_heads = sorted_heads_by_config["abs"][:crossed_k]
+    print(f"\nCircuit heads (|indirect|, k={crossed_k}):")
+    print(f"  {'#':<4} {'Layer':<7} {'Head':<6} {'|indirect|':<12} {'indirect':<12} {'direct':<10}")
+    print(f"  {'─'*4} {'─'*7} {'─'*6} {'─'*12} {'─'*12} {'─'*10}")
+    for i, (l, h) in enumerate(circuit_heads):
+        ind = indirect_effects_LH[l, h].item()
+        dir_ = effects_LH[l, h].item()
+        print(f"  {i+1:<4} L{l:<5} H{h:<4} {abs(ind):<12.4f} {ind:<+12.4f} {dir_:<+10.4f}")
+
+    layer_counts = {}
+    for l, h in circuit_heads:
+        layer_counts[l] = layer_counts.get(l, 0) + 1
+    print(f"\n  Layer distribution:")
+    for l in sorted(layer_counts):
+        print(f"    Layer {l:2d}: {layer_counts[l]} head{'s' if layer_counts[l] > 1 else ''}")
+
 # %%
