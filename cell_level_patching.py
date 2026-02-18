@@ -256,6 +256,276 @@ for layer, head, q, k, abs_diff in all_cells_sorted[:20]:
 
 # %%
 # =============================================================================
+# Cell-Level INDIRECT Attribution Patching
+# =============================================================================
+# The indirect effect for cell (l, h, q, k) flows through the residual stream:
+#   cell change → delta output[0] → residual → downstream Q/K → downstream attn → metric
+#
+# For attribution, we need:
+#   1. grad of metric w.r.t. output[0] at each layer (via full model backward)
+#   2. How each cell changes output[0]: delta_ctx[q, h_slice] = diff[h,q,k] * V[h,k,:]
+#   3. Indirect attr = diff[h,q,k] * dot(V[h, k, :], grad_ctx[q, h_slice])
+#
+# Vectorized per head: sensitivity_qk = grad_ctx[:, h_slice] @ V[h].T  →  attr = diff * sensitivity
+#
+# One forward+backward through the FULL MODEL gives all ~6M attributions.
+
+print(f"\n{'='*70}")
+print("CELL-LEVEL INDIRECT ATTRIBUTION PATCHING")
+print(f"{'='*70}")
+
+# Reimplement contact head as differentiable ops (from attr_patching_nnsight.py)
+contact_head_module = esm_model.esm.contact_head
+EOS_IDX = contact_head_module.eos_idx
+REGRESSION_WEIGHT = contact_head_module.regression.weight.detach()  # (1, 660)
+REGRESSION_BIAS = contact_head_module.regression.bias.detach()      # (1,)
+ORIG_SEG = orig_contacts_AA[
+    segment.ss1_start:segment.ss1_end,
+    segment.ss2_start:segment.ss2_end,
+].to(device)
+
+def contact_metric_from_attn_proxies(
+    attn_proxies, tokens_BL, attention_mask_BL,
+    eos_idx, regression_weight, regression_bias, orig_seg, segment,
+):
+    """Differentiable contact metric from attention weights (from attr_patching_nnsight.py)."""
+    attns = torch.stack(attn_proxies, dim=1)  # (B, num_layers, H, L, L)
+    attns = attns * attention_mask_BL.unsqueeze(1).unsqueeze(2).unsqueeze(3)
+    attns = attns * attention_mask_BL.unsqueeze(1).unsqueeze(2).unsqueeze(4)
+
+    eos_mask = tokens_BL.ne(eos_idx).float()
+    eos_mask_2d = eos_mask.unsqueeze(1) * eos_mask.unsqueeze(2)
+    attns = attns * eos_mask_2d[:, None, None, :, :]
+
+    attns = attns[..., :-1, :-1]
+    attns = attns[..., 1:, 1:]
+
+    batch_size, layers, heads, seqlen, _ = attns.shape
+    attns = attns.reshape(batch_size, layers * heads, seqlen, seqlen)
+
+    attns = attns + attns.transpose(-1, -2)
+
+    a1 = attns.sum(-1, keepdim=True)
+    a2 = attns.sum(-2, keepdim=True)
+    a12 = attns.sum(dim=(-1, -2), keepdim=True)
+    avg = a1 * a2 / a12
+    attns = attns - avg
+
+    attns = attns.permute(0, 2, 3, 1)
+    contacts = torch.sigmoid(torch.nn.functional.linear(attns, regression_weight, regression_bias))
+    contacts = contacts.squeeze(3)
+
+    pred_seg = contacts[0, segment.ss1_start:segment.ss1_end, segment.ss2_start:segment.ss2_end]
+    metric = (pred_seg * orig_seg).sum() / (orig_seg * orig_seg).sum()
+    return metric
+
+# --- Step 1: Forward pass through FULL model, capture output[0], V, output[1] ---
+print("Running corrupt forward pass with hooks...")
+saved_hooks = {}
+hooks = []
+
+for l in range(NUM_LAYERS):
+    # Capture V (value projection output)
+    def v_hook(module, input, output, l=l):
+        output.retain_grad()
+        saved_hooks[f'v_{l}'] = output
+    hooks.append(esm_model.esm.encoder.layer[l].attention.self.value.register_forward_hook(v_hook))
+
+    # Capture output[0] (context vector) and output[1] (attention weights)
+    def self_hook(module, input, output, l=l):
+        context, attn_weights = output
+        context.retain_grad()
+        attn_weights.retain_grad()
+        saved_hooks[f'ctx_{l}'] = context
+        saved_hooks[f'attn_{l}'] = attn_weights
+    hooks.append(esm_model.esm.encoder.layer[l].attention.self.register_forward_hook(self_hook))
+
+# Forward pass (corrupt inputs, gradients enabled)
+esm_model(**{**clean_inputs_BL, "output_attentions": True})
+
+# --- Step 2: Compute metric from captured attention weights (in autograd graph) ---
+attn_from_hooks = [saved_hooks[f'attn_{l}'] for l in range(NUM_LAYERS)]
+ie_attr_metric = contact_metric_from_attn_proxies(
+    attn_from_hooks,
+    clean_inputs_BL['input_ids'],
+    clean_inputs_BL['attention_mask'],
+    EOS_IDX, REGRESSION_WEIGHT, REGRESSION_BIAS, ORIG_SEG, segment,
+)
+print(f"Clean metric (from hooks): {ie_attr_metric.item():.4f}")
+
+# --- Step 3: Backward through FULL model ---
+ie_attr_metric.backward()
+
+# Remove hooks
+for h in hooks:
+    h.remove()
+
+print("Backward complete. Computing indirect attributions...")
+
+# --- Step 4: Compute per-cell indirect attribution ---
+# For cell (l, h, q, k) with diff d = (clean - corrupt)[l,h,q,k]:
+#   delta_ctx[q, h*HD:(h+1)*HD] = d * V_heads[h, k, :]
+#   indirect_attr = d * dot(V_heads[h, k, :], grad_ctx[q, h_slice])
+#
+# Vectorized per (layer, head):
+#   V_h = V_heads[h, :, :]  shape (L, HD)
+#   grad_h = grad_ctx[:, h*HD:(h+1)*HD]  shape (L, HD)
+#   sensitivity = grad_h @ V_h.T  shape (L_q, L_k)
+#   attr = diff[h] * sensitivity
+
+cell_attributions = []  # (layer, head, q, k, indirect_attr, abs_diff)
+
+for layer, head in ie_circuit_heads:
+    # V reshaped to heads: (B, L, hidden) → (B, num_heads, L, head_dim)
+    v_full = saved_hooks[f'v_{layer}'].detach()  # (B, L, hidden)
+    v_heads = v_full.reshape(B, L, NUM_HEADS, HEAD_DIM).transpose(1, 2)  # (B, H, L, HD)
+    v_h = v_heads[0, head]  # (L, HD)
+
+    # Gradient of metric w.r.t. context vector at this layer
+    grad_ctx = saved_hooks[f'ctx_{layer}'].grad  # (B, L, hidden)
+    if grad_ctx is None:
+        # Last layer may not have gradient flowing back through output[0]
+        # (metric depends on output[1] directly at this layer, not output[0])
+        print(f"  Warning: no grad for ctx at layer {layer}, using zeros")
+        grad_ctx = torch.zeros(B, L, NUM_HEADS * HEAD_DIM, device=device)
+    grad_h = grad_ctx[0, :, head * HEAD_DIM:(head + 1) * HEAD_DIM]  # (L, HD)
+
+    # Sensitivity matrix: how much metric changes per unit attn change at (q, k)
+    # sensitivity[q, k] = dot(grad_ctx[q, h_slice], V[h, k, :])
+    sensitivity_LL = grad_h @ v_h.T  # (L, L)
+
+    # Diff and attribution
+    clean_LL = clean_attn_LBHLL[layer][0, head].to(device)
+    corrupt_LL = corrupt_attn_LBHLL[layer][0, head].to(device)
+    diff_LL = clean_LL - corrupt_LL
+    attr_LL = (diff_LL * sensitivity_LL).cpu()
+    abs_diff_LL = diff_LL.abs().cpu()
+
+    # Collect nonzero cells
+    nonzero_mask = abs_diff_LL > 1e-6
+    qs, ks = torch.where(nonzero_mask)
+    for q, k in zip(qs.tolist(), ks.tolist()):
+        cell_attributions.append((
+            layer, head, q, k,
+            attr_LL[q, k].item(),
+            abs_diff_LL[q, k].item(),
+        ))
+
+del saved_hooks
+clear_memory()
+
+# Sort by attribution (positive = helpful for metric, protect these first)
+cell_attr_sorted = sorted(cell_attributions, key=lambda x: x[4], reverse=True)
+
+print(f"\nTotal cells with indirect attribution: {len(cell_attr_sorted):,d}")
+print(f"\nTop 20 cells by INDIRECT attribution (positive = helpful):")
+print(f"{'Layer':>5} {'Head':>4} {'q':>5} {'k':>5} {'ind_attr':>12} {'|diff|':>10}")
+print("-" * 50)
+for layer, head, q, k, attr, adiff in cell_attr_sorted[:20]:
+    print(f"  L{layer:2d}  H{head:2d}  {q:>4d}  {k:>4d}  {attr:>+11.6f}  {adiff:>10.6f}")
+
+print(f"\nBottom 20 cells (negative = harmful):")
+for layer, head, q, k, attr, adiff in cell_attr_sorted[-20:]:
+    print(f"  L{layer:2d}  H{head:2d}  {q:>4d}  {k:>4d}  {attr:>+11.6f}  {adiff:>10.6f}")
+
+# Attribution distribution
+all_attrs = torch.tensor([c[4] for c in cell_attr_sorted])
+print(f"\nIndirect attribution distribution:")
+print(f"  Positive: {(all_attrs > 0).sum().item():,d} cells")
+print(f"  Negative: {(all_attrs < 0).sum().item():,d} cells")
+for pct in [90, 95, 99, 99.5, 99.9]:
+    val = torch.quantile(all_attrs, pct / 100).item()
+    n_above = (all_attrs >= val).sum().item()
+    print(f"  {pct}th percentile: {val:+.8f}  ({n_above:,d} cells above)")
+
+# %%
+# =============================================================================
+# INDIRECT ATTRIBUTION-RANKED SUFFICIENCY TEST
+# =============================================================================
+# Protect top-K cells by INDIRECT attribution (most helpful for metric
+# through the residual stream path), corrupt everything else.
+
+print(f"\n{'='*60}")
+print("INDIRECT ATTRIBUTION-RANKED SUFFICIENCY TEST")
+print(f"{'='*60}")
+
+attr_thresholds = [0, 10, 20, 50, 100, 200, 500, 1000, 2000, 5000, 10000, 20000, 50000]
+attr_thresholds = [t for t in attr_thresholds if t <= len(cell_attr_sorted)]
+attr_sufficiency_results = []
+
+for k in attr_thresholds:
+    # Top-K by attribution are protected
+    protected_cells = set()
+    for layer, head, q, kk, attr, adiff in cell_attr_sorted[:k]:
+        protected_cells.add((layer, head, q, kk))
+
+    # Forward pass: corrupt everything, protect top-K cells
+    with model.trace() as tracer:
+        with tracer.invoke(**{**clean_inputs_BL, "output_attentions": True}):
+            attn_cache = tracer.cache(
+                modules=[model.esm.encoder.layer[i].attention.self for i in range(NUM_LAYERS)]
+            )
+
+            for layer_idx in range(NUM_LAYERS):
+                v_raw = model.esm.encoder.layer[layer_idx].attention.self.value.output
+                v_heads = v_raw.reshape(B, L, NUM_HEADS, HEAD_DIM).transpose(1, 2)
+
+                attn_probs = model.esm.encoder.layer[layer_idx].attention.self.output[1]
+
+                patched_attn = corrupt_attn_LBHLL[layer_idx].to(device).clone()
+
+                for head, q, kk in [(h, q, kk) for (l, h, q, kk) in protected_cells if l == layer_idx]:
+                    patched_attn[:, head, q, kk] = attn_probs[:, head, q, kk]
+
+                new_ctx = torch.matmul(patched_attn, v_heads)
+                new_ctx = new_ctx.transpose(1, 2).contiguous().reshape(B, L, -1)
+                model.esm.encoder.layer[layer_idx].attention.self.output[0][:] = new_ctx
+
+    attn_list = []
+    for i in range(NUM_LAYERS):
+        key = f"model.esm.encoder.layer.{i}.attention.self"
+        layer_attn = attn_cache[key].output[1].detach().cpu()
+        corrupt_layer = corrupt_attn_LBHLL[i].clone()
+        for head, q, kk in [(h, q, kk) for (l, h, q, kk) in protected_cells if l == i]:
+            corrupt_layer[:, head, q, kk] = layer_attn[:, head, q, kk]
+        attn_list.append(corrupt_layer)
+
+    contacts = compute_contacts_from_attention(
+        attn_list, clean_inputs_BL['input_ids'], clean_inputs_BL['attention_mask'],
+        esm_model.esm.contact_head, device=device,
+    )[0].detach().cpu()
+
+    metric = patching_metric(contacts, orig_contacts_AA, segment)
+    faithfulness = (metric - corrupt_metric) / (clean_metric - corrupt_metric) \
+        if abs(clean_metric - corrupt_metric) > 1e-6 else 0.0
+
+    n_heads = len(set((l, h) for l, h, q, kk in protected_cells))
+    attr_sufficiency_results.append({
+        'k': k, 'n_protected': len(protected_cells),
+        'n_heads': n_heads,
+        'metric': metric, 'faithfulness': faithfulness,
+    })
+    print(f"  Top {k:5d} protected ({len(protected_cells):,d} cells) → "
+          f"metric={metric:.4f}, faithfulness={faithfulness:.2%}")
+
+print(f"\nBaselines:")
+print(f"  Clean: {clean_metric:.4f}, Corrupt: {corrupt_metric:.4f}")
+print(f"  Head-level IE circuit (45 heads): ~70% faithfulness")
+print(f"  IE-ranked cells (1500): ~19% faithfulness")
+
+# Save indirect attribution results
+torch.save({
+    'cell_attr_sorted': cell_attr_sorted,
+    'attr_sufficiency_results': attr_sufficiency_results,
+    'ie_circuit_heads': ie_circuit_heads,
+    'clean_metric': clean_metric,
+    'corrupt_metric': corrupt_metric,
+    'protein': protein,
+}, f'reports/outputs/{protein}_cell_indirect_attr_results.pt')
+print(f"Saved to reports/outputs/{protein}_cell_indirect_attr_results.pt")
+
+# %%
+# =============================================================================
 # Cell-Level Indirect Effect Patching
 # =============================================================================
 # For each (layer, head, q, k) cell: patch only that cell from clean→corrupt,
