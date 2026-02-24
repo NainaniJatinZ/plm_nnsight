@@ -3,12 +3,15 @@
 #
 # Pipeline:
 #   1. Setup: load model + data, compute baselines, cache attention
-#   2. Gradient attribution: one forward+backward to score every head
-#   3. Sufficiency: protect top-K positive-attr heads, corrupt rest
-#      → find minimum K to reach 70% faithfulness
-#   4. Motif extraction for the identified circuit heads
+#   2. Indirect effects: 660-trace patching to rank heads
+#   3. Circuit discovery: greedy unpatching sweep
+#   4. Gradient attribution: one forward+backward to score every cell
+#   5. Sufficiency: protect top-K cells, corrupt rest
+#   6. Motif extraction for the identified circuit heads
+#   7. Markdown report
 #
-# Run as: `.plm_nn/bin/python -u contact_pattern.py [--protein 2B61A] [--model ...]`
+# Run as: `.plm_nn/bin/python contact_pattern_v2.py [--config configs/1PVGA.json]`
+# Or:    `.plm_nn/bin/python contact_pattern_v2.py --protein 2B61A`
 # Or run individual `# %%` cells in VS Code / Jupyter.
 
 # %% ── Imports ──────────────────────────────────────────────────────────────
@@ -16,20 +19,20 @@
 from __future__ import annotations
 
 import gc
+import hashlib
 import json
 import os
 import time
 from collections import defaultdict
 from dataclasses import dataclass
-from turtle import mode
+from datetime import datetime
+from pathlib import Path
 
 import torch
 from nnsight import NNsight
 from transformers import EsmForMaskedLM, EsmTokenizer
 
 # %% ── Configuration ─────────────────────────────────────────────────────────
-# Edit defaults here, or pass --protein / --model on the command line.
-# parse_known_args so IDE cell runners don't break on unknown args.
 
 import argparse as _ap
 
@@ -38,27 +41,88 @@ PROTEINS = {
     "1PVGA": {"contact_pair": (101, 202), "clean_flank": 65, "corrupt_flank": 63},
 }
 
-if False:
-    _p = _ap.ArgumentParser()
-    _p.add_argument("--protein", default="2B61A",                        choices=list(PROTEINS))
-    _p.add_argument("--model",   default="facebook/esm2_t33_650M_UR50D", help="HuggingFace model name")
-    _p.add_argument("--data",    default="data/full_seq_dict.json")
-    _p.add_argument("--faith-target", type=float, default=0.70,          help="Faithfulness target (0–1)")
-    _args, _ = _p.parse_known_args()
-    PROTEIN        = _args.protein
-    MODEL_NAME     = _args.model
-    DATA_PATH      = _args.data
-    FAITH_TARGET   = _args.faith_target
-    SEGMENT_RADIUS = 5
-else:
-    PROTEIN = "1PVGA" # "2B61A"
-    MODEL_NAME = "facebook/esm2_t33_650M_UR50D"
-    DATA_PATH = "data/full_seq_dict.json"
-    FAITH_TARGET = 0.70
-    SEGMENT_RADIUS = 5
+DEFAULT_CONFIG = {
+    "protein": "1PVGA",
+    "model": "facebook/esm2_t33_650M_UR50D",
+    "data_path": "data/full_seq_dict.json",
+    "faith_target": 0.70,
+    "segment_radius": 5,
+    "force_recalc": False,
+    "path_top_n": 400,
+    "topk_cell": 1000,
+    "topk_heads": 30,
+    "anchor_t1": 0.60, "anchor_t2": 0.70, "anchor_t3": 0.80,
+    "positional_t": 0.50,
+    "attr_thresholds": [0, 10, 20, 50, 100, 200, 500, 1000, 2000, 5000, 10000, 20000, 50000],
+    "report_dir": "reports/outputs",
+    "cache_dir": "reports/cache",
+}
 
-config = PROTEINS[PROTEIN]
+
+def load_config(path) -> dict:
+    cfg = dict(DEFAULT_CONFIG)
+    if path is not None:
+        with open(path) as f:
+            override = json.load(f)
+        cfg.update(override)
+    return cfg
+
+
+_p = _ap.ArgumentParser()
+_p.add_argument("--config", default=None)
+_p.add_argument("--protein", default=None)   # quick override
+_args, _ = _p.parse_known_args()             # parse_known_args for notebook compat
+cfg = load_config(_args.config)
+if _args.protein:
+    cfg["protein"] = _args.protein
+
+PROTEIN        = cfg["protein"]
+MODEL_NAME     = cfg["model"]
+DATA_PATH      = cfg["data_path"]
+FAITH_TARGET   = cfg["faith_target"]
+SEGMENT_RADIUS = cfg["segment_radius"]
+
+_prot_cfg     = PROTEINS[PROTEIN]
+CLEAN_FLANK   = _prot_cfg["clean_flank"]
+CORRUPT_FLANK = _prot_cfg["corrupt_flank"]
+CONTACT_PAIR  = tuple(_prot_cfg["contact_pair"])
+
+CACHE_DIR  = Path(cfg["cache_dir"]) / PROTEIN
+REPORT_DIR = Path(cfg["report_dir"])
+CACHE_DIR.mkdir(parents=True, exist_ok=True)
+REPORT_DIR.mkdir(parents=True, exist_ok=True)
+
 print(f"Config: protein={PROTEIN}  model={MODEL_NAME}  faith_target={FAITH_TARGET:.0%}")
+print(f"Cache dir: {CACHE_DIR}")
+
+
+# ── Cache helpers ──────────────────────────────────────────────────────────
+
+def _cfg_hash(d: dict) -> str:
+    return hashlib.md5(json.dumps(d, sort_keys=True).encode()).hexdigest()[:10]
+
+
+def _cache_valid(path: Path, key: dict, force: bool) -> bool:
+    if force or not path.exists():
+        return False
+    try:
+        data = torch.load(path, map_location="cpu", weights_only=False)
+        return data.get("cfg_hash") == _cfg_hash(key)
+    except Exception:
+        return False
+
+
+def _cache_save(path: Path, payload: dict, key: dict) -> None:
+    payload["cfg_hash"] = _cfg_hash(key)
+    torch.save(payload, path)
+
+
+_BASE_KEY = {
+    "protein": PROTEIN, "model": MODEL_NAME,
+    "contact_pair": list(CONTACT_PAIR),
+    "clean_flank": CLEAN_FLANK, "corrupt_flank": CORRUPT_FLANK,
+    "segment_radius": SEGMENT_RADIUS,
+}
 
 # %% ── Helpers ────────────────────────────────────────────────────────────────
 
@@ -68,9 +132,11 @@ def log_memory(label: str = "") -> None:
         resv  = torch.cuda.memory_reserved()  / 1e9
         print(f"[Memory {label}] alloc={alloc:.2f}GB  resv={resv:.2f}GB")
 
+
 def clear_memory() -> None:
     gc.collect()
     torch.cuda.empty_cache()
+
 
 @dataclass
 class ContactSegment:
@@ -81,6 +147,7 @@ class ContactSegment:
     def from_contact_pair(cls, pos1: int, pos2: int, radius: int = SEGMENT_RADIUS):
         return cls(pos1 - radius, pos1 + radius + 1,
                    pos2 - radius, pos2 + radius + 1)
+
 
 def mask_with_flanks(seq_S: str, seg: ContactSegment, flank: int) -> str:
     n = len(seq_S)
@@ -93,6 +160,7 @@ def mask_with_flanks(seq_S: str, seg: ContactSegment, flank: int) -> str:
         masked[i] = seq_S[i]
     return "".join(masked)
 
+
 def compute_contact_map(
     esm_model: EsmForMaskedLM, tokenizer: EsmTokenizer,
     sequence_S: str, device: str,
@@ -104,6 +172,7 @@ def compute_contact_map(
             inputs_BL["input_ids"], inputs_BL["attention_mask"]
         )[0].cpu()
 
+
 def patching_metric(
     pred_AA: torch.Tensor, orig_AA: torch.Tensor, seg: ContactSegment,
 ) -> float:
@@ -112,9 +181,11 @@ def patching_metric(
     denom = (orig * orig).sum()
     return ((pred * orig).sum() / denom).item() if denom > 1e-12 else 0.0
 
+
 def faithfulness(metric: float, clean_m: float, corrupt_m: float) -> float:
     gap = clean_m - corrupt_m
     return (metric - corrupt_m) / gap if abs(gap) > 1e-6 else 0.0
+
 
 def compute_contacts_from_attention(
     attn_list_LBHLL: list[torch.Tensor],
@@ -131,6 +202,7 @@ def compute_contacts_from_attention(
     attns_BLHLL = attns_BLHLL * attention_mask_BL[:, None, None, :, None]
     attns_BLHLL = attns_BLHLL * attention_mask_BL[:, None, None, None, :]
     return contact_head(tokens_BL, attns_BLHLL)
+
 
 def cache_attention_all_layers(
     model: NNsight, tokenizer: EsmTokenizer,
@@ -149,50 +221,61 @@ def cache_attention_all_layers(
         attn_LBHLL.append(attn_cache[key].output[1].detach().cpu())
     return attn_LBHLL, inputs_BL
 
-def contact_metric_differentiable(
-    attn_proxies_LBHLL: list[torch.Tensor],
-    tokens_BL: torch.Tensor, attention_mask_BL: torch.Tensor,
-    eos_idx: int,
-    reg_weight: torch.Tensor,   # (1, Nl*H)
-    reg_bias:   torch.Tensor,   # (1,)
-    orig_seg_AA: torch.Tensor,
-    seg: ContactSegment,
-) -> torch.Tensor:
-    """Differentiable contact metric (mirrors ESM contact head) for backward pass."""
-    attns_BLHLL = torch.stack(attn_proxies_LBHLL, dim=1)
-    attns_BLHLL = attns_BLHLL * attention_mask_BL[:, None, None, :, None]
-    attns_BLHLL = attns_BLHLL * attention_mask_BL[:, None, None, None, :]
 
-    eos_mask_BL  = tokens_BL.ne(eos_idx).float()
-    eos_mask_BLL = eos_mask_BL[:, :, None] * eos_mask_BL[:, None, :]
-    attns_BLHLL  = attns_BLHLL * eos_mask_BLL[:, None, None, :, :]
+def contact_metric_from_attn_proxies(
+    attn_proxies, tokens_BL, attention_mask_BL,
+    eos_idx, regression_weight, regression_bias, orig_seg, segment,
+):
+    """Differentiable contact metric from attention weights."""
+    attns = torch.stack(attn_proxies, dim=1)  # (B, num_layers, H, L, L)
+    attns = attns * attention_mask_BL.unsqueeze(1).unsqueeze(2).unsqueeze(3)
+    attns = attns * attention_mask_BL.unsqueeze(1).unsqueeze(2).unsqueeze(4)
 
-    attns_BLHLL  = attns_BLHLL[..., :-1, :-1][..., 1:, 1:]       # trim BOS/EOS
+    eos_mask = tokens_BL.ne(eos_idx).float()
+    eos_mask_2d = eos_mask.unsqueeze(1) * eos_mask.unsqueeze(2)
+    attns = attns * eos_mask_2d[:, None, None, :, :]
 
-    B, Nl, H, A, _ = attns_BLHLL.shape
-    attns_BFAA   = attns_BLHLL.reshape(B, Nl * H, A, A)
-    attns_BFAA   = attns_BFAA + attns_BFAA.transpose(-1, -2)      # symmetrize
+    attns = attns[..., :-1, :-1]
+    attns = attns[..., 1:, 1:]
 
-    # APC normalisation
-    a1  = attns_BFAA.sum(-1, keepdim=True)
-    a2  = attns_BFAA.sum(-2, keepdim=True)
-    a12 = attns_BFAA.sum(dim=(-1, -2), keepdim=True)
-    attns_BFAA = attns_BFAA - a1 * a2 / a12
+    batch_size, layers, heads, seqlen, _ = attns.shape
+    attns = attns.reshape(batch_size, layers * heads, seqlen, seqlen)
 
-    attns_BAAF   = attns_BFAA.permute(0, 2, 3, 1)                 # (B, A, A, F)
-    contacts_BAA = torch.sigmoid(
-        torch.nn.functional.linear(attns_BAAF, reg_weight, reg_bias)
-    ).squeeze(-1)
+    attns = attns + attns.transpose(-1, -2)
 
-    pred_seg = contacts_BAA[0, seg.ss1_start:seg.ss1_end, seg.ss2_start:seg.ss2_end]
-    return (pred_seg * orig_seg_AA).sum() / (orig_seg_AA * orig_seg_AA).sum()
+    a1  = attns.sum(-1, keepdim=True)
+    a2  = attns.sum(-2, keepdim=True)
+    a12 = attns.sum(dim=(-1, -2), keepdim=True)
+    avg = a1 * a2 / a12
+    attns = attns - avg
 
-def classify_pos(pos: int, seg: ContactSegment, flank: int) -> str:
-    if seg.ss1_start <= pos < seg.ss1_end: return "ss1"
-    if seg.ss2_start <= pos < seg.ss2_end: return "ss2"
-    if max(0, seg.ss1_start - flank) <= pos < seg.ss1_start: return "flkL"
-    if seg.ss2_end <= pos < seg.ss2_end + flank: return "flkR"
-    return "other"
+    attns = attns.permute(0, 2, 3, 1)
+    contacts = torch.sigmoid(torch.nn.functional.linear(attns, regression_weight, regression_bias))
+    contacts = contacts.squeeze(3)
+
+    pred_seg = contacts[0, segment.ss1_start:segment.ss1_end, segment.ss2_start:segment.ss2_end]
+    metric = (pred_seg * orig_seg).sum() / (orig_seg * orig_seg).sum()
+    return metric
+
+
+def make_classify_pos(seg: ContactSegment, flank: int):
+    """Returns a pos-classifier closure for the given segment and flank size."""
+    ss1   = set(range(seg.ss1_start, seg.ss1_end))
+    ss2   = set(range(seg.ss2_start, seg.ss2_end))
+    flk_l = set(range(max(0, seg.ss1_start - flank), seg.ss1_start))
+    flk_r = set(range(seg.ss2_end, seg.ss2_end + flank))
+
+    def _classify(pos: int) -> str:
+        if pos in ss1:   return "ss1"
+        if pos in ss2:   return "ss2"
+        if pos in flk_l: return "flkL"
+        if pos in flk_r: return "flkR"
+        return "other"
+
+    return _classify
+
+
+# %% ── Model + Data Loading ───────────────────────────────────────────────────
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
 print(f"\nDevice: {device}")
@@ -212,38 +295,88 @@ with open(DATA_PATH) as f:
     seq_dict = json.load(f)
 
 sequence_S    = seq_dict[PROTEIN]
-seg           = ContactSegment.from_contact_pair(*config["contact_pair"])
-clean_seq_S   = mask_with_flanks(sequence_S, seg, config["clean_flank"])
-corrupt_seq_S = mask_with_flanks(sequence_S, seg, config["corrupt_flank"])
+seg           = ContactSegment.from_contact_pair(*CONTACT_PAIR)
+clean_seq_S   = mask_with_flanks(sequence_S, seg, CLEAN_FLANK)
+corrupt_seq_S = mask_with_flanks(sequence_S, seg, CORRUPT_FLANK)
 
 print(f"\nProtein : {PROTEIN}  (len={len(sequence_S)})")
 print(f"Segment : ss1=[{seg.ss1_start}:{seg.ss1_end}]  ss2=[{seg.ss2_start}:{seg.ss2_end}]")
-print(f"Flanks  : clean={config['clean_flank']}  corrupt={config['corrupt_flank']}")
+print(f"Flanks  : clean={CLEAN_FLANK}  corrupt={CORRUPT_FLANK}")
 
-# %% ── Baselines ──────────────────────────────────────────────────────────────
+classify_pos = make_classify_pos(seg, CLEAN_FLANK)
 
-print("\nComputing contact-map baselines...")
-orig_contacts_AA    = compute_contact_map(esm_model, tokenizer, sequence_S,    device)
-clean_contacts_AA   = compute_contact_map(esm_model, tokenizer, clean_seq_S,   device)
-corrupt_contacts_AA = compute_contact_map(esm_model, tokenizer, corrupt_seq_S, device)
+# Extract contact head params (for differentiable metric)
+contact_head_module = esm_model.esm.contact_head
+EOS_IDX             = contact_head_module.eos_idx
+REGRESSION_WEIGHT   = contact_head_module.regression.weight.detach()  # (1, NUM_LAYERS*NUM_HEADS)
+REGRESSION_BIAS     = contact_head_module.regression.bias.detach()    # (1,)
 
-clean_metric   = patching_metric(clean_contacts_AA,   orig_contacts_AA, seg)
-corrupt_metric = patching_metric(corrupt_contacts_AA, orig_contacts_AA, seg)
+# %% ── Baselines (cached) ─────────────────────────────────────────────────────
+
+_baselines_pt = CACHE_DIR / "baselines.pt"
+_force        = cfg["force_recalc"]
+
+if _cache_valid(_baselines_pt, _BASE_KEY, _force):
+    print("Loading baselines from cache...")
+    _bd = torch.load(_baselines_pt, map_location="cpu", weights_only=False)
+    orig_contacts_AA    = _bd["orig_contacts_AA"]
+    clean_contacts_AA   = _bd["clean_contacts_AA"]
+    corrupt_contacts_AA = _bd["corrupt_contacts_AA"]
+    clean_metric        = _bd["clean_metric"]
+    corrupt_metric      = _bd["corrupt_metric"]
+else:
+    print("Computing contact-map baselines...")
+    orig_contacts_AA    = compute_contact_map(esm_model, tokenizer, sequence_S,    device)
+    clean_contacts_AA   = compute_contact_map(esm_model, tokenizer, clean_seq_S,   device)
+    corrupt_contacts_AA = compute_contact_map(esm_model, tokenizer, corrupt_seq_S, device)
+    clean_metric   = patching_metric(clean_contacts_AA,   orig_contacts_AA, seg)
+    corrupt_metric = patching_metric(corrupt_contacts_AA, orig_contacts_AA, seg)
+    _cache_save(_baselines_pt, {
+        "orig_contacts_AA":    orig_contacts_AA,
+        "clean_contacts_AA":   clean_contacts_AA,
+        "corrupt_contacts_AA": corrupt_contacts_AA,
+        "clean_metric":        clean_metric,
+        "corrupt_metric":      corrupt_metric,
+    }, _BASE_KEY)
+
 print(f"Clean metric   : {clean_metric:.4f}")
 print(f"Corrupt metric : {corrupt_metric:.4f}")
 print(f"Gap            : {clean_metric - corrupt_metric:.4f}")
 
-# %% ── Cache Attention ────────────────────────────────────────────────────────
+ORIG_SEG = orig_contacts_AA[seg.ss1_start:seg.ss1_end, seg.ss2_start:seg.ss2_end].to(device)
 
-print("\nCaching attention for clean + corrupt sequences...")
-clean_attn_LBHLL,   clean_inputs_BL   = cache_attention_all_layers(
-    model, tokenizer, clean_seq_S,   device, NUM_LAYERS)
-corrupt_attn_LBHLL, corrupt_inputs_BL = cache_attention_all_layers(
-    model, tokenizer, corrupt_seq_S, device, NUM_LAYERS)
+# %% ── Attention Cache (cached) ───────────────────────────────────────────────
+
+_attn_pt = CACHE_DIR / "attn_cache.pt"
+
+if _cache_valid(_attn_pt, _BASE_KEY, _force):
+    print("Loading attention cache from disk...")
+    _ad = torch.load(_attn_pt, map_location="cpu", weights_only=False)
+    clean_attn_LBHLL   = list(_ad["clean_attn_LBHLL"])
+    corrupt_attn_LBHLL = list(_ad["corrupt_attn_LBHLL"])
+    clean_inputs_BL    = {k: v.to(device) for k, v in _ad["clean_inputs_cpu"].items()}
+    corrupt_inputs_BL  = {k: v.to(device) for k, v in _ad["corrupt_inputs_cpu"].items()}
+else:
+    print("Caching attention for clean + corrupt sequences...")
+    clean_attn_LBHLL,   clean_inputs_BL   = cache_attention_all_layers(
+        model, tokenizer, clean_seq_S,   device, NUM_LAYERS)
+    corrupt_attn_LBHLL, corrupt_inputs_BL = cache_attention_all_layers(
+        model, tokenizer, corrupt_seq_S, device, NUM_LAYERS)
+    _cache_save(_attn_pt, {
+        "clean_attn_LBHLL":   clean_attn_LBHLL,
+        "corrupt_attn_LBHLL": corrupt_attn_LBHLL,
+        "clean_inputs_cpu":   {k: v.cpu() for k, v in clean_inputs_BL.items()},
+        "corrupt_inputs_cpu": {k: v.cpu() for k, v in corrupt_inputs_BL.items()},
+    }, _BASE_KEY)
 
 B = clean_attn_LBHLL[0].shape[0]    # batch size (1)
 L = clean_attn_LBHLL[0].shape[-1]   # seq len with special tokens
 print(f"L={L}  attention per layer: ({B}, {NUM_HEADS}, {L}, {L})")
+
+# %% ── Indirect Effects (cached) ──────────────────────────────────────────────
+
+_ie_pt = CACHE_DIR / "indirect_effects.pt"
+
 
 def indirect_effect_single_head(
     model,
@@ -300,59 +433,61 @@ def indirect_effect_single_head(
 
     return downstream_attn
 
-indirect_effects_LH = torch.zeros(NUM_LAYERS, NUM_HEADS)
 
-for layer_idx in range(NUM_LAYERS):
-    for head_idx in range(NUM_HEADS):
-        # Get corrupt attention for just this head
-        corrupt_head_attn_LL = corrupt_attn_LBHLL[layer_idx][:, head_idx, :, :]
+if _cache_valid(_ie_pt, _BASE_KEY, _force):
+    print("Loading indirect effects from cache...")
+    _ied = torch.load(_ie_pt, map_location="cpu", weights_only=False)
+    indirect_effects_LH = _ied["indirect_effects_LH"]
+else:
+    print("Computing indirect effects (660 traces)...")
+    indirect_effects_LH = torch.zeros(NUM_LAYERS, NUM_HEADS)
 
-        # Single trace: access V, patch attention, set output[0], capture downstream
-        downstream_attn = indirect_effect_single_head(
-            model, clean_inputs_BL,
-            corrupt_head_attn_LL,
-            layer_idx, head_idx, device,
-        )
+    for layer_idx in range(NUM_LAYERS):
+        for head_idx in range(NUM_HEADS):
+            corrupt_head_attn_LL = corrupt_attn_LBHLL[layer_idx][:, head_idx, :, :]
 
-        # Build full attention list for contact prediction:
-        # - Layers 0..patch_layer: clean attention (unaffected)
-        # - Layer patch_layer: patched attention (clean with one corrupt head)
-        # - Layers patch_layer+1..end: downstream attention (from intervention)
-        patched_full_attn = list(clean_attn_LBHLL[:layer_idx])
+            downstream_attn = indirect_effect_single_head(
+                model, clean_inputs_BL,
+                corrupt_head_attn_LL,
+                layer_idx, head_idx, device,
+            )
 
-        # The patched layer itself
-        patched_layer_attn = clean_attn_LBHLL[layer_idx].clone()
-        patched_layer_attn[:, head_idx, :, :] = corrupt_attn_LBHLL[layer_idx][:, head_idx, :, :]
-        patched_full_attn.append(patched_layer_attn)
+            # Build full attention list for contact prediction:
+            # - Layers 0..patch_layer: clean attention (unaffected)
+            # - Layer patch_layer: patched attention (clean with one corrupt head)
+            # - Layers patch_layer+1..end: downstream attention (from intervention)
+            patched_full_attn = list(clean_attn_LBHLL[:layer_idx])
 
-        # Downstream layers from the intervention
-        patched_full_attn.extend(downstream_attn)
+            patched_layer_attn = clean_attn_LBHLL[layer_idx].clone()
+            patched_layer_attn[:, head_idx, :, :] = corrupt_attn_LBHLL[layer_idx][:, head_idx, :, :]
+            patched_full_attn.append(patched_layer_attn)
 
-        # Compute contacts with the full (indirectly patched) attention
-        indirect_contacts_AA = compute_contacts_from_attention(
-            patched_full_attn,
-            clean_inputs_BL['input_ids'],
-            clean_inputs_BL['attention_mask'],
-            esm_model.esm.contact_head,
-            device=device,
-        )[0].detach().cpu()
+            patched_full_attn.extend(downstream_attn)
 
-        # Normalized effect
-        indirect_metric = patching_metric(indirect_contacts_AA, orig_contacts_AA, seg)
-        if abs(corrupt_metric - clean_metric) > 1e-6:
-            effect = (indirect_metric - clean_metric) / (corrupt_metric - clean_metric)
-        else:
-            effect = 0.0
-        indirect_effects_LH[layer_idx, head_idx] = effect
+            indirect_contacts_AA = compute_contacts_from_attention(
+                patched_full_attn,
+                clean_inputs_BL['input_ids'],
+                clean_inputs_BL['attention_mask'],
+                esm_model.esm.contact_head,
+                device=device,
+            )[0].detach().cpu()
 
-    if (layer_idx + 1) % 5 == 0:
-        print(f"    Processed layer {layer_idx + 1}/{NUM_LAYERS}")
+            indirect_metric = patching_metric(indirect_contacts_AA, orig_contacts_AA, seg)
+            if abs(corrupt_metric - clean_metric) > 1e-6:
+                effect = (indirect_metric - clean_metric) / (corrupt_metric - clean_metric)
+            else:
+                effect = 0.0
+            indirect_effects_LH[layer_idx, head_idx] = effect
 
-# %%
+        if (layer_idx + 1) % 5 == 0:
+            print(f"    Processed layer {layer_idx + 1}/{NUM_LAYERS}")
 
+    _cache_save(_ie_pt, {"indirect_effects_LH": indirect_effects_LH}, _BASE_KEY)
+
+# %% ── Circuit Discovery (cached) ─────────────────────────────────────────────
 
 indirect_flat = indirect_effects_LH.flatten()
-total_heads = NUM_LAYERS * NUM_HEADS  # 660
+total_heads   = NUM_LAYERS * NUM_HEADS  # 660
 
 # Three sort orders
 sort_configs = {
@@ -362,22 +497,23 @@ sort_configs = {
 }
 sorted_heads_by_config = {}
 for name, indices in sort_configs.items():
-    sorted_heads_by_config[name] = [(idx.item() // NUM_HEADS, idx.item() % NUM_HEADS) for idx in indices]
+    sorted_heads_by_config[name] = [
+        (idx.item() // NUM_HEADS, idx.item() % NUM_HEADS) for idx in indices
+    ]
 
 # k values: fine near start and around expected threshold (100-300), coarser at tail
-k_values = list(range(0, min(31, total_heads)))           # 0..30 by 1
-k_values += list(range(35, min(101, total_heads), 5))     # 35,40,...,100
-k_values += list(range(102, min(351, total_heads), 5))    # 102,105,...,350 (fine around threshold)
-k_values += list(range(360, total_heads, 20))             # 360,380,...
+k_values = list(range(0, min(31, total_heads)))
+k_values += list(range(35, min(150, total_heads), 5))
+# k_values += list(range(101552, min(351, total_heads), 5))
+k_values += list(range(150, total_heads, 50))
 k_values.append(total_heads)
 k_values = sorted(set(k_values))
 
-FORCE_CIRCUIT_RECALC = True
+_circuit_pt = CACHE_DIR / "circuit_results.pt"
 
 
 def run_circuit_experiment(sorted_heads_list, label):
     """Run greedy unpatching experiment for a given head ordering."""
-
     print(f"\n  [{label}] Running {len(k_values)} k-values...")
     scores = []
 
@@ -427,189 +563,173 @@ def run_circuit_experiment(sorted_heads_list, label):
         scores.append(score)
 
         if k <= 10 or k_idx % 20 == 0:
-            faith = (score - corrupt_metric) / (clean_metric - corrupt_metric) if abs(clean_metric - corrupt_metric) > 1e-6 else 0.0
+            faith = faithfulness(score, clean_metric, corrupt_metric)
             print(f"    k={k:4d}: faithfulness={faith:.2%}")
 
     print(f"    Done!")
     return list(k_values), scores
 
 
-# Run all three experiments
-print(f"Circuit discovery: {len(k_values)} k-values, 3 sort orders")
-print(f"  Baseline: clean={clean_metric:.4f}, corrupt={corrupt_metric:.4f}, gap={clean_metric - corrupt_metric:.4f}")
+if _cache_valid(_circuit_pt, _BASE_KEY, _force):
+    print("Loading circuit results from cache...")
+    _cd = torch.load(_circuit_pt, map_location="cpu", weights_only=False)
+    circuit_results = _cd["circuit_results"]
+    # Recompute crossed_k using current FAITH_TARGET (cached value may be stale)
+    for _sname in circuit_results:
+        _cr = circuit_results[_sname]
+        _crossed = None
+        for _kv, _fv in zip(_cr["k"], _cr["faith"]):
+            if _fv >= FAITH_TARGET:
+                _crossed = _kv
+                break
+        _cr["crossed_k"] = _crossed
+else:
+    print(f"Circuit discovery: {len(k_values)} k-values, 3 sort orders")
+    print(f"  Baseline: clean={clean_metric:.4f}, corrupt={corrupt_metric:.4f}, "
+          f"gap={clean_metric - corrupt_metric:.4f}")
+    circuit_results = {}
+    for sort_name, sort_label in [("abs", "|indirect|"), ("pos", "positive IE"), ("neg", "negative IE")]:
+        kv, sc = run_circuit_experiment(sorted_heads_by_config[sort_name], sort_label)
+        faith = [faithfulness(s, clean_metric, corrupt_metric) for s in sc]
+        crossed = None
+        for k_val, f_val in zip(kv, faith):
+            if f_val >= FAITH_TARGET:
+                crossed = k_val
+                break
+        circuit_results[sort_name] = {"k": kv, "scores": sc, "faith": faith, "crossed_k": crossed}
+    _cache_save(_circuit_pt, {"circuit_results": circuit_results}, _BASE_KEY)
 
-circuit_results = {}
-for sort_name, sort_label in [("abs", "|indirect|"), ("pos", "positive IE"), ("neg", "negative IE")]:
-    kv, sc = run_circuit_experiment(sorted_heads_by_config[sort_name], sort_label)
-    faith = [(s - corrupt_metric) / (clean_metric - corrupt_metric) if abs(clean_metric - corrupt_metric) > 1e-6 else 0.0 for s in sc]
-    crossed = None
-    for k_val, f_val in zip(kv, faith):
-        if f_val >= 0.7:
-            crossed = k_val
-            break
-    circuit_results[sort_name] = {"k": kv, "scores": sc, "faith": faith, "crossed_k": crossed}
+crossed_k = circuit_results["pos"]["crossed_k"]
+if crossed_k is None:
+    import warnings
+    warnings.warn(
+        f"Faithfulness target {FAITH_TARGET:.0%} never reached for positive IE sort; "
+        f"using topk_heads={cfg['topk_heads']} as fallback."
+    )
+    crossed_k = cfg["topk_heads"]
 
+top_ie_heads = sorted_heads_by_config["pos"][:crossed_k]
+print(f"\nCrossed faithfulness target at k={crossed_k}")
 
+# %% ── Cell Attribution / Gradient (cached) ──────────────────────────────────
 
-# %%
-top_ie_heads = sorted_heads_by_config["pos"][:circuit_results["pos"]["crossed_k"]]
+_CELL_KEY = {**_BASE_KEY, "crossed_k": crossed_k}
+_cell_pt  = CACHE_DIR / "cell_attr.pt"
 
+if _cache_valid(_cell_pt, _CELL_KEY, _force):
+    print("Loading cell attributions from cache...")
+    _cacd            = torch.load(_cell_pt, map_location="cpu", weights_only=False)
+    cell_attributions = _cacd["cell_attributions"]
+    cell_attr_sorted  = _cacd["cell_attr_sorted"]
+    all_attrs         = _cacd["all_attrs"]
+else:
+    # --- Step 1: Forward pass through FULL model, capture output[0], V, output[1] ---
+    print("Running forward pass with hooks...")
+    saved_hooks: dict = {}
+    hooks = []
 
-# %%
+    for l in range(NUM_LAYERS):
+        def v_hook(module, input, output, l=l):
+            output.retain_grad()
+            saved_hooks[f'v_{l}'] = output
+        hooks.append(esm_model.esm.encoder.layer[l].attention.self.value.register_forward_hook(v_hook))
 
-# Reimplement contact head as differentiable ops (from attr_patching_nnsight.py)
-contact_head_module = esm_model.esm.contact_head
-EOS_IDX = contact_head_module.eos_idx
-REGRESSION_WEIGHT = contact_head_module.regression.weight.detach()  # (1, 660)
-REGRESSION_BIAS = contact_head_module.regression.bias.detach()      # (1,)
-ORIG_SEG = orig_contacts_AA[
-    seg.ss1_start:seg.ss1_end,
-    seg.ss2_start:seg.ss2_end,
-].to(device)
+        def self_hook(module, input, output, l=l):
+            context, attn_weights = output
+            context.retain_grad()
+            attn_weights.retain_grad()
+            saved_hooks[f'ctx_{l}'] = context
+            saved_hooks[f'attn_{l}'] = attn_weights
+        hooks.append(esm_model.esm.encoder.layer[l].attention.self.register_forward_hook(self_hook))
 
-def contact_metric_from_attn_proxies(
-    attn_proxies, tokens_BL, attention_mask_BL,
-    eos_idx, regression_weight, regression_bias, orig_seg, segment,
-):
-    """Differentiable contact metric from attention weights (from attr_patching_nnsight.py)."""
-    attns = torch.stack(attn_proxies, dim=1)  # (B, num_layers, H, L, L)
-    attns = attns * attention_mask_BL.unsqueeze(1).unsqueeze(2).unsqueeze(3)
-    attns = attns * attention_mask_BL.unsqueeze(1).unsqueeze(2).unsqueeze(4)
+    # Forward pass (clean inputs, gradients enabled)
+    esm_model(**{**clean_inputs_BL, "output_attentions": True})
 
-    eos_mask = tokens_BL.ne(eos_idx).float()
-    eos_mask_2d = eos_mask.unsqueeze(1) * eos_mask.unsqueeze(2)
-    attns = attns * eos_mask_2d[:, None, None, :, :]
+    # --- Step 2: Compute metric from captured attention weights (in autograd graph) ---
+    attn_from_hooks = [saved_hooks[f'attn_{l}'] for l in range(NUM_LAYERS)]
+    ie_attr_metric = contact_metric_from_attn_proxies(
+        attn_from_hooks,
+        clean_inputs_BL['input_ids'],
+        clean_inputs_BL['attention_mask'],
+        EOS_IDX, REGRESSION_WEIGHT, REGRESSION_BIAS, ORIG_SEG, seg,
+    )
+    print(f"Clean metric (from hooks): {ie_attr_metric.item():.4f}")
 
-    attns = attns[..., :-1, :-1]
-    attns = attns[..., 1:, 1:]
+    # --- Step 3: Backward through FULL model ---
+    ie_attr_metric.backward()
 
-    batch_size, layers, heads, seqlen, _ = attns.shape
-    attns = attns.reshape(batch_size, layers * heads, seqlen, seqlen)
+    # Remove hooks
+    for h in hooks:
+        h.remove()
 
-    attns = attns + attns.transpose(-1, -2)
+    print("Backward complete. Computing indirect attributions...")
 
-    a1 = attns.sum(-1, keepdim=True)
-    a2 = attns.sum(-2, keepdim=True)
-    a12 = attns.sum(dim=(-1, -2), keepdim=True)
-    avg = a1 * a2 / a12
-    attns = attns - avg
+    # --- Step 4: Compute per-cell indirect attribution ---
+    # For cell (l, h, q, k) with diff d = (clean - corrupt)[l,h,q,k]:
+    #   delta_ctx[q, h*HD:(h+1)*HD] = d * V_heads[h, k, :]
+    #   indirect_attr = d * dot(V_heads[h, k, :], grad_ctx[q, h_slice])
+    #
+    # Vectorized per (layer, head):
+    #   V_h = V_heads[h, :, :]  shape (L, HD)
+    #   grad_h = grad_ctx[:, h*HD:(h+1)*HD]  shape (L, HD)
+    #   sensitivity = grad_h @ V_h.T  shape (L_q, L_k)
+    #   attr = diff[h] * sensitivity
 
-    attns = attns.permute(0, 2, 3, 1)
-    contacts = torch.sigmoid(torch.nn.functional.linear(attns, regression_weight, regression_bias))
-    contacts = contacts.squeeze(3)
+    cell_attributions = []  # (layer, head, q, k, total_attr, abs_diff)
 
-    pred_seg = contacts[0, segment.ss1_start:segment.ss1_end, segment.ss2_start:segment.ss2_end]
-    metric = (pred_seg * orig_seg).sum() / (orig_seg * orig_seg).sum()
-    return metric
+    for layer, head in top_ie_heads:
+        # V reshaped to heads: (B, L, hidden) → (B, num_heads, L, head_dim)
+        v_full  = saved_hooks[f'v_{layer}'].detach()  # (B, L, hidden)
+        v_heads = v_full.reshape(B, L, NUM_HEADS, HEAD_DIM).transpose(1, 2)  # (B, H, L, HD)
+        v_h     = v_heads[0, head]  # (L, HD)
 
-# --- Step 1: Forward pass through FULL model, capture output[0], V, output[1] ---
-print("Running corrupt forward pass with hooks...")
-saved_hooks = {}
-hooks = []
+        # --- Indirect sensitivity: through ctx → residual → downstream attn ---
+        grad_ctx = saved_hooks[f'ctx_{layer}'].grad  # (B, L, hidden)
+        if grad_ctx is None:
+            indirect_sensitivity_LL = torch.zeros(L, L, device=device)
+        else:
+            grad_h = grad_ctx[0, :, head * HEAD_DIM:(head + 1) * HEAD_DIM]  # (L, HD)
+            indirect_sensitivity_LL = grad_h @ v_h.T  # (L, L)
 
-for l in range(NUM_LAYERS):
-    # Capture V (value projection output)
-    def v_hook(module, input, output, l=l):
-        output.retain_grad()
-        saved_hooks[f'v_{l}'] = output
-    hooks.append(esm_model.esm.encoder.layer[l].attention.self.value.register_forward_hook(v_hook))
+        # --- Direct sensitivity: attn[l,h] → contact head → metric ---
+        grad_attn = saved_hooks[f'attn_{layer}'].grad  # (B, H, L, L)
+        if grad_attn is not None:
+            direct_sensitivity_LL = grad_attn[0, head]  # (L, L)
+        else:
+            direct_sensitivity_LL = torch.zeros(L, L, device=device)
 
-    # Capture output[0] (context vector) and output[1] (attention weights)
-    def self_hook(module, input, output, l=l):
-        context, attn_weights = output
-        context.retain_grad()
-        attn_weights.retain_grad()
-        saved_hooks[f'ctx_{l}'] = context
-        saved_hooks[f'attn_{l}'] = attn_weights
-    hooks.append(esm_model.esm.encoder.layer[l].attention.self.register_forward_hook(self_hook))
+        # Total attribution = indirect + direct
+        sensitivity_LL = indirect_sensitivity_LL + direct_sensitivity_LL
 
-# Forward pass (corrupt inputs, gradients enabled)
-esm_model(**{**clean_inputs_BL, "output_attentions": True})
+        clean_LL   = clean_attn_LBHLL[layer][0, head].to(device)
+        corrupt_LL = corrupt_attn_LBHLL[layer][0, head].to(device)
+        diff_LL    = clean_LL - corrupt_LL
+        attr_LL    = (diff_LL * sensitivity_LL).cpu()
+        abs_diff_LL = diff_LL.abs().cpu()
 
-# --- Step 2: Compute metric from captured attention weights (in autograd graph) ---
-attn_from_hooks = [saved_hooks[f'attn_{l}'] for l in range(NUM_LAYERS)]
-ie_attr_metric = contact_metric_from_attn_proxies(
-    attn_from_hooks,
-    clean_inputs_BL['input_ids'],
-    clean_inputs_BL['attention_mask'],
-    EOS_IDX, REGRESSION_WEIGHT, REGRESSION_BIAS, ORIG_SEG, seg,
-)
-print(f"Clean metric (from hooks): {ie_attr_metric.item():.4f}")
+        # Collect nonzero cells
+        nonzero_mask = abs_diff_LL > 1e-6
+        qs, ks = torch.where(nonzero_mask)
+        for q, k in zip(qs.tolist(), ks.tolist()):
+            cell_attributions.append((
+                layer, head, q, k,
+                attr_LL[q, k].item(),
+                abs_diff_LL[q, k].item(),
+            ))
 
-# --- Step 3: Backward through FULL model ---
-ie_attr_metric.backward()
+    del saved_hooks
+    clear_memory()
 
-# Remove hooks
-for h in hooks:
-    h.remove()
+    cell_attr_sorted = sorted(cell_attributions, key=lambda x: x[4], reverse=True)
+    all_attrs = torch.tensor([c[4] for c in cell_attr_sorted])
 
-print("Backward complete. Computing indirect attributions...")
+    _cache_save(_cell_pt, {
+        "cell_attributions": cell_attributions,
+        "cell_attr_sorted":  cell_attr_sorted,
+        "all_attrs":         all_attrs,
+    }, _CELL_KEY)
 
-# --- Step 4: Compute per-cell indirect attribution ---
-# For cell (l, h, q, k) with diff d = (clean - corrupt)[l,h,q,k]:
-#   delta_ctx[q, h*HD:(h+1)*HD] = d * V_heads[h, k, :]
-#   indirect_attr = d * dot(V_heads[h, k, :], grad_ctx[q, h_slice])
-#
-# Vectorized per (layer, head):
-#   V_h = V_heads[h, :, :]  shape (L, HD)
-#   grad_h = grad_ctx[:, h*HD:(h+1)*HD]  shape (L, HD)
-#   sensitivity = grad_h @ V_h.T  shape (L_q, L_k)
-#   attr = diff[h] * sensitivity
-
-cell_attributions = []  # (layer, head, q, k, total_attr, abs_diff)
-
-for layer, head in top_ie_heads:
-    # V reshaped to heads: (B, L, hidden) → (B, num_heads, L, head_dim)
-    v_full = saved_hooks[f'v_{layer}'].detach()  # (B, L, hidden)
-    v_heads = v_full.reshape(B, L, NUM_HEADS, HEAD_DIM).transpose(1, 2)  # (B, H, L, HD)
-    v_h = v_heads[0, head]  # (L, HD)
-
-    # --- Indirect sensitivity: through ctx → residual → downstream attn ---
-    # grad_ctx[l] is non-zero only if ctx[l] has downstream path to metric.
-    # For the last layer (layer 32), no downstream layers exist → grad_ctx is None.
-    grad_ctx = saved_hooks[f'ctx_{layer}'].grad  # (B, L, hidden)
-    if grad_ctx is None:
-        indirect_sensitivity_LL = torch.zeros(L, L, device=device)
-    else:
-        grad_h = grad_ctx[0, :, head * HEAD_DIM:(head + 1) * HEAD_DIM]  # (L, HD)
-        indirect_sensitivity_LL = grad_h @ v_h.T  # (L, L)
-
-    # --- Direct sensitivity: attn[l,h] → contact head → metric ---
-    # All layers have this path. For layer 32 it's the ONLY path.
-    # attn_weights.retain_grad() was already called so this is always populated.
-    grad_attn = saved_hooks[f'attn_{layer}'].grad  # (B, H, L, L)
-    if grad_attn is not None:
-        direct_sensitivity_LL = grad_attn[0, head]  # (L, L)
-    else:
-        direct_sensitivity_LL = torch.zeros(L, L, device=device)
-
-    # Total attribution = indirect + direct
-    # Indirect dominates for internal layers; only direct exists for the last layer.
-    sensitivity_LL = indirect_sensitivity_LL + direct_sensitivity_LL
-
-    # Diff and attribution
-    clean_LL = clean_attn_LBHLL[layer][0, head].to(device)
-    corrupt_LL = corrupt_attn_LBHLL[layer][0, head].to(device)
-    diff_LL = clean_LL - corrupt_LL
-    attr_LL = (diff_LL * sensitivity_LL).cpu()
-    abs_diff_LL = diff_LL.abs().cpu()
-
-    # Collect nonzero cells
-    nonzero_mask = abs_diff_LL > 1e-6
-    qs, ks = torch.where(nonzero_mask)
-    for q, k in zip(qs.tolist(), ks.tolist()):
-        cell_attributions.append((
-            layer, head, q, k,
-            attr_LL[q, k].item(),
-            abs_diff_LL[q, k].item(),
-        ))
-
-del saved_hooks
-clear_memory()
-
-# Sort by attribution (positive = helpful for metric, protect these first)
-cell_attr_sorted = sorted(cell_attributions, key=lambda x: x[4], reverse=True)
-
+# Print distribution stats
 print(f"\nTotal cells with attribution: {len(cell_attr_sorted):,d}")
 print(f"\nTop 20 cells by attribution (positive = helpful):")
 print(f"  (= indirect via residual stream + direct via contact head)")
@@ -622,34 +742,29 @@ print(f"\nBottom 20 cells (negative = harmful):")
 for layer, head, q, k, attr, adiff in cell_attr_sorted[-20:]:
     print(f"  L{layer:2d}  H{head:2d}  {q:>4d}  {k:>4d}  {attr:>+11.6f}  {adiff:>10.6f}")
 
-# Attribution distribution
-all_attrs = torch.tensor([c[4] for c in cell_attr_sorted])
 print(f"\nAttribution distribution (indirect + direct):")
 print(f"  Positive: {(all_attrs > 0).sum().item():,d} cells")
 print(f"  Negative: {(all_attrs < 0).sum().item():,d} cells")
 for pct in [90, 95, 99, 99.5, 99.9]:
-    val = torch.quantile(all_attrs, pct / 100).item()
+    val     = torch.quantile(all_attrs, pct / 100).item()
     n_above = (all_attrs >= val).sum().item()
     print(f"  {pct}th percentile: {val:+.8f}  ({n_above:,d} cells above)")
-# %%
-# Protect top-K cells by INDIRECT attribution (most helpful for metric
-# through the residual stream path), corrupt everything else.
+
+# %% ── Sufficiency Test ────────────────────────────────────────────────────────
 
 print(f"\n{'='*60}")
 print("INDIRECT ATTRIBUTION-RANKED SUFFICIENCY TEST")
 print(f"{'='*60}")
 
-attr_thresholds = [0, 10, 20, 50, 100, 200, 500, 1000, 2000, 5000, 10000, 20000, 50000]
-attr_thresholds = [t for t in attr_thresholds if t <= len(cell_attr_sorted)]
+attr_thresholds = [t for t in cfg["attr_thresholds"] if t <= len(cell_attr_sorted)]
 attr_sufficiency_results = []
 
 for k in attr_thresholds:
     # Top-K by attribution are protected
-    protected_cells = set()
+    protected_cells: set = set()
     for layer, head, q, kk, attr, adiff in cell_attr_sorted[:k]:
         protected_cells.add((layer, head, q, kk))
 
-    # Forward pass: corrupt everything, protect top-K cells
     with model.trace() as tracer:
         with tracer.invoke(**{**clean_inputs_BL, "output_attentions": True}):
             attn_cache = tracer.cache(
@@ -685,66 +800,52 @@ for k in attr_thresholds:
         esm_model.esm.contact_head, device=device,
     )[0].detach().cpu()
 
-    metric = patching_metric(contacts, orig_contacts_AA, seg)
-    faithfulness = (metric - corrupt_metric) / (clean_metric - corrupt_metric) \
-        if abs(clean_metric - corrupt_metric) > 1e-6 else 0.0
+    metric      = patching_metric(contacts, orig_contacts_AA, seg)
+    faith_score = faithfulness(metric, clean_metric, corrupt_metric)
 
     n_heads = len(set((l, h) for l, h, q, kk in protected_cells))
     attr_sufficiency_results.append({
         'k': k, 'n_protected': len(protected_cells),
         'n_heads': n_heads,
-        'metric': metric, 'faithfulness': faithfulness,
+        'metric': metric, 'faithfulness': faith_score,
     })
     print(f"  Top {k:5d} protected ({len(protected_cells):,d} cells) → "
-          f"metric={metric:.4f}, faithfulness={faithfulness:.2%}")
+          f"metric={metric:.4f}, faithfulness={faith_score:.2%}")
 
-# %%
+# %% ── Motif Analysis ──────────────────────────────────────────────────────────
 
-# =============================================================================
-# Motif Extraction: per-head key/query mass, anchor + positional classification
-# =============================================================================
-from collections import defaultdict
-
-topk_cell = 1000
-topk_heads = 30
-ie_circuit_cells = cell_attr_sorted[:topk_cell]
+TOPK_CELL  = cfg["topk_cell"]
+TOPK_HEADS = cfg["topk_heads"]
+ie_circuit_cells = cell_attr_sorted[:TOPK_CELL]
 
 # IE rank lookup (original attribution-ranking order)
-ie_rank = {(l, h): i + 1 for i, (l, h) in enumerate(top_ie_heads[:topk_heads])}
+ie_rank = {(l, h): i + 1 for i, (l, h) in enumerate(top_ie_heads[:TOPK_HEADS])}
 
 # Display in (layer, head) order
-heads_sorted = sorted(top_ie_heads[:topk_heads], key=lambda x: (x[0], x[1]))
+heads_sorted = sorted(top_ie_heads[:TOPK_HEADS], key=lambda x: (x[0], x[1]))
 
 # Regions (same indexing as q/k values in cells)
 SS1     = set(range(seg.ss1_start, seg.ss1_end))
 SS2     = set(range(seg.ss2_start, seg.ss2_end))
-FLANK_L = set(range(max(0, seg.ss1_start - config["clean_flank"]), seg.ss1_start))
-FLANK_R = set(range(seg.ss2_end, seg.ss2_end + config["clean_flank"]))
+FLANK_L = set(range(max(0, seg.ss1_start - CLEAN_FLANK), seg.ss1_start))
+FLANK_R = set(range(seg.ss2_end, seg.ss2_end + CLEAN_FLANK))
 SSE_GAP = seg.ss2_start - seg.ss1_start  # offset between the two contact residues
 
-def classify_pos(pos):
-    if pos in SS1:     return "ss1"
-    if pos in SS2:     return "ss2"
-    if pos in FLANK_L: return "flkL"
-    if pos in FLANK_R: return "flkR"
-    return "other"
-
-# Classification thresholds
-ANCHOR_T1    = 0.60
-ANCHOR_T2    = 0.70
-ANCHOR_T3    = 0.80
-POSITIONAL_T = 0.50
+# Classification thresholds (from config)
+ANCHOR_T1    = cfg["anchor_t1"]
+ANCHOR_T2    = cfg["anchor_t2"]
+ANCHOR_T3    = cfg["anchor_t3"]
+POSITIONAL_T = cfg["positional_t"]
 
 # --- Load path patching data ---
-PATH_TOP_N = 400
-path_pt = f'reports/outputs/{PROTEIN}_path_patching_full.pt'
-path_srcdst = {}  # (l, h) -> {'as_src': [(dl, dh, ch, eff), ...], 'as_dst': [...]}
+path_pt = Path(cfg["report_dir"]) / f"{PROTEIN}_path_patching_full.pt"
+path_srcdst: dict = {}
 
-if os.path.exists(path_pt):
+if path_pt.exists():
     path_data  = torch.load(path_pt, map_location='cpu', weights_only=False)
     pass_d_all = path_data['pass_d_results']
-    top_paths  = sorted(pass_d_all, key=lambda x: abs(x['pass_d_effect']), reverse=True)[:PATH_TOP_N]
-    print(f"Loaded {len(pass_d_all)} paths, using top {PATH_TOP_N}")
+    top_paths  = sorted(pass_d_all, key=lambda x: abs(x['pass_d_effect']), reverse=True)[:cfg["path_top_n"]]
+    print(f"Loaded {len(pass_d_all)} paths, using top {cfg['path_top_n']}")
     for r in top_paths:
         sl, sh = int(r['source'][0]), int(r['source'][1])
         dl, dh = int(r['dest'][0]),   int(r['dest'][1])
@@ -758,16 +859,17 @@ else:
     print(f"Warning: no path patching file at {path_pt}")
 
 print(f"\n{'='*70}")
-print(f"MOTIF ANALYSIS — top {topk_cell} cells by attribution")
+print(f"MOTIF ANALYSIS — top {TOPK_CELL} cells by attribution")
 print(f"{'='*70}")
 print(f"  ss1={seg.ss1_start}–{seg.ss1_end-1}  "
       f"ss2={seg.ss2_start}–{seg.ss2_end-1}  "
-      f"flkL={seg.ss1_start - config['clean_flank']}–{seg.ss1_start-1}  "
-      f"flkR={seg.ss2_end}–{seg.ss2_end + config['clean_flank']-1}  "
+      f"flkL={seg.ss1_start - CLEAN_FLANK}–{seg.ss1_start-1}  "
+      f"flkR={seg.ss2_end}–{seg.ss2_end + CLEAN_FLANK-1}  "
       f"SSE_GAP={SSE_GAP}")
 print()
 
 summary_rows = []
+motif_data   = []
 
 for l, h in heads_sorted:
     rank = ie_rank[(l, h)]
@@ -778,8 +880,17 @@ for l, h in heads_sorted:
     total_attr = sum(a for _, _, a, _ in head_cells)
 
     if n_cells == 0:
-        summary_rows.append((rank, l, h, 0, 0.0, "—", ""))
-        print(f"  L{l:2d} H{h:2d} [rank#{rank:2d}]: 0 cells in top-{topk_cell}")
+        summary_rows.append((rank, l, h, 0, 0.0, "—", "", "—"))
+        motif_data.append({
+            "rank": rank, "layer": l, "head": h, "n_cells": 0,
+            "total_attr": 0.0, "anchor": "—", "pos_tag": "",
+            "t1": 0.0, "t2": 0.0, "t3": 0.0,
+            "q_anchor": "—", "qt1": 0.0, "qt2": 0.0, "qt3": 0.0,
+            "key_sorted": [], "qry_sorted": [], "off_sorted": [],
+            "top_cells": [], "top2_off_frac": 0.0,
+            "paths": {"as_src": [], "as_dst": []},
+        })
+        print(f"  L{l:2d} H{h:2d} [rank#{rank:2d}]: 0 cells in top-{TOPK_CELL}")
         continue
 
     # Key mass: signed sum per key position
@@ -796,24 +907,33 @@ for l, h in heads_sorted:
     qry_sorted  = sorted(qry_mass.items(), key=lambda x: x[1], reverse=True)
     total_abs_q = sum(abs(v) for v in qry_mass.values())
 
-    # Offset distribution (q - k), weighted by abs(attr)
-    off_mass = defaultdict(float)
+    # Query anchor classification (mirrors key anchor)
+    qt1 = abs(qry_sorted[0][1]) / total_abs_q if total_abs_q and qry_sorted else 0.0
+    qt2 = sum(abs(qry_sorted[i][1]) for i in range(min(2, len(qry_sorted)))) / total_abs_q if total_abs_q else 0.0
+    qt3 = sum(abs(qry_sorted[i][1]) for i in range(min(3, len(qry_sorted)))) / total_abs_q if total_abs_q else 0.0
+    q_anchor = ("SINGLE-ANCHOR" if qt1 >= ANCHOR_T1 else
+                "DUAL-ANCHOR"   if qt2 >= ANCHOR_T2 else
+                "MULTI-ANCHOR"  if qt3 >= ANCHOR_T3 else
+                "DISTRIBUTED")
+
+    # Offset distribution (q - k), frequency-based (each cell counts once)
+    off_count = defaultdict(int)
     for q, k, attr, _ in head_cells:
-        off_mass[q - k] += abs(attr)
-    off_sorted  = sorted(off_mass.items(), key=lambda x: x[1], reverse=True)
-    total_off   = sum(off_mass.values())
+        off_count[q - k] += 1
+    off_sorted = sorted(off_count.items(), key=lambda x: x[1], reverse=True)
+    total_off  = sum(off_count.values())
 
     # Anchor classification
-    t1 = abs(key_sorted[0][1]) / total_abs_k if total_abs_k else 0
-    t2 = sum(abs(key_sorted[i][1]) for i in range(min(2, len(key_sorted)))) / total_abs_k if total_abs_k else 0
-    t3 = sum(abs(key_sorted[i][1]) for i in range(min(3, len(key_sorted)))) / total_abs_k if total_abs_k else 0
+    t1 = abs(key_sorted[0][1]) / total_abs_k if total_abs_k else 0.0
+    t2 = sum(abs(key_sorted[i][1]) for i in range(min(2, len(key_sorted)))) / total_abs_k if total_abs_k else 0.0
+    t3 = sum(abs(key_sorted[i][1]) for i in range(min(3, len(key_sorted)))) / total_abs_k if total_abs_k else 0.0
     anchor = ("SINGLE-ANCHOR" if t1 >= ANCHOR_T1 else
               "DUAL-ANCHOR"   if t2 >= ANCHOR_T2 else
               "MULTI-ANCHOR"  if t3 >= ANCHOR_T3 else
               "DISTRIBUTED")
 
-    # Positional classification (distinguish cross-SSE offset from local positional)
-    top2_off_frac = sum(v for _, v in off_sorted[:2]) / total_off if total_off else 0
+    # Positional classification
+    top2_off_frac = sum(v for _, v in off_sorted[:2]) / total_off if total_off else 0.0
     top_offset    = off_sorted[0][0] if off_sorted else 0
     is_cross_sse  = abs(abs(top_offset) - SSE_GAP) <= 3
     if is_cross_sse and top2_off_frac >= POSITIONAL_T:
@@ -824,7 +944,23 @@ for l, h in heads_sorted:
         pos_tag = ""
 
     tags = anchor + (f" | {pos_tag}" if pos_tag else "")
-    summary_rows.append((rank, l, h, n_cells, total_attr, anchor, pos_tag))
+    summary_rows.append((rank, l, h, n_cells, total_attr, anchor, pos_tag, q_anchor))
+
+    cells_by_attr = sorted(head_cells, key=lambda x: x[2], reverse=True)
+    paths_info    = path_srcdst.get((l, h), {'as_src': [], 'as_dst': []})
+
+    motif_data.append({
+        "rank": rank, "layer": l, "head": h,
+        "n_cells": n_cells, "total_attr": total_attr,
+        "anchor": anchor, "pos_tag": pos_tag,
+        "t1": t1, "t2": t2, "t3": t3,
+        "q_anchor": q_anchor, "qt1": qt1, "qt2": qt2, "qt3": qt3,
+        "key_sorted": key_sorted, "qry_sorted": qry_sorted, "off_sorted": off_sorted,
+        "top_cells": cells_by_attr[:5],
+        "top2_off_frac": top2_off_frac,
+        "paths": paths_info,
+    })
+
     print(f"  L{l:2d} H{h:2d} [rank#{rank:2d}]: {n_cells} cells | attr={total_attr:+.4f} | {tags}")
 
     # Key mass
@@ -838,18 +974,20 @@ for l, h in heads_sorted:
         print(f"         … {len(key_sorted)-5} more keys  ({rest_pct:.1f}% of mass)")
 
     # Query mass
-    print(f"       Queries:")
+    print(f"       Queries (top-1={qt1:.0%}, top-2={qt2:.0%}, top-3={qt3:.0%})  [{q_anchor}]:")
     for q_pos, q_attr in qry_sorted[:5]:
         frac = abs(q_attr) / total_abs_q * 100
-        print(f"         q={q_pos:>4d} [{classify_pos(q_pos):5s}]  {q_attr:>+7.4f}  {frac:>5.1f}%")
+        bar  = "█" * int(frac / 5)
+        print(f"         q={q_pos:>4d} [{classify_pos(q_pos):5s}]  {q_attr:>+7.4f}  {frac:>5.1f}%  {bar}")
     if len(qry_sorted) > 5:
-        print(f"         … {len(qry_sorted)-5} more queries")
+        rest_pct = sum(abs(v) for _, v in qry_sorted[5:]) / total_abs_q * 100
+        print(f"         … {len(qry_sorted)-5} more queries  ({rest_pct:.1f}% of mass)")
 
     # Offset distribution
     dom_offsets = ", ".join(f"{o:+d}" for o, _ in off_sorted[:2])
-    print(f"       Offsets (q−k), top-2 coverage={top2_off_frac:.0%}  [{dom_offsets}]:")
-    for offset, o_mass in off_sorted[:5]:
-        frac = o_mass / total_off * 100
+    print(f"       Offsets (q−k) [freq], top-2 coverage={top2_off_frac:.0%}  [{dom_offsets}]:")
+    for offset, o_count in off_sorted[:5]:
+        frac = o_count / total_off * 100
         note = (" ← self"        if offset == 0 else
                 " ← attend-prev" if offset == 1 else
                 " ← attend-next" if offset == -1 else
@@ -858,14 +996,12 @@ for l, h in heads_sorted:
         print(f"         Δ={offset:>+6d}  {frac:>5.1f}%{note}")
 
     # Top 5 cells
-    cells_by_attr = sorted(head_cells, key=lambda x: x[2], reverse=True)
     print(f"       Top 5 cells (by attribution):")
     for q, k, attr, adiff in cells_by_attr[:5]:
         print(f"         q={q:>4d}[{classify_pos(q):5s}]  k={k:>4d}[{classify_pos(k):5s}]  "
               f"attr={attr:>+7.4f}  |diff|={adiff:.4f}")
 
     # Path patching connections
-    paths_info = path_srcdst.get((l, h), {'as_src': [], 'as_dst': []})
     if paths_info['as_dst']:
         print(f"       Receives from (top 5 src heads):")
         for sl, sh, ch, eff in paths_info['as_dst'][:5]:
@@ -878,16 +1014,231 @@ for l, h in heads_sorted:
             print(f"         L{dl:2d}H{dh:2d} [rank#{dl_rank}] via {ch}  eff={eff:>+7.4f}")
     print()
 
-# Compact summary table (also sorted by layer/head)
+# Compact summary table
 print(f"\n{'='*70}")
-print(f"SUMMARY  (top-{topk_cell} cells, ordered by layer/head)")
+print(f"SUMMARY  (top-{TOPK_CELL} cells, ordered by layer/head)")
 print(f"{'='*70}")
-print(f"{'rank':>5} {'L':>3} {'H':>3} {'cells':>6} {'total_attr':>11}  {'anchor':>14}  {'pos_type':>10}")
-print("-" * 62)
-for rank, l, h, n, attr, anchor, pos_tag in sorted(summary_rows, key=lambda x: (x[1], x[2])):
-    print(f" #{rank:2d}   L{l:2d} H{h:2d}  {n:>5d}  {attr:>+10.4f}  {anchor:>14}  {pos_tag}")
+print(f"{'rank':>5} {'L':>3} {'H':>3} {'cells':>6} {'total_attr':>11}  {'k_anchor':>14} / {'q_anchor':>14}  {'pos_type':>10}")
+print("-" * 80)
+for rank, l, h, n, attr, anchor, pos_tag, q_anchor in sorted(summary_rows, key=lambda x: (x[1], x[2])):
+    print(f" #{rank:2d}   L{l:2d} H{h:2d}  {n:>5d}  {attr:>+10.4f}  {anchor:>14} / {q_anchor:>14}  {pos_tag}")
+
+# %% ── Report Generation ───────────────────────────────────────────────────────
 
 
+def _make_report() -> str:
+    lines: list[str] = []
+    a = lines.append
+
+    a(f"# Contact Pattern Analysis: {PROTEIN}")
+    a(f"")
+    a(f"Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}   Model: {MODEL_NAME}")
+    a(f"")
+
+    # ── Configuration ──────────────────────────────────────────────────────
+    a(f"## Configuration")
+    a(f"")
+    a(f"| Parameter | Value |")
+    a(f"|-----------|-------|")
+    a(f"| Protein | {PROTEIN} |")
+    a(f"| Contact pair | {CONTACT_PAIR} |")
+    a(f"| ss1 | [{seg.ss1_start}, {seg.ss1_end}) |")
+    a(f"| ss2 | [{seg.ss2_start}, {seg.ss2_end}) |")
+    a(f"| Clean flank | {CLEAN_FLANK} |")
+    a(f"| Corrupt flank | {CORRUPT_FLANK} |")
+    a(f"| Segment radius | {SEGMENT_RADIUS} |")
+    a(f"| Faith target | {FAITH_TARGET:.0%} |")
+    a(f"| Model dims | {NUM_LAYERS}L × {NUM_HEADS}H, head_dim={HEAD_DIM} |")
+    a(f"| topk_cell | {TOPK_CELL} |")
+    a(f"| topk_heads | {TOPK_HEADS} |")
+    a(f"")
+
+    # ── Baselines ──────────────────────────────────────────────────────────
+    a(f"## Baselines")
+    a(f"")
+    a(f"| Metric | Value |")
+    a(f"|--------|-------|")
+    a(f"| Clean metric | {clean_metric:.4f} |")
+    a(f"| Corrupt metric | {corrupt_metric:.4f} |")
+    a(f"| Gap | {clean_metric - corrupt_metric:.4f} |")
+    a(f"")
+
+    # ── Circuit Discovery ──────────────────────────────────────────────────
+    a(f"## Circuit Discovery")
+    a(f"")
+    a(f"### Minimum K to Reach Faithfulness Target ({FAITH_TARGET:.0%})")
+    a(f"")
+    a(f"| Sort order | min_K | faithfulness_at_K |")
+    a(f"|------------|-------|-------------------|")
+    for sname, slabel in [("abs", "|indirect|"), ("pos", "positive IE"), ("neg", "negative IE")]:
+        cr = circuit_results[sname]
+        ck = cr["crossed_k"]
+        if ck is not None:
+            idx = cr["k"].index(ck)
+            fv  = cr["faith"][idx]
+            a(f"| {slabel} | {ck} | {fv:.2%} |")
+        else:
+            a(f"| {slabel} | — | never reached |")
+    a(f"")
+
+    a(f"### Top Indirect Effect Heads (by positive IE)")
+    a(f"")
+    a(f"| Rank | Layer | Head | IE score |")
+    a(f"|------|-------|------|----------|")
+    for rank_i, (li, hi) in enumerate(sorted_heads_by_config["pos"][:TOPK_HEADS], 1):
+        ie_val = indirect_effects_LH[li, hi].item()
+        a(f"| {rank_i} | L{li} | H{hi} | {ie_val:+.4f} |")
+    a(f"")
+
+    a(f"### Faithfulness Sweep (Positive IE)")
+    a(f"")
+    a(f"| k | faithfulness |")
+    a(f"|---|--------------|")
+    cr_pos = circuit_results["pos"]
+    kv, fv = cr_pos["k"], cr_pos["faith"]
+    shown: set = set()
+    for i, k in enumerate(kv):
+        if k <= 10 or i % 20 == 0:
+            shown.add(i)
+    for i in sorted(shown):
+        a(f"| {kv[i]} | {fv[i]:.2%} |")
+    a(f"")
+
+    # ── Cell Attribution ───────────────────────────────────────────────────
+    a(f"## Cell Attribution Analysis")
+    a(f"")
+    a(f"Total cells: {len(cell_attr_sorted):,}")
+    a(f"")
+    a(f"- Positive: {(all_attrs > 0).sum().item():,}")
+    a(f"- Negative: {(all_attrs < 0).sum().item():,}")
+    a(f"")
+    a(f"**Percentile table:**")
+    a(f"")
+    a(f"| Percentile | Value | Cells above |")
+    a(f"|------------|-------|-------------|")
+    for pct in [90, 95, 99, 99.5, 99.9]:
+        val     = torch.quantile(all_attrs, pct / 100).item()
+        n_above = (all_attrs >= val).sum().item()
+        a(f"| {pct}th | {val:+.8f} | {n_above:,} |")
+    a(f"")
+
+    a(f"**Top 20 positive cells:**")
+    a(f"")
+    a(f"| Layer | Head | q | q-region | k | k-region | attr | \|diff\| |")
+    a(f"|-------|------|---|----------|---|----------|------|--------|")
+    for layer, head, q, k, attr, adiff in cell_attr_sorted[:20]:
+        a(f"| L{layer} | H{head} | {q} | {classify_pos(q)} | {k} | {classify_pos(k)} "
+          f"| {attr:+.6f} | {adiff:.6f} |")
+    a(f"")
+
+    a(f"**Top 20 negative cells:**")
+    a(f"")
+    a(f"| Layer | Head | q | q-region | k | k-region | attr | \|diff\| |")
+    a(f"|-------|------|---|----------|---|----------|------|--------|")
+    for layer, head, q, k, attr, adiff in cell_attr_sorted[-20:]:
+        a(f"| L{layer} | H{head} | {q} | {classify_pos(q)} | {k} | {classify_pos(k)} "
+          f"| {attr:+.6f} | {adiff:.6f} |")
+    a(f"")
+
+    # ── Attribution Sufficiency ────────────────────────────────────────────
+    a(f"## Attribution Sufficiency Test")
+    a(f"")
+    a(f"| K | cells | heads | metric | faithfulness |")
+    a(f"|---|-------|-------|--------|--------------|")
+    for r in attr_sufficiency_results:
+        a(f"| {r['k']} | {r['n_protected']:,} | {r['n_heads']} "
+          f"| {r['metric']:.4f} | {r['faithfulness']:.2%} |")
+    a(f"")
+
+    # ── Motif Analysis ─────────────────────────────────────────────────────
+    a(f"## Motif Analysis")
+    a(f"")
+    for md in motif_data:
+        li, hi, rank = md["layer"], md["head"], md["rank"]
+        a(f"### L{li} H{hi} — Rank #{rank}")
+        a(f"")
+        tags = f"k:{md['anchor']} / q:{md['q_anchor']}" + (f" | {md['pos_tag']}" if md["pos_tag"] else "")
+        a(f"**Tags:** {tags}  |  cells: {md['n_cells']}  |  total attr: {md['total_attr']:+.4f}")
+        a(f"")
+        if md["n_cells"] == 0:
+            a(f"_No cells in top-{TOPK_CELL}_")
+            a(f"")
+            continue
+
+        total_abs_k = sum(abs(v) for _, v in md["key_sorted"])
+        a(f"**Key mass** (top-1={md['t1']:.0%}, top-2={md['t2']:.0%}, top-3={md['t3']:.0%})  [{md['anchor']}]:")
+        a(f"")
+        a(f"| k pos | region | attr | fraction |")
+        a(f"|-------|--------|------|----------|")
+        for k_pos, k_attr in md["key_sorted"][:5]:
+            frac = abs(k_attr) / total_abs_k * 100 if total_abs_k else 0.0
+            a(f"| {k_pos} | {classify_pos(k_pos)} | {k_attr:+.4f} | {frac:.1f}% |")
+        a(f"")
+
+        total_abs_q = sum(abs(v) for _, v in md["qry_sorted"])
+        a(f"**Query mass** (top-1={md['qt1']:.0%}, top-2={md['qt2']:.0%}, top-3={md['qt3']:.0%})  [{md['q_anchor']}]:")
+        a(f"")
+        a(f"| q pos | region | attr | fraction |")
+        a(f"|-------|--------|------|----------|")
+        for q_pos, q_attr in md["qry_sorted"][:5]:
+            frac = abs(q_attr) / total_abs_q * 100 if total_abs_q else 0.0
+            a(f"| {q_pos} | {classify_pos(q_pos)} | {q_attr:+.4f} | {frac:.1f}% |")
+        a(f"")
+
+        total_off = sum(v for _, v in md["off_sorted"])
+        a(f"**Offset distribution [frequency]** (top-2 coverage: {md['top2_off_frac']:.0%}):")
+        a(f"")
+        a(f"| offset (q−k) | fraction |")
+        a(f"|--------------|----------|")
+        for offset, o_mass in md["off_sorted"][:5]:
+            frac = o_mass / total_off * 100 if total_off else 0.0
+            a(f"| {offset:+d} | {frac:.1f}% |")
+        a(f"")
+
+        a(f"**Top 5 cells:**")
+        a(f"")
+        a(f"| q | q-region | k | k-region | attr | \|diff\| |")
+        a(f"|---|----------|---|----------|------|--------|")
+        for q, k, attr, adiff in md["top_cells"]:
+            a(f"| {q} | {classify_pos(q)} | {k} | {classify_pos(k)} "
+              f"| {attr:+.4f} | {adiff:.4f} |")
+        a(f"")
+
+        paths = md["paths"]
+        if paths["as_dst"] or paths["as_src"]:
+            a(f"**Path patching connections:**")
+            a(f"")
+            if paths["as_dst"]:
+                a(f"Receives from:")
+                a(f"")
+                a(f"| src | rank | channel | effect |")
+                a(f"|-----|------|---------|--------|")
+                for sl, sh, ch, eff in paths["as_dst"][:5]:
+                    sl_rank = ie_rank.get((sl, sh), "–")
+                    a(f"| L{sl}H{sh} | #{sl_rank} | {ch} | {eff:+.4f} |")
+                a(f"")
+            if paths["as_src"]:
+                a(f"Sends to:")
+                a(f"")
+                a(f"| dst | rank | channel | effect |")
+                a(f"|-----|------|---------|--------|")
+                for dl, dh, ch, eff in paths["as_src"][:5]:
+                    dl_rank = ie_rank.get((dl, dh), "–")
+                    a(f"| L{dl}H{dh} | #{dl_rank} | {ch} | {eff:+.4f} |")
+                a(f"")
+
+    # ── Summary Table ──────────────────────────────────────────────────────
+    a(f"## Summary Table")
+    a(f"")
+    a(f"| rank | L | H | cells | total_attr | k_anchor | q_anchor | pos_type |")
+    a(f"|------|---|---|-------|------------|----------|----------|----------|")
+    for rank, l, h, n, attr, anchor, pos_tag, q_anchor in sorted(summary_rows, key=lambda x: (x[1], x[2])):
+        a(f"| #{rank} | L{l} | H{h} | {n} | {attr:+.4f} | {anchor} | {q_anchor} | {pos_tag} |")
+    a(f"")
+
+    return "\n".join(lines)
 
 
-# %%
+report_path = REPORT_DIR / f"{PROTEIN}_contact_report.md"
+report_path.write_text(_make_report())
+print(f"\nReport written to: {report_path}")
