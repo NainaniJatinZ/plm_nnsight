@@ -1,0 +1,1000 @@
+Config: protein=2B61A  model=facebook/esm2_t33_650M_UR50D  faith_target=70%
+
+Device: cuda
+/work/pi_annagreen_umass_edu/jatin/plm_nnsight/.plm_nn/lib/python3.11/site-packages/nnsight/intervention/envoy.py:823: UserWarning: Module `model.esm.encoder.layer.0.attention` of type `<class 'transformers.models.esm.modeling_esm.EsmAttention'>` has pre-defined a `output` attribute. nnsight access for `output` will be mounted at `.nns_output` instead of `.output` for this module only.
+  warnings.warn(
+/work/pi_annagreen_umass_edu/jatin/plm_nnsight/.plm_nn/lib/python3.11/site-packages/nnsight/intervention/envoy.py:823: UserWarning: Module `model.esm.encoder.layer.0` of type `<class 'transformers.models.esm.modeling_esm.EsmLayer'>` has pre-defined a `output` attribute. nnsight access for `output` will be mounted at `.nns_output` instead of `.output` for this module only.
+  warnings.warn(
+/work/pi_annagreen_umass_edu/jatin/plm_nnsight/.plm_nn/lib/python3.11/site-packages/nnsight/intervention/envoy.py:823: UserWarning: Module `model.esm.encoder.layer.1.attention` of type `<class 'transformers.models.esm.modeling_esm.EsmAttention'>` has pre-defined a `output` attribute. nnsight access for `output` will be mounted at `.nns_output` instead of `.output` for this module only.
+  warnings.warn(
+/work/pi_annagreen_umass_edu/jatin/plm_nnsight/.plm_nn/lib/python3.11/site-packages/nnsight/intervention/envoy.py:823: UserWarning: Module `model.esm.encoder.layer.1` of type `<class 'transformers.models.esm.modeling_esm.EsmLayer'>` has pre-defined a `output` attribute. nnsight access for `output` will be mounted at `.nns_output` instead of `.output` for this module only.
+  warnings.warn(
+/work/pi_annagreen_umass_edu/jatin/plm_nnsight/.plm_nn/lib/python3.11/site-packages/nnsight/intervention/envoy.py:823: UserWarning: Module `model.esm.encoder.layer.2.attention` of type `<class 'transformers.models.esm.modeling_esm.EsmAttention'>` has pre-defined a `output` attribute. nnsight access for `output` will be mounted at `.nns_output` instead of `.output` for this module only.
+  warnings.warn(
+/work/pi_annagreen_umass_edu/jatin/plm_nnsight/.plm_nn/lib/python3.11/site-packages/nnsight/intervention/envoy.py:823: UserWarning: Module `model.esm.encoder.layer.2` of type `<class 'transformers.models.esm.modeling_esm.EsmLayer'>` has pre-defined a `output` attribute. nnsight access for `output` will be mounted at `.nns_output` instead of `.output` for this module only.
+  warnings.warn(
+/work/pi_annagreen_umass_edu/jatin/plm_nnsight/.plm_nn/lib/python3.11/site-packages/nnsight/intervention/envoy.py:823: UserWarning: Module `model.esm.encoder.layer.3.attention` of type `<class 'transformers.models.esm.modeling_esm.EsmAttention'>` has pre-defined a `output` attribute. nnsight access for `output` will be mounted at `.nns_output` instead of `.output` for this module only.
+  warnings.warn(
+/work/pi_annagreen_umass_edu/jatin/plm_nnsight/.plm_nn/lib/python3.11/site-packages/nnsight/intervention/envoy.py:823: UserWarning: Module `model.esm.encoder.layer.3` of type `<class 'transformers.models.esm.modeling_esm.EsmLayer'>` has pre-defined a `output` attribute. nnsight access for `output` will be mounted at `.nns_output` instead of `.output` for this module only.
+  warnings.warn(
+/work/pi_annagreen_umass_edu/jatin/plm_nnsight/.plm_nn/lib/python3.11/site-packages/nnsight/intervention/envoy.py:823: UserWarning: Module `model.esm.encoder.layer.4.attention` of type `<class 'transformers.models.esm.modeling_esm.EsmAttention'>` has pre-defined a `output` attribute. nnsight access for `output` will be mounted at `.nns_output` instead of `.output` for this module only.
+  warnings.warn(
+/work/pi_annagreen_umass_edu/jatin/plm_nnsight/.plm_nn/lib/python3.11/site-packages/nnsight/intervention/envoy.py:823: UserWarning: Module `model.esm.encoder.layer.4` of type `<class 'transformers.models.esm.modeling_esm.EsmLayer'>` has pre-defined a `output` attribute. nnsight access for `output` will be mounted at `.nns_output` instead of `.output` for this module only.
+  warnings.warn(
+/work/pi_annagreen_umass_edu/jatin/plm_nnsight/.plm_nn/lib/python3.11/site-packages/nnsight/intervention/envoy.py:823: UserWarning: Module `model.esm.encoder.layer.5.attention` of type `<class 'transformers.models.esm.modeling_esm.EsmAttention'>` has pre-defined a `output` attribute. nnsight access for `output` will be mounted at `.nns_output` instead of `.output` for this module only.
+  warnings.warn(
+/work/pi_annagreen_umass_edu/jatin/plm_nnsight/.plm_nn/lib/python3.11/site-packages/nnsight/intervention/envoy.py:823: UserWarning: Module `model.esm.encoder.layer.5` of type `<class 'transformers.models.esm.modeling_esm.EsmLayer'>` has pre-defined a `output` attribute. nnsight access for `output` will be mounted at `.nns_output` instead of `.output` for this module only.
+  warnings.warn(
+/work/pi_annagreen_umass_edu/jatin/plm_nnsight/.plm_nn/lib/python3.11/site-packages/nnsight/intervention/envoy.py:823: UserWarning: Module `model.esm.encoder.layer.6.attention` of type `<class 'transformers.models.esm.modeling_esm.EsmAttention'>` has pre-defined a `output` attribute. nnsight access for `output` will be mounted at `.nns_output` instead of `.output` for this module only.
+  warnings.warn(
+/work/pi_annagreen_umass_edu/jatin/plm_nnsight/.plm_nn/lib/python3.11/site-packages/nnsight/intervention/envoy.py:823: UserWarning: Module `model.esm.encoder.layer.6` of type `<class 'transformers.models.esm.modeling_esm.EsmLayer'>` has pre-defined a `output` attribute. nnsight access for `output` will be mounted at `.nns_output` instead of `.output` for this module only.
+  warnings.warn(
+/work/pi_annagreen_umass_edu/jatin/plm_nnsight/.plm_nn/lib/python3.11/site-packages/nnsight/intervention/envoy.py:823: UserWarning: Module `model.esm.encoder.layer.7.attention` of type `<class 'transformers.models.esm.modeling_esm.EsmAttention'>` has pre-defined a `output` attribute. nnsight access for `output` will be mounted at `.nns_output` instead of `.output` for this module only.
+  warnings.warn(
+/work/pi_annagreen_umass_edu/jatin/plm_nnsight/.plm_nn/lib/python3.11/site-packages/nnsight/intervention/envoy.py:823: UserWarning: Module `model.esm.encoder.layer.7` of type `<class 'transformers.models.esm.modeling_esm.EsmLayer'>` has pre-defined a `output` attribute. nnsight access for `output` will be mounted at `.nns_output` instead of `.output` for this module only.
+  warnings.warn(
+/work/pi_annagreen_umass_edu/jatin/plm_nnsight/.plm_nn/lib/python3.11/site-packages/nnsight/intervention/envoy.py:823: UserWarning: Module `model.esm.encoder.layer.8.attention` of type `<class 'transformers.models.esm.modeling_esm.EsmAttention'>` has pre-defined a `output` attribute. nnsight access for `output` will be mounted at `.nns_output` instead of `.output` for this module only.
+  warnings.warn(
+/work/pi_annagreen_umass_edu/jatin/plm_nnsight/.plm_nn/lib/python3.11/site-packages/nnsight/intervention/envoy.py:823: UserWarning: Module `model.esm.encoder.layer.8` of type `<class 'transformers.models.esm.modeling_esm.EsmLayer'>` has pre-defined a `output` attribute. nnsight access for `output` will be mounted at `.nns_output` instead of `.output` for this module only.
+  warnings.warn(
+/work/pi_annagreen_umass_edu/jatin/plm_nnsight/.plm_nn/lib/python3.11/site-packages/nnsight/intervention/envoy.py:823: UserWarning: Module `model.esm.encoder.layer.9.attention` of type `<class 'transformers.models.esm.modeling_esm.EsmAttention'>` has pre-defined a `output` attribute. nnsight access for `output` will be mounted at `.nns_output` instead of `.output` for this module only.
+  warnings.warn(
+/work/pi_annagreen_umass_edu/jatin/plm_nnsight/.plm_nn/lib/python3.11/site-packages/nnsight/intervention/envoy.py:823: UserWarning: Module `model.esm.encoder.layer.9` of type `<class 'transformers.models.esm.modeling_esm.EsmLayer'>` has pre-defined a `output` attribute. nnsight access for `output` will be mounted at `.nns_output` instead of `.output` for this module only.
+  warnings.warn(
+/work/pi_annagreen_umass_edu/jatin/plm_nnsight/.plm_nn/lib/python3.11/site-packages/nnsight/intervention/envoy.py:823: UserWarning: Module `model.esm.encoder.layer.10.attention` of type `<class 'transformers.models.esm.modeling_esm.EsmAttention'>` has pre-defined a `output` attribute. nnsight access for `output` will be mounted at `.nns_output` instead of `.output` for this module only.
+  warnings.warn(
+/work/pi_annagreen_umass_edu/jatin/plm_nnsight/.plm_nn/lib/python3.11/site-packages/nnsight/intervention/envoy.py:823: UserWarning: Module `model.esm.encoder.layer.10` of type `<class 'transformers.models.esm.modeling_esm.EsmLayer'>` has pre-defined a `output` attribute. nnsight access for `output` will be mounted at `.nns_output` instead of `.output` for this module only.
+  warnings.warn(
+/work/pi_annagreen_umass_edu/jatin/plm_nnsight/.plm_nn/lib/python3.11/site-packages/nnsight/intervention/envoy.py:823: UserWarning: Module `model.esm.encoder.layer.11.attention` of type `<class 'transformers.models.esm.modeling_esm.EsmAttention'>` has pre-defined a `output` attribute. nnsight access for `output` will be mounted at `.nns_output` instead of `.output` for this module only.
+  warnings.warn(
+/work/pi_annagreen_umass_edu/jatin/plm_nnsight/.plm_nn/lib/python3.11/site-packages/nnsight/intervention/envoy.py:823: UserWarning: Module `model.esm.encoder.layer.11` of type `<class 'transformers.models.esm.modeling_esm.EsmLayer'>` has pre-defined a `output` attribute. nnsight access for `output` will be mounted at `.nns_output` instead of `.output` for this module only.
+  warnings.warn(
+/work/pi_annagreen_umass_edu/jatin/plm_nnsight/.plm_nn/lib/python3.11/site-packages/nnsight/intervention/envoy.py:823: UserWarning: Module `model.esm.encoder.layer.12.attention` of type `<class 'transformers.models.esm.modeling_esm.EsmAttention'>` has pre-defined a `output` attribute. nnsight access for `output` will be mounted at `.nns_output` instead of `.output` for this module only.
+  warnings.warn(
+/work/pi_annagreen_umass_edu/jatin/plm_nnsight/.plm_nn/lib/python3.11/site-packages/nnsight/intervention/envoy.py:823: UserWarning: Module `model.esm.encoder.layer.12` of type `<class 'transformers.models.esm.modeling_esm.EsmLayer'>` has pre-defined a `output` attribute. nnsight access for `output` will be mounted at `.nns_output` instead of `.output` for this module only.
+  warnings.warn(
+/work/pi_annagreen_umass_edu/jatin/plm_nnsight/.plm_nn/lib/python3.11/site-packages/nnsight/intervention/envoy.py:823: UserWarning: Module `model.esm.encoder.layer.13.attention` of type `<class 'transformers.models.esm.modeling_esm.EsmAttention'>` has pre-defined a `output` attribute. nnsight access for `output` will be mounted at `.nns_output` instead of `.output` for this module only.
+  warnings.warn(
+/work/pi_annagreen_umass_edu/jatin/plm_nnsight/.plm_nn/lib/python3.11/site-packages/nnsight/intervention/envoy.py:823: UserWarning: Module `model.esm.encoder.layer.13` of type `<class 'transformers.models.esm.modeling_esm.EsmLayer'>` has pre-defined a `output` attribute. nnsight access for `output` will be mounted at `.nns_output` instead of `.output` for this module only.
+  warnings.warn(
+/work/pi_annagreen_umass_edu/jatin/plm_nnsight/.plm_nn/lib/python3.11/site-packages/nnsight/intervention/envoy.py:823: UserWarning: Module `model.esm.encoder.layer.14.attention` of type `<class 'transformers.models.esm.modeling_esm.EsmAttention'>` has pre-defined a `output` attribute. nnsight access for `output` will be mounted at `.nns_output` instead of `.output` for this module only.
+  warnings.warn(
+/work/pi_annagreen_umass_edu/jatin/plm_nnsight/.plm_nn/lib/python3.11/site-packages/nnsight/intervention/envoy.py:823: UserWarning: Module `model.esm.encoder.layer.14` of type `<class 'transformers.models.esm.modeling_esm.EsmLayer'>` has pre-defined a `output` attribute. nnsight access for `output` will be mounted at `.nns_output` instead of `.output` for this module only.
+  warnings.warn(
+/work/pi_annagreen_umass_edu/jatin/plm_nnsight/.plm_nn/lib/python3.11/site-packages/nnsight/intervention/envoy.py:823: UserWarning: Module `model.esm.encoder.layer.15.attention` of type `<class 'transformers.models.esm.modeling_esm.EsmAttention'>` has pre-defined a `output` attribute. nnsight access for `output` will be mounted at `.nns_output` instead of `.output` for this module only.
+  warnings.warn(
+/work/pi_annagreen_umass_edu/jatin/plm_nnsight/.plm_nn/lib/python3.11/site-packages/nnsight/intervention/envoy.py:823: UserWarning: Module `model.esm.encoder.layer.15` of type `<class 'transformers.models.esm.modeling_esm.EsmLayer'>` has pre-defined a `output` attribute. nnsight access for `output` will be mounted at `.nns_output` instead of `.output` for this module only.
+  warnings.warn(
+/work/pi_annagreen_umass_edu/jatin/plm_nnsight/.plm_nn/lib/python3.11/site-packages/nnsight/intervention/envoy.py:823: UserWarning: Module `model.esm.encoder.layer.16.attention` of type `<class 'transformers.models.esm.modeling_esm.EsmAttention'>` has pre-defined a `output` attribute. nnsight access for `output` will be mounted at `.nns_output` instead of `.output` for this module only.
+  warnings.warn(
+/work/pi_annagreen_umass_edu/jatin/plm_nnsight/.plm_nn/lib/python3.11/site-packages/nnsight/intervention/envoy.py:823: UserWarning: Module `model.esm.encoder.layer.16` of type `<class 'transformers.models.esm.modeling_esm.EsmLayer'>` has pre-defined a `output` attribute. nnsight access for `output` will be mounted at `.nns_output` instead of `.output` for this module only.
+  warnings.warn(
+/work/pi_annagreen_umass_edu/jatin/plm_nnsight/.plm_nn/lib/python3.11/site-packages/nnsight/intervention/envoy.py:823: UserWarning: Module `model.esm.encoder.layer.17.attention` of type `<class 'transformers.models.esm.modeling_esm.EsmAttention'>` has pre-defined a `output` attribute. nnsight access for `output` will be mounted at `.nns_output` instead of `.output` for this module only.
+  warnings.warn(
+/work/pi_annagreen_umass_edu/jatin/plm_nnsight/.plm_nn/lib/python3.11/site-packages/nnsight/intervention/envoy.py:823: UserWarning: Module `model.esm.encoder.layer.17` of type `<class 'transformers.models.esm.modeling_esm.EsmLayer'>` has pre-defined a `output` attribute. nnsight access for `output` will be mounted at `.nns_output` instead of `.output` for this module only.
+  warnings.warn(
+/work/pi_annagreen_umass_edu/jatin/plm_nnsight/.plm_nn/lib/python3.11/site-packages/nnsight/intervention/envoy.py:823: UserWarning: Module `model.esm.encoder.layer.18.attention` of type `<class 'transformers.models.esm.modeling_esm.EsmAttention'>` has pre-defined a `output` attribute. nnsight access for `output` will be mounted at `.nns_output` instead of `.output` for this module only.
+  warnings.warn(
+/work/pi_annagreen_umass_edu/jatin/plm_nnsight/.plm_nn/lib/python3.11/site-packages/nnsight/intervention/envoy.py:823: UserWarning: Module `model.esm.encoder.layer.18` of type `<class 'transformers.models.esm.modeling_esm.EsmLayer'>` has pre-defined a `output` attribute. nnsight access for `output` will be mounted at `.nns_output` instead of `.output` for this module only.
+  warnings.warn(
+/work/pi_annagreen_umass_edu/jatin/plm_nnsight/.plm_nn/lib/python3.11/site-packages/nnsight/intervention/envoy.py:823: UserWarning: Module `model.esm.encoder.layer.19.attention` of type `<class 'transformers.models.esm.modeling_esm.EsmAttention'>` has pre-defined a `output` attribute. nnsight access for `output` will be mounted at `.nns_output` instead of `.output` for this module only.
+  warnings.warn(
+/work/pi_annagreen_umass_edu/jatin/plm_nnsight/.plm_nn/lib/python3.11/site-packages/nnsight/intervention/envoy.py:823: UserWarning: Module `model.esm.encoder.layer.19` of type `<class 'transformers.models.esm.modeling_esm.EsmLayer'>` has pre-defined a `output` attribute. nnsight access for `output` will be mounted at `.nns_output` instead of `.output` for this module only.
+  warnings.warn(
+/work/pi_annagreen_umass_edu/jatin/plm_nnsight/.plm_nn/lib/python3.11/site-packages/nnsight/intervention/envoy.py:823: UserWarning: Module `model.esm.encoder.layer.20.attention` of type `<class 'transformers.models.esm.modeling_esm.EsmAttention'>` has pre-defined a `output` attribute. nnsight access for `output` will be mounted at `.nns_output` instead of `.output` for this module only.
+  warnings.warn(
+/work/pi_annagreen_umass_edu/jatin/plm_nnsight/.plm_nn/lib/python3.11/site-packages/nnsight/intervention/envoy.py:823: UserWarning: Module `model.esm.encoder.layer.20` of type `<class 'transformers.models.esm.modeling_esm.EsmLayer'>` has pre-defined a `output` attribute. nnsight access for `output` will be mounted at `.nns_output` instead of `.output` for this module only.
+  warnings.warn(
+/work/pi_annagreen_umass_edu/jatin/plm_nnsight/.plm_nn/lib/python3.11/site-packages/nnsight/intervention/envoy.py:823: UserWarning: Module `model.esm.encoder.layer.21.attention` of type `<class 'transformers.models.esm.modeling_esm.EsmAttention'>` has pre-defined a `output` attribute. nnsight access for `output` will be mounted at `.nns_output` instead of `.output` for this module only.
+  warnings.warn(
+/work/pi_annagreen_umass_edu/jatin/plm_nnsight/.plm_nn/lib/python3.11/site-packages/nnsight/intervention/envoy.py:823: UserWarning: Module `model.esm.encoder.layer.21` of type `<class 'transformers.models.esm.modeling_esm.EsmLayer'>` has pre-defined a `output` attribute. nnsight access for `output` will be mounted at `.nns_output` instead of `.output` for this module only.
+  warnings.warn(
+/work/pi_annagreen_umass_edu/jatin/plm_nnsight/.plm_nn/lib/python3.11/site-packages/nnsight/intervention/envoy.py:823: UserWarning: Module `model.esm.encoder.layer.22.attention` of type `<class 'transformers.models.esm.modeling_esm.EsmAttention'>` has pre-defined a `output` attribute. nnsight access for `output` will be mounted at `.nns_output` instead of `.output` for this module only.
+  warnings.warn(
+/work/pi_annagreen_umass_edu/jatin/plm_nnsight/.plm_nn/lib/python3.11/site-packages/nnsight/intervention/envoy.py:823: UserWarning: Module `model.esm.encoder.layer.22` of type `<class 'transformers.models.esm.modeling_esm.EsmLayer'>` has pre-defined a `output` attribute. nnsight access for `output` will be mounted at `.nns_output` instead of `.output` for this module only.
+  warnings.warn(
+/work/pi_annagreen_umass_edu/jatin/plm_nnsight/.plm_nn/lib/python3.11/site-packages/nnsight/intervention/envoy.py:823: UserWarning: Module `model.esm.encoder.layer.23.attention` of type `<class 'transformers.models.esm.modeling_esm.EsmAttention'>` has pre-defined a `output` attribute. nnsight access for `output` will be mounted at `.nns_output` instead of `.output` for this module only.
+  warnings.warn(
+/work/pi_annagreen_umass_edu/jatin/plm_nnsight/.plm_nn/lib/python3.11/site-packages/nnsight/intervention/envoy.py:823: UserWarning: Module `model.esm.encoder.layer.23` of type `<class 'transformers.models.esm.modeling_esm.EsmLayer'>` has pre-defined a `output` attribute. nnsight access for `output` will be mounted at `.nns_output` instead of `.output` for this module only.
+  warnings.warn(
+/work/pi_annagreen_umass_edu/jatin/plm_nnsight/.plm_nn/lib/python3.11/site-packages/nnsight/intervention/envoy.py:823: UserWarning: Module `model.esm.encoder.layer.24.attention` of type `<class 'transformers.models.esm.modeling_esm.EsmAttention'>` has pre-defined a `output` attribute. nnsight access for `output` will be mounted at `.nns_output` instead of `.output` for this module only.
+  warnings.warn(
+/work/pi_annagreen_umass_edu/jatin/plm_nnsight/.plm_nn/lib/python3.11/site-packages/nnsight/intervention/envoy.py:823: UserWarning: Module `model.esm.encoder.layer.24` of type `<class 'transformers.models.esm.modeling_esm.EsmLayer'>` has pre-defined a `output` attribute. nnsight access for `output` will be mounted at `.nns_output` instead of `.output` for this module only.
+  warnings.warn(
+/work/pi_annagreen_umass_edu/jatin/plm_nnsight/.plm_nn/lib/python3.11/site-packages/nnsight/intervention/envoy.py:823: UserWarning: Module `model.esm.encoder.layer.25.attention` of type `<class 'transformers.models.esm.modeling_esm.EsmAttention'>` has pre-defined a `output` attribute. nnsight access for `output` will be mounted at `.nns_output` instead of `.output` for this module only.
+  warnings.warn(
+/work/pi_annagreen_umass_edu/jatin/plm_nnsight/.plm_nn/lib/python3.11/site-packages/nnsight/intervention/envoy.py:823: UserWarning: Module `model.esm.encoder.layer.25` of type `<class 'transformers.models.esm.modeling_esm.EsmLayer'>` has pre-defined a `output` attribute. nnsight access for `output` will be mounted at `.nns_output` instead of `.output` for this module only.
+  warnings.warn(
+/work/pi_annagreen_umass_edu/jatin/plm_nnsight/.plm_nn/lib/python3.11/site-packages/nnsight/intervention/envoy.py:823: UserWarning: Module `model.esm.encoder.layer.26.attention` of type `<class 'transformers.models.esm.modeling_esm.EsmAttention'>` has pre-defined a `output` attribute. nnsight access for `output` will be mounted at `.nns_output` instead of `.output` for this module only.
+  warnings.warn(
+/work/pi_annagreen_umass_edu/jatin/plm_nnsight/.plm_nn/lib/python3.11/site-packages/nnsight/intervention/envoy.py:823: UserWarning: Module `model.esm.encoder.layer.26` of type `<class 'transformers.models.esm.modeling_esm.EsmLayer'>` has pre-defined a `output` attribute. nnsight access for `output` will be mounted at `.nns_output` instead of `.output` for this module only.
+  warnings.warn(
+/work/pi_annagreen_umass_edu/jatin/plm_nnsight/.plm_nn/lib/python3.11/site-packages/nnsight/intervention/envoy.py:823: UserWarning: Module `model.esm.encoder.layer.27.attention` of type `<class 'transformers.models.esm.modeling_esm.EsmAttention'>` has pre-defined a `output` attribute. nnsight access for `output` will be mounted at `.nns_output` instead of `.output` for this module only.
+  warnings.warn(
+/work/pi_annagreen_umass_edu/jatin/plm_nnsight/.plm_nn/lib/python3.11/site-packages/nnsight/intervention/envoy.py:823: UserWarning: Module `model.esm.encoder.layer.27` of type `<class 'transformers.models.esm.modeling_esm.EsmLayer'>` has pre-defined a `output` attribute. nnsight access for `output` will be mounted at `.nns_output` instead of `.output` for this module only.
+  warnings.warn(
+/work/pi_annagreen_umass_edu/jatin/plm_nnsight/.plm_nn/lib/python3.11/site-packages/nnsight/intervention/envoy.py:823: UserWarning: Module `model.esm.encoder.layer.28.attention` of type `<class 'transformers.models.esm.modeling_esm.EsmAttention'>` has pre-defined a `output` attribute. nnsight access for `output` will be mounted at `.nns_output` instead of `.output` for this module only.
+  warnings.warn(
+/work/pi_annagreen_umass_edu/jatin/plm_nnsight/.plm_nn/lib/python3.11/site-packages/nnsight/intervention/envoy.py:823: UserWarning: Module `model.esm.encoder.layer.28` of type `<class 'transformers.models.esm.modeling_esm.EsmLayer'>` has pre-defined a `output` attribute. nnsight access for `output` will be mounted at `.nns_output` instead of `.output` for this module only.
+  warnings.warn(
+/work/pi_annagreen_umass_edu/jatin/plm_nnsight/.plm_nn/lib/python3.11/site-packages/nnsight/intervention/envoy.py:823: UserWarning: Module `model.esm.encoder.layer.29.attention` of type `<class 'transformers.models.esm.modeling_esm.EsmAttention'>` has pre-defined a `output` attribute. nnsight access for `output` will be mounted at `.nns_output` instead of `.output` for this module only.
+  warnings.warn(
+/work/pi_annagreen_umass_edu/jatin/plm_nnsight/.plm_nn/lib/python3.11/site-packages/nnsight/intervention/envoy.py:823: UserWarning: Module `model.esm.encoder.layer.29` of type `<class 'transformers.models.esm.modeling_esm.EsmLayer'>` has pre-defined a `output` attribute. nnsight access for `output` will be mounted at `.nns_output` instead of `.output` for this module only.
+  warnings.warn(
+/work/pi_annagreen_umass_edu/jatin/plm_nnsight/.plm_nn/lib/python3.11/site-packages/nnsight/intervention/envoy.py:823: UserWarning: Module `model.esm.encoder.layer.30.attention` of type `<class 'transformers.models.esm.modeling_esm.EsmAttention'>` has pre-defined a `output` attribute. nnsight access for `output` will be mounted at `.nns_output` instead of `.output` for this module only.
+  warnings.warn(
+/work/pi_annagreen_umass_edu/jatin/plm_nnsight/.plm_nn/lib/python3.11/site-packages/nnsight/intervention/envoy.py:823: UserWarning: Module `model.esm.encoder.layer.30` of type `<class 'transformers.models.esm.modeling_esm.EsmLayer'>` has pre-defined a `output` attribute. nnsight access for `output` will be mounted at `.nns_output` instead of `.output` for this module only.
+  warnings.warn(
+/work/pi_annagreen_umass_edu/jatin/plm_nnsight/.plm_nn/lib/python3.11/site-packages/nnsight/intervention/envoy.py:823: UserWarning: Module `model.esm.encoder.layer.31.attention` of type `<class 'transformers.models.esm.modeling_esm.EsmAttention'>` has pre-defined a `output` attribute. nnsight access for `output` will be mounted at `.nns_output` instead of `.output` for this module only.
+  warnings.warn(
+/work/pi_annagreen_umass_edu/jatin/plm_nnsight/.plm_nn/lib/python3.11/site-packages/nnsight/intervention/envoy.py:823: UserWarning: Module `model.esm.encoder.layer.31` of type `<class 'transformers.models.esm.modeling_esm.EsmLayer'>` has pre-defined a `output` attribute. nnsight access for `output` will be mounted at `.nns_output` instead of `.output` for this module only.
+  warnings.warn(
+/work/pi_annagreen_umass_edu/jatin/plm_nnsight/.plm_nn/lib/python3.11/site-packages/nnsight/intervention/envoy.py:823: UserWarning: Module `model.esm.encoder.layer.32.attention` of type `<class 'transformers.models.esm.modeling_esm.EsmAttention'>` has pre-defined a `output` attribute. nnsight access for `output` will be mounted at `.nns_output` instead of `.output` for this module only.
+  warnings.warn(
+/work/pi_annagreen_umass_edu/jatin/plm_nnsight/.plm_nn/lib/python3.11/site-packages/nnsight/intervention/envoy.py:823: UserWarning: Module `model.esm.encoder.layer.32` of type `<class 'transformers.models.esm.modeling_esm.EsmLayer'>` has pre-defined a `output` attribute. nnsight access for `output` will be mounted at `.nns_output` instead of `.output` for this module only.
+  warnings.warn(
+Model : facebook/esm2_t33_650M_UR50D  (33L × 20H, head_dim=64)
+[Memory after model load] alloc=2.67GB  resv=2.75GB
+
+Protein : 2B61A  (len=377)
+Segment : ss1=[177:188]  ss2=[311:322]
+Flanks  : clean=44  corrupt=43
+
+Computing contact-map baselines...
+Clean metric   : 0.5738
+Corrupt metric : 0.0279
+Gap            : 0.5459
+
+Caching attention for clean + corrupt sequences...
+L=379  attention per layer: (1, 20, 379, 379)
+
+Running gradient attribution (forward + backward on clean input)...
+Clean metric (differentiable): 0.5738
+Computing head attributions (one layer at a time)...
+  Layer  0/32  indirect: [-0.0901, +0.0732]  direct: [-0.0901, +0.0732]
+  Layer  1/32  indirect: [-0.0100, +0.0330]  direct: [-0.0100, +0.0330]
+  Layer  2/32  indirect: [-0.0190, +0.0149]  direct: [-0.0190, +0.0149]
+  Layer  3/32  indirect: [-0.0105, +0.0197]  direct: [-0.0105, +0.0197]
+  Layer  4/32  indirect: [-0.0162, +0.0126]  direct: [-0.0162, +0.0126]
+  Layer  5/32  indirect: [-0.0213, +0.0543]  direct: [-0.0213, +0.0543]
+  Layer  6/32  indirect: [-0.0456, +0.2164]  direct: [-0.0456, +0.2164]
+  Layer  7/32  indirect: [-0.0301, +0.1764]  direct: [-0.0301, +0.1764]
+  Layer  8/32  indirect: [-0.1724, +0.1121]  direct: [-0.1724, +0.1121]
+  Layer  9/32  indirect: [-0.0508, +0.0394]  direct: [-0.0508, +0.0394]
+  Layer 10/32  indirect: [-0.0106, +0.1689]  direct: [-0.0106, +0.1689]
+  Layer 11/32  indirect: [-0.0191, +0.1683]  direct: [-0.0191, +0.1683]
+  Layer 12/32  indirect: [-0.0130, +0.0254]  direct: [-0.0130, +0.0254]
+  Layer 13/32  indirect: [-0.0234, +0.0295]  direct: [-0.0234, +0.0295]
+  Layer 14/32  indirect: [-0.0251, +0.0635]  direct: [-0.0251, +0.0635]
+  Layer 15/32  indirect: [-0.0124, +0.0377]  direct: [-0.0124, +0.0376]
+  Layer 16/32  indirect: [-0.0489, +0.0415]  direct: [-0.0489, +0.0415]
+  Layer 17/32  indirect: [-0.0158, +0.0294]  direct: [-0.0158, +0.0446]
+  Layer 18/32  indirect: [-0.0271, +0.0076]  direct: [-0.0271, +0.0075]
+  Layer 19/32  indirect: [-0.0068, +0.0365]  direct: [-0.0068, +0.0365]
+  Layer 20/32  indirect: [-0.0094, +0.0103]  direct: [-0.0094, +0.0103]
+  Layer 21/32  indirect: [-0.0053, +0.0119]  direct: [-0.0053, +0.0119]
+  Layer 22/32  indirect: [-0.0091, +0.0087]  direct: [-0.0091, +0.1405]
+  Layer 23/32  indirect: [-0.0079, +0.0127]  direct: [-0.0079, +0.0127]
+  Layer 24/32  indirect: [-0.0147, +0.0126]  direct: [-0.0147, +0.0200]
+  Layer 25/32  indirect: [-0.0077, +0.0099]  direct: [-0.0083, +0.0099]
+  Layer 26/32  indirect: [-0.0051, +0.0287]  direct: [-0.0051, +0.1836]
+  Layer 27/32  indirect: [-0.0053, +0.0116]  direct: [-0.0051, +0.0506]
+  Layer 28/32  indirect: [-0.0089, +0.0097]  direct: [-0.0089, +0.0097]
+  Layer 29/32  indirect: [-0.0048, +0.0115]  direct: [-0.0042, +0.0148]
+  Layer 30/32  indirect: [-0.0360, +0.0090]  direct: [-0.0360, +0.0564]
+  Layer 31/32  indirect: [-0.0103, +0.0055]  direct: [-0.0025, +0.0147]
+  Layer 32/32  indirect: [+0.0000, +0.0000]  direct: [+0.0000, +0.1116]
+
+=================================================================
+HEAD-LEVEL ATTRIBUTION SUMMARY
+=================================================================
+  Total heads   : 660
+  Positive attr : 368
+  Negative attr : 292
+
+Top 30 heads by attribution:
+    L   H      total   indirect     direct
+  ---------------------------------------------
+  L 6 H 3    +0.4329    +0.2164    +0.2164
+  L 7 H13    +0.3529    +0.1764    +0.1764
+  L10 H 9    +0.3379    +0.1689    +0.1689
+  L11 H 1    +0.3366    +0.1683    +0.1683
+  L 8 H19    +0.2242    +0.1121    +0.1121
+  L26 H16    +0.2123    +0.0287    +0.1836
+  L 7 H16    +0.1607    +0.0804    +0.0803
+  L 6 H19    +0.1472    +0.0736    +0.0735
+  L22 H14    +0.1470    +0.0065    +0.1405
+  L 0 H 7    +0.1464    +0.0732    +0.0732
+  L14 H 9    +0.1270    +0.0635    +0.0635
+  L32 H13    +0.1116    +0.0000    +0.1116
+  L 5 H19    +0.1085    +0.0543    +0.0543
+  L 0 H 6    +0.1058    +0.0529    +0.0529
+  L11 H16    +0.0933    +0.0466    +0.0466
+  L14 H14    +0.0854    +0.0427    +0.0427
+  L32 H18    +0.0850    +0.0000    +0.0850
+  L16 H17    +0.0830    +0.0415    +0.0415
+  L 6 H17    +0.0818    +0.0409    +0.0409
+  L 9 H 1    +0.0787    +0.0394    +0.0394
+  L15 H 2    +0.0753    +0.0377    +0.0376
+  L17 H18    +0.0739    +0.0294    +0.0446
+  L19 H 0    +0.0730    +0.0365    +0.0365
+  L 6 H 8    +0.0715    +0.0358    +0.0358
+  L 1 H 8    +0.0660    +0.0330    +0.0330
+  L 1 H13    +0.0640    +0.0320    +0.0320
+  L30 H 1    +0.0640    +0.0075    +0.0564
+  L27 H15    +0.0622    +0.0116    +0.0506
+  L 5 H 6    +0.0609    +0.0305    +0.0305
+  L13 H 8    +0.0591    +0.0295    +0.0295
+
+Saved to reports/outputs/2B61A_head_attr.pt
+
+============================================================
+SUFFICIENCY TEST  (target faithfulness: 70%)
+============================================================
+  K=  0  (0 layers touched)  metric=0.0279  faith=0.0%
+  K=  1  (1 layers touched)  metric=0.0279  faith=0.0%
+  K=  2  (2 layers touched)  metric=0.0279  faith=0.0%
+  K=  3  (3 layers touched)  metric=0.0279  faith=0.0%
+  K=  4  (4 layers touched)  metric=0.0279  faith=0.0%
+  K=  5  (5 layers touched)  metric=0.0279  faith=0.0%
+  K=  6  (6 layers touched)  metric=0.0783  faith=9.2%
+  K=  7  (6 layers touched)  metric=0.0783  faith=9.2%
+  K=  8  (6 layers touched)  metric=0.0782  faith=9.2%
+  K=  9  (7 layers touched)  metric=0.1637  faith=24.9%
+  K= 10  (8 layers touched)  metric=0.1637  faith=24.9%
+  K= 11  (9 layers touched)  metric=0.1637  faith=24.9%
+  K= 12  (10 layers touched)  metric=0.2283  faith=36.7%
+  K= 13  (11 layers touched)  metric=0.2283  faith=36.7%
+  K= 14  (11 layers touched)  metric=0.2283  faith=36.7%
+  K= 15  (11 layers touched)  metric=0.2283  faith=36.7%
+  K= 16  (11 layers touched)  metric=0.2283  faith=36.7%
+  K= 17  (11 layers touched)  metric=0.3342  faith=56.1%
+  K= 18  (12 layers touched)  metric=0.3342  faith=56.1%
+  K= 19  (12 layers touched)  metric=0.3342  faith=56.1%
+  K= 20  (13 layers touched)  metric=0.3342  faith=56.1%
+  K= 21  (14 layers touched)  metric=0.3337  faith=56.0%
+  K= 22  (15 layers touched)  metric=0.3487  faith=58.8%
+  K= 23  (16 layers touched)  metric=0.3487  faith=58.8%
+  K= 24  (16 layers touched)  metric=0.3487  faith=58.8%
+  K= 25  (17 layers touched)  metric=0.3487  faith=58.8%
+  K= 26  (17 layers touched)  metric=0.3487  faith=58.8%
+  K= 27  (18 layers touched)  metric=0.4346  faith=74.5%
+  *** Target 70% reached at K=27 ***
+  K= 28  (19 layers touched)  metric=0.4681  faith=80.6%
+  K= 29  (19 layers touched)  metric=0.4681  faith=80.6%
+  K= 30  (20 layers touched)  metric=0.4681  faith=80.6%
+  K= 31  (20 layers touched)  metric=0.4690  faith=80.8%
+  K= 32  (20 layers touched)  metric=0.4690  faith=80.8%
+
+Baselines: clean=0.5738  corrupt=0.0279
+Circuit: 27 heads reach 70% faithfulness
+Saved to reports/outputs/2B61A_head_sufficiency.pt
+
+Cell-level attribution on 27 circuit heads...
+  L 0 H 7  nonzero cells:  126,655
+  L 0 H 6  nonzero cells:  104,463
+  L 1 H 8  nonzero cells:   52,637
+  L 1 H13  nonzero cells:   79,842
+  L 5 H19  nonzero cells:  134,375
+  L 6 H 8  nonzero cells:  140,006
+  L 6 H17  nonzero cells:  126,712
+  L 6 H19  nonzero cells:  143,569
+  L 6 H 3  nonzero cells:  138,677
+  L 7 H16  nonzero cells:  142,123
+  L 7 H13  nonzero cells:  133,697
+  L 8 H19  nonzero cells:  142,470
+  L 9 H 1  nonzero cells:  142,470
+  L10 H 9  nonzero cells:  142,883
+  L11 H 1  nonzero cells:  143,009
+  L11 H16  nonzero cells:  141,022
+  L14 H 9  nonzero cells:  140,831
+  L14 H14  nonzero cells:  131,286
+  L15 H 2  nonzero cells:  143,444
+  L16 H17  nonzero cells:  142,574
+  L17 H18  nonzero cells:  119,623
+  L19 H 0  nonzero cells:  118,187
+  L22 H14  nonzero cells:  142,895
+  L26 H16  nonzero cells:  139,614
+  L30 H 1  nonzero cells:  142,702
+  L32 H18  nonzero cells:  140,595
+  L32 H13  nonzero cells:  141,609
+
+Total nonzero-diff cells in circuit heads: 3,537,970
+
+Top 20 cells by attribution:
+    L   H     q     k         attr     |diff|
+  ---------------------------------------------
+  L 6 H 3   316   356   +0.394986   0.056147
+  L11 H 1   182   164   +0.327406   0.196448
+  L 6 H19   316   182   +0.231121   0.077539
+  L10 H 9   182   316   +0.199112   0.157787
+  L 8 H19   316   338   +0.163011   0.143850
+  L 5 H19   182   160   +0.153340   0.033628
+  L 7 H13   182   139   +0.132788   0.128904
+  L 7 H13   316   316   +0.127400   0.112129
+  L14 H 9   182   316   +0.104311   0.172110
+  L26 H16   184   317   +0.085818   0.570949
+  L16 H17   182   164   +0.078574   0.120908
+  L14 H14   182   176   +0.069806   0.125942
+  L 7 H16   316   345   +0.066534   0.057710
+  L 9 H 1   158   164   +0.063203   0.151169
+  L15 H 2   182   164   +0.059651   0.103438
+  L 7 H13   180   180   +0.059648   0.142797
+  L10 H 9   316   316   +0.056088   0.236479
+  L 6 H 8   316   327   +0.054408   0.027104
+  L19 H 0   184   182   +0.051835   0.321007
+  L32 H18   314   181   +0.043761   0.115737
+
+Cell attribution distribution:
+  Positive: 1,782,030  Negative: 1,752,934
+  90th pct: +0.000001  (353,798 cells above)
+  95th pct: +0.000002  (176,899 cells above)
+  99th pct: +0.000014  (35,380 cells above)
+  99.9th pct: +0.000174  (3,539 cells above)
+
+Saved to reports/outputs/2B61A_cell_attr_circuit.pt
+
+============================================================
+CELL-LEVEL SUFFICIENCY  (circuit heads, protect top-K cells)
+============================================================
+  Positive-attr cells in circuit: 1,782,030
+  K=     0  ( 0 heads) → metric=0.0279  faith=0.0%
+  K=     1  ( 1 heads) → metric=0.0279  faith=0.0%
+  K=     2  ( 2 heads) → metric=0.0279  faith=0.0%
+  K=     5  ( 4 heads) → metric=0.0279  faith=0.0%
+  K=    10  ( 8 heads) → metric=0.0431  faith=2.8%
+  K=    20  (13 heads) → metric=0.0467  faith=3.5%
+  K=    50  (17 heads) → metric=0.1305  faith=18.8%
+  K=   100  (18 heads) → metric=0.2449  faith=39.8%
+  K=   200  (18 heads) → metric=0.3513  faith=59.2%
+  K=   500  (18 heads) → metric=0.3700  faith=62.7%
+  K=  1000  (18 heads) → metric=0.3766  faith=63.9%
+  K=  2000  (18 heads) → metric=0.4155  faith=71.0%
+  *** Target 70% reached at K=2000 cells ***
+  K=  5000  (18 heads) → metric=0.4180  faith=71.5%
+  K= 10000  (18 heads) → metric=0.4207  faith=72.0%
+  K= 20000  (18 heads) → metric=0.4224  faith=72.3%
+  K= 50000  (18 heads) → metric=0.4258  faith=72.9%
+  K=100000  (18 heads) → metric=0.4285  faith=73.4%
+  K=200000  (18 heads) → metric=0.4313  faith=73.9%
+  K=500000  (18 heads) → metric=0.4337  faith=74.3%
+  K=1000000  (18 heads) → metric=0.4351  faith=74.6%
+
+Baselines: clean=0.5738  corrupt=0.0279
+Circuit: 2000 cells (within 27 heads) → 70% faithfulness
+Saved to reports/outputs/2B61A_cell_sufficiency_circuit.pt
+
+======================================================================
+MOTIF EXTRACTION — 27 circuit heads
+======================================================================
+  ss1=[177..187]  ss2=[311..321]  flkL=[133..176]  flkR=[322..365]  SSE_GAP=134
+
+  L 0 H 6 [attr_rank#14]  attr=+0.1058 (indir=+0.0529 dir=+0.0529)  | DISTRIBUTED
+       Keys  (top-1=31% top-2=61% top-3=62%):
+         k= 134 [flkL ]   0.1094   30.9%  ██████
+         k= 366 [other]   0.1072   30.3%  ██████
+         k= 356 [flkR ]   0.0018    0.5%  
+         k= 346 [flkR ]   0.0017    0.5%  
+         k= 333 [flkR ]   0.0012    0.3%  
+         … 374 more keys  (37% of mass)
+       Queries:
+         q= 160 [flkL ]   0.0209    5.9%
+         q= 134 [flkL ]   0.0201    5.7%
+         q= 356 [flkR ]   0.0179    5.1%
+         q= 366 [other]   0.0151    4.3%
+         q= 355 [flkR ]   0.0144    4.1%
+         … 374 more queries
+       Offsets (q−k), top-2=7%  [+26, -10]:
+         Δ=   +26    3.7%
+         Δ=   -10    3.6%
+         Δ=   -11    2.6%
+         Δ=   +12    2.3%
+         Δ=   -24    1.6%
+
+  L 0 H 7 [attr_rank#10]  attr=+0.1464 (indir=+0.0732 dir=+0.0732)  | DISTRIBUTED
+       Keys  (top-1=38% top-2=69% top-3=69%):
+         k= 366 [other]   0.2287   37.7%  ███████
+         k= 134 [flkL ]   0.1884   31.1%  ██████
+         k= 378 [other]   0.0031    0.5%  
+         k= 171 [flkL ]   0.0031    0.5%  
+         k= 367 [other]   0.0020    0.3%  
+         … 374 more keys  (30% of mass)
+       Queries:
+         q= 356 [flkR ]   0.0364    6.0%
+         q= 160 [flkL ]   0.0285    4.7%
+         q= 378 [other]   0.0248    4.1%
+         q= 134 [flkL ]   0.0238    3.9%
+         q= 355 [flkR ]   0.0179    3.0%
+         … 374 more queries
+       Offsets (q−k), top-2=7%  [+12, +26]:
+         Δ=   +12    3.8%
+         Δ=   +26    3.6%
+         Δ=    -8    2.5%
+         Δ=   -10    2.3%
+         Δ=    +0    2.1% ← self
+
+  L 1 H 8 [attr_rank#25]  attr=+0.0660 (indir=+0.0330 dir=+0.0330)  | DISTRIBUTED | LOCAL
+       Keys  (top-1=10% top-2=15% top-3=18%):
+         k= 366 [other]   0.0295    9.8%  █
+         k= 365 [flkR ]   0.0144    4.8%  
+         k= 180 [ss1  ]   0.0104    3.5%  
+         k= 360 [flkR ]   0.0104    3.5%  
+         k= 134 [flkL ]   0.0089    3.0%  
+         … 374 more keys  (75% of mass)
+       Queries:
+         q= 362 [flkR ]   0.0251    8.4%
+         q= 363 [flkR ]   0.0166    5.5%
+         q= 356 [flkR ]   0.0156    5.2%
+         q= 327 [flkR ]   0.0126    4.2%
+         q= 175 [flkL ]   0.0124    4.1%
+         … 374 more queries
+       Offsets (q−k), top-2=65%  [-4, -5]:
+         Δ=    -4   41.7% ← ±4
+         Δ=    -5   22.9% ← ±5
+         Δ=    -3   20.4% ← ±3
+         Δ=    -6    1.6%
+         Δ=    -2    1.5% ← ±2
+
+  L 1 H13 [attr_rank#26]  attr=+0.0640 (indir=+0.0320 dir=+0.0320)  | DISTRIBUTED
+       Keys  (top-1=33% top-2=42% top-3=44%):
+         k= 366 [other]   0.2172   32.6%  ██████
+         k= 378 [other]   0.0617    9.3%  █
+         k= 364 [flkR ]   0.0131    2.0%  
+         k= 362 [flkR ]   0.0109    1.6%  
+         k= 365 [flkR ]   0.0107    1.6%  
+         … 374 more keys  (53% of mass)
+       Queries:
+         q= 316 [ss2  ]   0.0468    7.0%
+         q= 359 [flkR ]   0.0425    6.4%
+         q= 356 [flkR ]   0.0353    5.3%
+         q= 362 [flkR ]   0.0277    4.2%
+         q= 175 [flkL ]   0.0248    3.7%
+         … 374 more queries
+       Offsets (q−k), top-2=8%  [-7, -50]:
+         Δ=    -7    4.4%
+         Δ=   -50    4.1%
+         Δ=   -10    3.7%
+         Δ=    -4    3.6% ← ±4
+         Δ=    -6    2.9%
+
+  L 5 H19 [attr_rank#13]  attr=+0.1085 (indir=+0.0543 dir=+0.0543)  | DISTRIBUTED
+       Keys  (top-1=52% top-2=55% top-3=57%):
+         k= 160 [flkL ]   0.2355   51.9%  ██████████
+         k= 378 [other]   0.0158    3.5%  
+         k= 377 [other]   0.0089    2.0%  
+         k= 376 [other]   0.0078    1.7%  
+         k= 369 [other]   0.0074    1.6%  
+         … 374 more keys  (39% of mass)
+       Queries:
+         q= 182 [ss1  ]   0.1668   36.7%
+         q= 356 [flkR ]   0.0496   10.9%
+         q= 164 [flkL ]   0.0276    6.1%
+         q= 158 [flkL ]   0.0263    5.8%
+         q= 316 [ss2  ]   0.0227    5.0%
+         … 374 more queries
+       Offsets (q−k), top-2=40%  [+22, +4]:
+         Δ=   +22   33.9%
+         Δ=    +4    5.8% ← ±4
+         Δ=    -2    5.0% ← ±2
+         Δ=   -22    1.8%
+         Δ=   -21    1.5%
+
+  L 6 H 3 [attr_rank#1]  attr=+0.4329 (indir=+0.2164 dir=+0.2164)  | DISTRIBUTED
+       Keys  (top-1=56% top-2=59% top-3=61%):
+         k= 356 [flkR ]   0.4201   56.1%  ███████████
+         k= 161 [flkL ]   0.0202    2.7%  
+         k= 364 [flkR ]   0.0190    2.5%  
+         k= 134 [flkL ]   0.0161    2.2%  
+         k= 366 [other]   0.0137    1.8%  
+         … 374 more keys  (35% of mass)
+       Queries:
+         q= 316 [ss2  ]   0.4640   62.0%
+         q= 158 [flkL ]   0.0354    4.7%
+         q= 182 [ss1  ]   0.0136    1.8%
+         q= 338 [flkR ]   0.0082    1.1%
+         q= 134 [flkL ]   0.0067    0.9%
+         … 374 more queries
+       Offsets (q−k), top-2=54%  [-40, -198]:
+         Δ=   -40   52.9%
+         Δ=  -198    1.5%
+         Δ=    -7    1.0%
+         Δ=   -11    0.7%
+         Δ=   -33    0.6%
+
+  L 6 H 8 [attr_rank#24]  attr=+0.0715 (indir=+0.0358 dir=+0.0358)  | DISTRIBUTED
+       Keys  (top-1=22% top-2=28% top-3=31%):
+         k= 327 [flkR ]   0.0566   22.2%  ████
+         k= 356 [flkR ]   0.0143    5.6%  █
+         k= 134 [flkL ]   0.0069    2.7%  
+         k= 136 [flkL ]   0.0054    2.1%  
+         k= 362 [flkR ]   0.0050    2.0%  
+         … 374 more keys  (65% of mass)
+       Queries:
+         q= 316 [ss2  ]   0.0701   27.5%
+         q= 182 [ss1  ]   0.0128    5.0%
+         q= 345 [flkR ]   0.0122    4.8%
+         q= 347 [flkR ]   0.0092    3.6%
+         q= 158 [flkL ]   0.0087    3.4%
+         … 374 more queries
+       Offsets (q−k), top-2=29%  [-11, -9]:
+         Δ=   -11   24.6%
+         Δ=    -9    4.3%
+         Δ=   -10    2.9%
+         Δ=    -8    1.7%
+         Δ=   -13    1.4%
+
+  L 6 H17 [attr_rank#19]  attr=+0.0818 (indir=+0.0409 dir=+0.0409)  | DISTRIBUTED
+       Keys  (top-1=11% top-2=15% top-3=18%):
+         k= 134 [flkL ]   0.1390   10.9%  ██
+         k= 139 [flkL ]   0.0494    3.9%  
+         k= 360 [flkR ]   0.0426    3.3%  
+         k= 144 [flkL ]   0.0371    2.9%  
+         k= 362 [flkR ]   0.0351    2.8%  
+         … 374 more keys  (76% of mass)
+       Queries:
+         q= 139 [flkL ]   0.1217    9.5%
+         q= 133 [flkL ]   0.0673    5.3%
+         q= 182 [ss1  ]   0.0665    5.2%
+         q= 134 [flkL ]   0.0627    4.9%
+         q= 367 [other]   0.0511    4.0%
+         … 374 more queries
+       Offsets (q−k), top-2=20%  [+0, +5]:
+         Δ=    +0   16.0% ← self
+         Δ=    +5    4.3% ← ±5
+         Δ=   +16    2.8%
+         Δ=   -16    2.8%
+         Δ=    +7    2.8%
+
+  L 6 H19 [attr_rank#8]  attr=+0.1472 (indir=+0.0736 dir=+0.0735)  | DUAL-ANCHOR
+       Keys  (top-1=59% top-2=72% top-3=76%):
+         k= 182 [ss1  ]   0.5248   58.9%  ███████████
+         k= 158 [flkL ]   0.1140   12.8%  ██
+         k= 164 [flkL ]   0.0383    4.3%  
+         k=   0 [other]   0.0232    2.6%  
+         k= 378 [other]   0.0169    1.9%  
+         … 374 more keys  (19% of mass)
+       Queries:
+         q= 316 [ss2  ]   0.3360   37.7%
+         q= 182 [ss1  ]   0.0262    2.9%
+         q= 179 [ss1  ]   0.0126    1.4%
+         q= 338 [flkR ]   0.0121    1.4%
+         q= 180 [ss1  ]   0.0113    1.3%
+         … 374 more queries
+       Offsets (q−k), top-2=35%  [+134, +158]:
+         Δ=  +134   26.0% ← ~SSE_GAP
+         Δ=  +158    8.8%
+         Δ=  +152    2.2%
+         Δ=    +0    1.8% ← self
+         Δ=  +156    1.1%
+
+  L 7 H13 [attr_rank#2]  attr=+0.3529 (indir=+0.1764 dir=+0.1764)  | DISTRIBUTED
+       Keys  (top-1=15% top-2=25% top-3=34%):
+         k= 134 [flkL ]   0.2377   14.8%  ██
+         k= 139 [flkL ]   0.1622   10.1%  ██
+         k= 316 [ss2  ]   0.1394    8.7%  █
+         k= 180 [ss1  ]   0.0632    3.9%  
+         k= 159 [flkL ]   0.0484    3.0%  
+         … 374 more keys  (59% of mass)
+       Queries:
+         q= 182 [ss1  ]   0.2592   16.2%
+         q= 316 [ss2  ]   0.1554    9.7%
+         q= 158 [flkL ]   0.0959    6.0%
+         q= 180 [ss1  ]   0.0744    4.6%
+         q= 181 [ss1  ]   0.0579    3.6%
+         … 374 more queries
+       Offsets (q−k), top-2=34%  [+0, +43]:
+         Δ=    +0   24.2% ← self
+         Δ=   +43    9.5%
+         Δ=   +48    8.0%
+         Δ=   +25    3.4%
+         Δ=   +32    2.3%
+
+  L 7 H16 [attr_rank#7]  attr=+0.1607 (indir=+0.0804 dir=+0.0803)  | DISTRIBUTED
+       Keys  (top-1=18% top-2=32% top-3=43%):
+         k= 345 [flkR ]   0.0701   18.2%  ███
+         k= 182 [ss1  ]   0.0533   13.9%  ██
+         k= 347 [flkR ]   0.0405   10.5%  ██
+         k= 366 [other]   0.0044    1.2%  
+         k= 316 [ss2  ]   0.0038    1.0%  
+         … 374 more keys  (55% of mass)
+       Queries:
+         q= 316 [ss2  ]   0.1580   41.1%
+         q= 158 [flkL ]   0.0600   15.6%
+         q= 182 [ss1  ]   0.0096    2.5%
+         q= 164 [flkL ]   0.0087    2.3%
+         q= 160 [flkL ]   0.0072    1.9%
+         … 374 more queries
+       Offsets (q−k), top-2=29%  [-29, -24]:
+         Δ=   -29   18.0%
+         Δ=   -24   11.1%
+         Δ=   -31    9.9%
+         Δ=   -22    2.5%
+         Δ=    +0    1.5% ← self
+
+  L 8 H19 [attr_rank#5]  attr=+0.2242 (indir=+0.1121 dir=+0.1121)  | DISTRIBUTED
+       Keys  (top-1=39% top-2=43% top-3=45%):
+         k= 338 [flkR ]   0.1729   39.3%  ███████
+         k= 366 [other]   0.0173    3.9%  
+         k= 363 [flkR ]   0.0082    1.9%  
+         k= 362 [flkR ]   0.0072    1.6%  
+         k= 313 [ss2  ]   0.0054    1.2%  
+         … 374 more keys  (52% of mass)
+       Queries:
+         q= 316 [ss2  ]   0.2208   50.2%
+         q= 182 [ss1  ]   0.0144    3.3%
+         q= 333 [flkR ]   0.0095    2.2%
+         q= 158 [flkL ]   0.0069    1.6%
+         q= 164 [flkL ]   0.0066    1.5%
+         … 374 more queries
+       Offsets (q−k), top-2=39%  [-22, -33]:
+         Δ=   -22   37.3%
+         Δ=   -33    1.8%
+         Δ=   -30    1.3%
+         Δ=   -26    1.2%
+         Δ=    +3    1.1% ← ±3
+
+  L 9 H 1 [attr_rank#20]  attr=+0.0787 (indir=+0.0394 dir=+0.0394)  | DISTRIBUTED
+       Keys  (top-1=47% top-2=53% top-3=58%):
+         k= 164 [flkL ]   0.2508   47.3%  █████████
+         k= 316 [ss2  ]   0.0319    6.0%  █
+         k= 160 [flkL ]   0.0228    4.3%  
+         k= 165 [flkL ]   0.0178    3.4%  
+         k= 161 [flkL ]   0.0096    1.8%  
+         … 374 more keys  (37% of mass)
+       Queries:
+         q= 316 [ss2  ]   0.0905   17.1%
+         q= 158 [flkL ]   0.0864   16.3%
+         q= 164 [flkL ]   0.0337    6.3%
+         q= 182 [ss1  ]   0.0229    4.3%
+         q= 181 [ss1  ]   0.0175    3.3%
+         … 374 more queries
+       Offsets (q−k), top-2=19%  [-6, +0]:
+         Δ=    -6   12.1%
+         Δ=    +0    6.5% ← self
+         Δ=  +152    5.9%
+         Δ=   +17    3.1%
+         Δ=   +18    2.6%
+
+  L10 H 9 [attr_rank#3]  attr=+0.3379 (indir=+0.1689 dir=+0.1689)  | SINGLE-ANCHOR
+       Keys  (top-1=63% top-2=69% top-3=71%):
+         k= 316 [ss2  ]   0.4802   63.4%  ████████████
+         k=   0 [other]   0.0452    6.0%  █
+         k= 164 [flkL ]   0.0144    1.9%  
+         k= 318 [ss2  ]   0.0117    1.5%  
+         k= 182 [ss1  ]   0.0102    1.3%  
+         … 374 more keys  (26% of mass)
+       Queries:
+         q= 182 [ss1  ]   0.2173   28.7%
+         q= 316 [ss2  ]   0.0759   10.0%
+         q= 158 [flkL ]   0.0286    3.8%
+         q= 160 [flkL ]   0.0202    2.7%
+         q= 164 [flkL ]   0.0178    2.4%
+         … 374 more queries
+       Offsets (q−k), top-2=34%  [-134, +0]:
+         Δ=  -134   26.4% ← ~SSE_GAP
+         Δ=    +0    7.8% ← self
+         Δ=  -158    3.2%
+         Δ=  -156    2.1%
+         Δ=  -133    1.7% ← ~SSE_GAP
+
+  L11 H 1 [attr_rank#4]  attr=+0.3366 (indir=+0.1683 dir=+0.1683)  | DISTRIBUTED
+       Keys  (top-1=51% top-2=55% top-3=57%):
+         k= 164 [flkL ]   0.3759   51.1%  ██████████
+         k= 160 [flkL ]   0.0325    4.4%  
+         k= 165 [flkL ]   0.0123    1.7%  
+         k= 134 [flkL ]   0.0101    1.4%  
+         k= 139 [flkL ]   0.0083    1.1%  
+         … 374 more keys  (40% of mass)
+       Queries:
+         q= 182 [ss1  ]   0.3966   53.9%
+         q= 168 [flkL ]   0.0163    2.2%
+         q= 186 [ss1  ]   0.0154    2.1%
+         q= 167 [flkL ]   0.0128    1.7%
+         q= 183 [ss1  ]   0.0125    1.7%
+         … 374 more queries
+       Offsets (q−k), top-2=48%  [+18, +22]:
+         Δ=   +18   44.8%
+         Δ=   +22    3.6%
+         Δ=    +4    2.2% ← ±4
+         Δ=    +3    1.6% ← ±3
+         Δ=   +19    1.5%
+
+  L11 H16 [attr_rank#15]  attr=+0.0933 (indir=+0.0466 dir=+0.0466)  | DISTRIBUTED
+       Keys  (top-1=23% top-2=35% top-3=46%):
+         k= 158 [flkL ]   0.1408   23.0%  ████
+         k= 316 [ss2  ]   0.0740   12.1%  ██
+         k= 164 [flkL ]   0.0647   10.6%  ██
+         k= 340 [flkR ]   0.0290    4.7%  
+         k= 160 [flkL ]   0.0234    3.8%  
+         … 374 more keys  (46% of mass)
+       Queries:
+         q= 316 [ss2  ]   0.0822   13.4%
+         q= 182 [ss1  ]   0.0527    8.6%
+         q= 164 [flkL ]   0.0211    3.4%
+         q= 311 [ss2  ]   0.0141    2.3%
+         q= 179 [ss1  ]   0.0133    2.2%
+         … 374 more queries
+       Offsets (q−k), top-2=9%  [+18, +0]:
+         Δ=   +18    4.7%
+         Δ=    +0    4.0% ← self
+         Δ=  +156    3.1%
+         Δ=  +152    2.7%
+         Δ=   +22    1.3%
+
+  L14 H 9 [attr_rank#11]  attr=+0.1270 (indir=+0.0635 dir=+0.0635)  | DISTRIBUTED
+       Keys  (top-1=36% top-2=44% top-3=51%):
+         k= 316 [ss2  ]   0.2240   36.1%  ███████
+         k= 158 [flkL ]   0.0481    7.8%  █
+         k= 164 [flkL ]   0.0466    7.5%  █
+         k= 160 [flkL ]   0.0333    5.4%  █
+         k= 182 [ss1  ]   0.0274    4.4%  
+         … 374 more keys  (39% of mass)
+       Queries:
+         q= 182 [ss1  ]   0.1598   25.8%
+         q= 181 [ss1  ]   0.0256    4.1%
+         q= 317 [ss2  ]   0.0251    4.1%
+         q= 184 [ss1  ]   0.0221    3.6%
+         q= 316 [ss2  ]   0.0212    3.4%
+         … 374 more queries
+       Offsets (q−k), top-2=20%  [-134, +24]:
+         Δ=  -134   16.9% ← ~SSE_GAP
+         Δ=   +24    3.4%
+         Δ=    -2    2.6% ← ±2
+         Δ=    +1    2.2% ← attend-prev
+         Δ=    +0    2.1% ← self
+
+  L14 H14 [attr_rank#16]  attr=+0.0854 (indir=+0.0427 dir=+0.0427)  | DISTRIBUTED
+       Keys  (top-1=24% top-2=30% top-3=36%):
+         k= 176 [flkL ]   0.0815   23.7%  ████
+         k= 182 [ss1  ]   0.0223    6.5%  █
+         k= 316 [ss2  ]   0.0199    5.8%  █
+         k= 160 [flkL ]   0.0164    4.8%  
+         k= 158 [flkL ]   0.0136    4.0%  
+         … 374 more keys  (55% of mass)
+       Queries:
+         q= 182 [ss1  ]   0.1041   30.3%
+         q= 164 [flkL ]   0.0338    9.9%
+         q= 184 [ss1  ]   0.0157    4.6%
+         q= 186 [ss1  ]   0.0085    2.5%
+         q= 314 [ss2  ]   0.0071    2.1%
+         … 374 more queries
+       Offsets (q−k), top-2=41%  [+6, +5]:
+         Δ=    +6   31.1%
+         Δ=    +5    9.8% ← ±5
+         Δ=    +4    9.2% ← ±4
+         Δ=    +7    6.4%
+         Δ=    +8    4.0%
+
+  L15 H 2 [attr_rank#21]  attr=+0.0753 (indir=+0.0377 dir=+0.0376)  | DISTRIBUTED
+       Keys  (top-1=49% top-2=55% top-3=60%):
+         k= 164 [flkL ]   0.1665   48.6%  █████████
+         k= 160 [flkL ]   0.0229    6.7%  █
+         k= 316 [ss2  ]   0.0161    4.7%  
+         k= 161 [flkL ]   0.0075    2.2%  
+         k= 165 [flkL ]   0.0057    1.7%  
+         … 374 more keys  (36% of mass)
+       Queries:
+         q= 182 [ss1  ]   0.0816   23.8%
+         q= 184 [ss1  ]   0.0263    7.7%
+         q= 186 [ss1  ]   0.0142    4.1%
+         q= 183 [ss1  ]   0.0089    2.6%
+         q= 315 [ss2  ]   0.0081    2.4%
+         … 374 more queries
+       Offsets (q−k), top-2=23%  [+18, +20]:
+         Δ=   +18   17.8%
+         Δ=   +20    4.9%
+         Δ=   +22    4.2%
+         Δ=   +19    2.4%
+         Δ=  +151    1.7%
+
+  L16 H17 [attr_rank#18]  attr=+0.0830 (indir=+0.0415 dir=+0.0415)  | DISTRIBUTED
+       Keys  (top-1=30% top-2=34% top-3=37%):
+         k= 164 [flkL ]   0.1120   30.3%  ██████
+         k= 323 [flkR ]   0.0135    3.6%  
+         k= 321 [ss2  ]   0.0105    2.8%  
+         k= 171 [flkL ]   0.0092    2.5%  
+         k= 320 [ss2  ]   0.0090    2.4%  
+         … 374 more keys  (58% of mass)
+       Queries:
+         q= 182 [ss1  ]   0.1333   36.0%
+         q= 184 [ss1  ]   0.0162    4.4%
+         q= 186 [ss1  ]   0.0147    4.0%
+         q= 314 [ss2  ]   0.0074    2.0%
+         q= 181 [ss1  ]   0.0068    1.8%
+         … 374 more queries
+       Offsets (q−k), top-2=28%  [+18, +0]:
+         Δ=   +18   21.6%
+         Δ=    +0    6.1% ← self
+         Δ=    +1    3.1% ← attend-prev
+         Δ=    +2    2.8% ← ±2
+         Δ=   +22    2.1%
+
+  L17 H18 [attr_rank#22]  attr=+0.0739 (indir=+0.0294 dir=+0.0446)  | DISTRIBUTED
+       Keys  (top-1=12% top-2=17% top-3=20%):
+         k= 158 [flkL ]   0.0337   11.5%  ██
+         k= 184 [ss1  ]   0.0148    5.1%  █
+         k= 164 [flkL ]   0.0103    3.5%  
+         k= 182 [ss1  ]   0.0057    1.9%  
+         k= 161 [flkL ]   0.0056    1.9%  
+         … 374 more keys  (76% of mass)
+       Queries:
+         q= 182 [ss1  ]   0.0359   12.3%
+         q= 317 [ss2  ]   0.0166    5.7%
+         q= 308 [other]   0.0087    3.0%
+         q= 314 [ss2  ]   0.0087    3.0%
+         q= 315 [ss2  ]   0.0086    3.0%
+         … 374 more queries
+       Offsets (q−k), top-2=17%  [+24, +133]:
+         Δ=   +24   11.0%
+         Δ=  +133    5.8% ← ~SSE_GAP
+         Δ=    +2    2.7% ← ±2
+         Δ=   +26    2.3%
+         Δ=    +0    2.2% ← self
+
+  L19 H 0 [attr_rank#23]  attr=+0.0730 (indir=+0.0365 dir=+0.0365)  | DISTRIBUTED | LOCAL
+       Keys  (top-1=22% top-2=27% top-3=31%):
+         k= 182 [ss1  ]   0.0542   22.2%  ████
+         k= 316 [ss2  ]   0.0117    4.8%  
+         k= 176 [flkL ]   0.0093    3.8%  
+         k= 181 [ss1  ]   0.0068    2.8%  
+         k= 171 [flkL ]   0.0060    2.5%  
+         … 374 more keys  (64% of mass)
+       Queries:
+         q= 184 [ss1  ]   0.0668   27.4%
+         q= 317 [ss2  ]   0.0131    5.4%
+         q= 179 [ss1  ]   0.0103    4.2%
+         q= 183 [ss1  ]   0.0062    2.5%
+         q= 146 [flkL ]   0.0057    2.3%
+         … 374 more queries
+       Offsets (q−k), top-2=52%  [+2, +7]:
+         Δ=    +2   34.3% ← ±2
+         Δ=    +7   17.5%
+         Δ=    +8   16.1%
+         Δ=    +1    6.8% ← attend-prev
+         Δ=    -5    2.3% ← ±5
+
+  L22 H14 [attr_rank#9]  attr=+0.1470 (indir=+0.0065 dir=+0.1405)  | DISTRIBUTED
+       Keys  (top-1=14% top-2=24% top-3=31%):
+         k= 184 [ss1  ]   0.0473   14.0%  ██
+         k= 185 [ss1  ]   0.0356   10.5%  ██
+         k= 182 [ss1  ]   0.0225    6.6%  █
+         k= 186 [ss1  ]   0.0186    5.5%  █
+         k= 157 [flkL ]   0.0153    4.5%  
+         … 374 more keys  (59% of mass)
+       Queries:
+         q= 317 [ss2  ]   0.0461   13.6%
+         q= 318 [ss2  ]   0.0429   12.6%
+         q= 315 [ss2  ]   0.0343   10.1%
+         q= 314 [ss2  ]   0.0246    7.2%
+         q= 181 [ss1  ]   0.0208    6.1%
+         … 374 more queries
+       Offsets (q−k), top-2=39%  [+133, +134]:
+         Δ=  +133   33.0% ← ~SSE_GAP
+         Δ=  +134    6.4% ← ~SSE_GAP
+         Δ=   +24    4.4%
+         Δ=  +135    3.0% ← ~SSE_GAP
+         Δ=   +26    1.9%
+
+  L26 H16 [attr_rank#6]  attr=+0.2123 (indir=+0.0287 dir=+0.1836)  | DISTRIBUTED | CROSS_SSE
+       Keys  (top-1=21% top-2=32% top-3=39%):
+         k= 317 [ss2  ]   0.0891   20.8%  ████
+         k= 315 [ss2  ]   0.0489   11.4%  ██
+         k= 314 [ss2  ]   0.0300    7.0%  █
+         k= 318 [ss2  ]   0.0287    6.7%  █
+         k= 345 [flkR ]   0.0245    5.7%  █
+         … 374 more keys  (48% of mass)
+       Queries:
+         q= 184 [ss1  ]   0.0935   21.8%
+         q= 182 [ss1  ]   0.0569   13.3%
+         q= 181 [ss1  ]   0.0387    9.0%
+         q= 315 [ss2  ]   0.0317    7.4%
+         q= 185 [ss1  ]   0.0304    7.1%
+         … 374 more queries
+       Offsets (q−k), top-2=50%  [-133, -30]:
+         Δ=  -133   42.8% ← ~SSE_GAP
+         Δ=   -30    7.5%
+         Δ=   -32    2.0%
+         Δ=    +0    1.8% ← self
+         Δ=   -24    1.6%
+
+  L30 H 1 [attr_rank#27]  attr=+0.0640 (indir=+0.0075 dir=+0.0564)  | DISTRIBUTED
+       Keys  (top-1=15% top-2=27% top-3=35%):
+         k= 316 [ss2  ]   0.0215   14.5%  ██
+         k= 314 [ss2  ]   0.0189   12.8%  ██
+         k= 182 [ss1  ]   0.0112    7.6%  █
+         k= 184 [ss1  ]   0.0070    4.8%  
+         k= 318 [ss2  ]   0.0056    3.8%  
+         … 374 more keys  (57% of mass)
+       Queries:
+         q= 181 [ss1  ]   0.0340   23.0%
+         q= 315 [ss2  ]   0.0155   10.5%
+         q= 183 [ss1  ]   0.0118    8.0%
+         q= 317 [ss2  ]   0.0092    6.3%
+         q= 313 [ss2  ]   0.0083    5.7%
+         … 374 more queries
+       Offsets (q−k), top-2=32%  [-133, +133]:
+         Δ=  -133   20.4% ← ~SSE_GAP
+         Δ=  +133   11.4% ← ~SSE_GAP
+         Δ=  -135    7.3% ← ~SSE_GAP
+         Δ=    -1    3.6% ← attend-next
+         Δ=    +0    3.6% ← self
+
+  L32 H13 [attr_rank#12]  attr=+0.1116 (indir=+0.0000 dir=+0.1116)  | DISTRIBUTED | CROSS_SSE
+       Keys  (top-1=21% top-2=37% top-3=52%):
+         k= 182 [ss1  ]   0.0265   20.9%  ████
+         k= 181 [ss1  ]   0.0207   16.4%  ███
+         k= 315 [ss2  ]   0.0184   14.6%  ██
+         k= 184 [ss1  ]   0.0138   10.9%  ██
+         k= 314 [ss2  ]   0.0120    9.5%  █
+         … 374 more keys  (28% of mass)
+       Queries:
+         q= 182 [ss1  ]   0.0219   17.3%
+         q= 181 [ss1  ]   0.0198   15.7%
+         q= 314 [ss2  ]   0.0194   15.4%
+         q= 313 [ss2  ]   0.0174   13.8%
+         q= 317 [ss2  ]   0.0124    9.8%
+         … 374 more queries
+       Offsets (q−k), top-2=58%  [+133, -133]:
+         Δ=  +133   31.9% ← ~SSE_GAP
+         Δ=  -133   26.6% ← ~SSE_GAP
+         Δ=  +131   14.3% ← ~SSE_GAP
+         Δ=  -135    8.3% ← ~SSE_GAP
+         Δ=  -131    5.1% ← ~SSE_GAP
+
+  L32 H18 [attr_rank#17]  attr=+0.0850 (indir=+0.0000 dir=+0.0850)  | DISTRIBUTED | CROSS_SSE
+       Keys  (top-1=45% top-2=66% top-3=72%):
+         k= 181 [ss1  ]   0.0474   45.2%  █████████
+         k= 182 [ss1  ]   0.0214   20.4%  ████
+         k= 315 [ss2  ]   0.0066    6.3%  █
+         k= 317 [ss2  ]   0.0034    3.2%  
+         k= 184 [ss1  ]   0.0031    2.9%  
+         … 374 more keys  (22% of mass)
+       Queries:
+         q= 314 [ss2  ]   0.0448   42.7%
+         q= 315 [ss2  ]   0.0135   12.8%
+         q= 313 [ss2  ]   0.0084    8.0%
+         q= 182 [ss1  ]   0.0055    5.3%
+         q= 181 [ss1  ]   0.0039    3.8%
+         … 374 more queries
+       Offsets (q−k), top-2=64%  [+133, -133]:
+         Δ=  +133   55.9% ← ~SSE_GAP
+         Δ=  -133    7.6% ← ~SSE_GAP
+         Δ=  +131    7.6% ← ~SSE_GAP
+         Δ=  +135    3.3% ← ~SSE_GAP
+         Δ=  -135    2.4% ← ~SSE_GAP
+
+
+======================================================================
+CIRCUIT SUMMARY  (27 heads → 70% faithfulness)
+======================================================================
+    L   H   rank      total   indirect   direct  anchor         pos
+  --------------------------------------------------------------------
+  L 0 H 6  # 14    +0.1058    +0.0529  +0.0529  DISTRIBUTED    
+  L 0 H 7  # 10    +0.1464    +0.0732  +0.0732  DISTRIBUTED    
+  L 1 H 8  # 25    +0.0660    +0.0330  +0.0330  DISTRIBUTED    LOCAL
+  L 1 H13  # 26    +0.0640    +0.0320  +0.0320  DISTRIBUTED    
+  L 5 H19  # 13    +0.1085    +0.0543  +0.0543  DISTRIBUTED    
+  L 6 H 3  #  1    +0.4329    +0.2164  +0.2164  DISTRIBUTED    
+  L 6 H 8  # 24    +0.0715    +0.0358  +0.0358  DISTRIBUTED    
+  L 6 H17  # 19    +0.0818    +0.0409  +0.0409  DISTRIBUTED    
+  L 6 H19  #  8    +0.1472    +0.0736  +0.0735  DUAL-ANCHOR    
+  L 7 H13  #  2    +0.3529    +0.1764  +0.1764  DISTRIBUTED    
+  L 7 H16  #  7    +0.1607    +0.0804  +0.0803  DISTRIBUTED    
+  L 8 H19  #  5    +0.2242    +0.1121  +0.1121  DISTRIBUTED    
+  L 9 H 1  # 20    +0.0787    +0.0394  +0.0394  DISTRIBUTED    
+  L10 H 9  #  3    +0.3379    +0.1689  +0.1689  SINGLE-ANCHOR  
+  L11 H 1  #  4    +0.3366    +0.1683  +0.1683  DISTRIBUTED    
+  L11 H16  # 15    +0.0933    +0.0466  +0.0466  DISTRIBUTED    
+  L14 H 9  # 11    +0.1270    +0.0635  +0.0635  DISTRIBUTED    
+  L14 H14  # 16    +0.0854    +0.0427  +0.0427  DISTRIBUTED    
+  L15 H 2  # 21    +0.0753    +0.0377  +0.0376  DISTRIBUTED    
+  L16 H17  # 18    +0.0830    +0.0415  +0.0415  DISTRIBUTED    
+  L17 H18  # 22    +0.0739    +0.0294  +0.0446  DISTRIBUTED    
+  L19 H 0  # 23    +0.0730    +0.0365  +0.0365  DISTRIBUTED    LOCAL
+  L22 H14  #  9    +0.1470    +0.0065  +0.1405  DISTRIBUTED    
+  L26 H16  #  6    +0.2123    +0.0287  +0.1836  DISTRIBUTED    CROSS_SSE
+  L30 H 1  # 27    +0.0640    +0.0075  +0.0564  DISTRIBUTED    
+  L32 H13  # 12    +0.1116    +0.0000  +0.1116  DISTRIBUTED    CROSS_SSE
+  L32 H18  # 17    +0.0850    +0.0000  +0.0850  DISTRIBUTED    CROSS_SSE
+
+Done.

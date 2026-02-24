@@ -13,3 +13,5 @@ pdbs/
 CLAUDE.md
 testing
 *.pt 
+*.pkl
+*.npy

@@ -271,7 +271,7 @@ for layer, head, q, k, abs_diff in all_cells_sorted[:20]:
 # One forward+backward through the FULL MODEL gives all ~6M attributions.
 
 print(f"\n{'='*70}")
-print("CELL-LEVEL INDIRECT ATTRIBUTION PATCHING")
+print("CELL-LEVEL ATTRIBUTION PATCHING (indirect + direct)")
 print(f"{'='*70}")
 
 # Reimplement contact head as differentiable ops (from attr_patching_nnsight.py)
@@ -373,7 +373,7 @@ print("Backward complete. Computing indirect attributions...")
 #   sensitivity = grad_h @ V_h.T  shape (L_q, L_k)
 #   attr = diff[h] * sensitivity
 
-cell_attributions = []  # (layer, head, q, k, indirect_attr, abs_diff)
+cell_attributions = []  # (layer, head, q, k, total_attr, abs_diff)
 
 for layer, head in ie_circuit_heads:
     # V reshaped to heads: (B, L, hidden) → (B, num_heads, L, head_dim)
@@ -381,18 +381,28 @@ for layer, head in ie_circuit_heads:
     v_heads = v_full.reshape(B, L, NUM_HEADS, HEAD_DIM).transpose(1, 2)  # (B, H, L, HD)
     v_h = v_heads[0, head]  # (L, HD)
 
-    # Gradient of metric w.r.t. context vector at this layer
+    # --- Indirect sensitivity: through ctx → residual → downstream attn ---
+    # grad_ctx[l] is non-zero only if ctx[l] has downstream path to metric.
+    # For the last layer (layer 32), no downstream layers exist → grad_ctx is None.
     grad_ctx = saved_hooks[f'ctx_{layer}'].grad  # (B, L, hidden)
     if grad_ctx is None:
-        # Last layer may not have gradient flowing back through output[0]
-        # (metric depends on output[1] directly at this layer, not output[0])
-        print(f"  Warning: no grad for ctx at layer {layer}, using zeros")
-        grad_ctx = torch.zeros(B, L, NUM_HEADS * HEAD_DIM, device=device)
-    grad_h = grad_ctx[0, :, head * HEAD_DIM:(head + 1) * HEAD_DIM]  # (L, HD)
+        indirect_sensitivity_LL = torch.zeros(L, L, device=device)
+    else:
+        grad_h = grad_ctx[0, :, head * HEAD_DIM:(head + 1) * HEAD_DIM]  # (L, HD)
+        indirect_sensitivity_LL = grad_h @ v_h.T  # (L, L)
 
-    # Sensitivity matrix: how much metric changes per unit attn change at (q, k)
-    # sensitivity[q, k] = dot(grad_ctx[q, h_slice], V[h, k, :])
-    sensitivity_LL = grad_h @ v_h.T  # (L, L)
+    # --- Direct sensitivity: attn[l,h] → contact head → metric ---
+    # All layers have this path. For layer 32 it's the ONLY path.
+    # attn_weights.retain_grad() was already called so this is always populated.
+    grad_attn = saved_hooks[f'attn_{layer}'].grad  # (B, H, L, L)
+    if grad_attn is not None:
+        direct_sensitivity_LL = grad_attn[0, head]  # (L, L)
+    else:
+        direct_sensitivity_LL = torch.zeros(L, L, device=device)
+
+    # Total attribution = indirect + direct
+    # Indirect dominates for internal layers; only direct exists for the last layer.
+    sensitivity_LL = indirect_sensitivity_LL + direct_sensitivity_LL
 
     # Diff and attribution
     clean_LL = clean_attn_LBHLL[layer][0, head].to(device)
@@ -417,9 +427,10 @@ clear_memory()
 # Sort by attribution (positive = helpful for metric, protect these first)
 cell_attr_sorted = sorted(cell_attributions, key=lambda x: x[4], reverse=True)
 
-print(f"\nTotal cells with indirect attribution: {len(cell_attr_sorted):,d}")
-print(f"\nTop 20 cells by INDIRECT attribution (positive = helpful):")
-print(f"{'Layer':>5} {'Head':>4} {'q':>5} {'k':>5} {'ind_attr':>12} {'|diff|':>10}")
+print(f"\nTotal cells with attribution: {len(cell_attr_sorted):,d}")
+print(f"\nTop 20 cells by attribution (positive = helpful):")
+print(f"  (= indirect via residual stream + direct via contact head)")
+print(f"{'Layer':>5} {'Head':>4} {'q':>5} {'k':>5} {'attr':>12} {'|diff|':>10}")
 print("-" * 50)
 for layer, head, q, k, attr, adiff in cell_attr_sorted[:20]:
     print(f"  L{layer:2d}  H{head:2d}  {q:>4d}  {k:>4d}  {attr:>+11.6f}  {adiff:>10.6f}")
@@ -430,7 +441,7 @@ for layer, head, q, k, attr, adiff in cell_attr_sorted[-20:]:
 
 # Attribution distribution
 all_attrs = torch.tensor([c[4] for c in cell_attr_sorted])
-print(f"\nIndirect attribution distribution:")
+print(f"\nAttribution distribution (indirect + direct):")
 print(f"  Positive: {(all_attrs > 0).sum().item():,d} cells")
 print(f"  Negative: {(all_attrs < 0).sum().item():,d} cells")
 for pct in [90, 95, 99, 99.5, 99.9]:
@@ -523,6 +534,209 @@ torch.save({
     'protein': protein,
 }, f'reports/outputs/{protein}_cell_indirect_attr_results.pt')
 print(f"Saved to reports/outputs/{protein}_cell_indirect_attr_results.pt")
+
+# %% [markdown]
+# ## Motif extractions from top cells by indirect attribution
+
+"""
+
+set a top K for cells : say 5000
+step 1: for each of the top head, print the number of cells that are in the top K and get the key_mass and query_mass 
+step 2: 
+
+"""
+
+
+# %%
+# =============================================================================
+# Motif Extraction: per-head key/query mass, anchor + positional classification
+# =============================================================================
+from collections import defaultdict
+
+topk_cell = 1000
+topk_heads = 30
+ie_circuit_cells = cell_attr_sorted[:topk_cell]
+
+# IE rank lookup (original attribution-ranking order)
+ie_rank = {(l, h): i + 1 for i, (l, h) in enumerate(ie_circuit_heads[:topk_heads])}
+
+# Display in (layer, head) order
+heads_sorted = sorted(ie_circuit_heads[:topk_heads], key=lambda x: (x[0], x[1]))
+
+# Regions (same indexing as q/k values in cells)
+SS1     = set(range(segment.ss1_start, segment.ss1_end))
+SS2     = set(range(segment.ss2_start, segment.ss2_end))
+FLANK_L = set(range(max(0, segment.ss1_start - config["clean_flank"]), segment.ss1_start))
+FLANK_R = set(range(segment.ss2_end, segment.ss2_end + config["clean_flank"]))
+SSE_GAP = segment.ss2_start - segment.ss1_start  # offset between the two contact residues
+
+def classify_pos(pos):
+    if pos in SS1:     return "ss1"
+    if pos in SS2:     return "ss2"
+    if pos in FLANK_L: return "flkL"
+    if pos in FLANK_R: return "flkR"
+    return "other"
+
+# Classification thresholds
+ANCHOR_T1    = 0.60
+ANCHOR_T2    = 0.70
+ANCHOR_T3    = 0.80
+POSITIONAL_T = 0.50
+
+# --- Load path patching data ---
+PATH_TOP_N = 400
+path_pt = f'reports/outputs/{protein}_path_patching_full.pt'
+path_srcdst = {}  # (l, h) -> {'as_src': [(dl, dh, ch, eff), ...], 'as_dst': [...]}
+
+if os.path.exists(path_pt):
+    path_data  = torch.load(path_pt, map_location='cpu', weights_only=False)
+    pass_d_all = path_data['pass_d_results']
+    top_paths  = sorted(pass_d_all, key=lambda x: abs(x['pass_d_effect']), reverse=True)[:PATH_TOP_N]
+    print(f"Loaded {len(pass_d_all)} paths, using top {PATH_TOP_N}")
+    for r in top_paths:
+        sl, sh = int(r['source'][0]), int(r['source'][1])
+        dl, dh = int(r['dest'][0]),   int(r['dest'][1])
+        ch, eff = r['channel'], r['pass_d_effect']
+        path_srcdst.setdefault((sl, sh), {'as_src': [], 'as_dst': []})['as_src'].append((dl, dh, ch, eff))
+        path_srcdst.setdefault((dl, dh), {'as_src': [], 'as_dst': []})['as_dst'].append((sl, sh, ch, eff))
+    for info in path_srcdst.values():
+        info['as_src'].sort(key=lambda x: abs(x[3]), reverse=True)
+        info['as_dst'].sort(key=lambda x: abs(x[3]), reverse=True)
+else:
+    print(f"Warning: no path patching file at {path_pt}")
+
+print(f"\n{'='*70}")
+print(f"MOTIF ANALYSIS — top {topk_cell} cells by attribution")
+print(f"{'='*70}")
+print(f"  ss1={segment.ss1_start}–{segment.ss1_end-1}  "
+      f"ss2={segment.ss2_start}–{segment.ss2_end-1}  "
+      f"flkL={segment.ss1_start - config['clean_flank']}–{segment.ss1_start-1}  "
+      f"flkR={segment.ss2_end}–{segment.ss2_end + config['clean_flank']-1}  "
+      f"SSE_GAP={SSE_GAP}")
+print()
+
+summary_rows = []
+
+for l, h in heads_sorted:
+    rank = ie_rank[(l, h)]
+    head_cells = [(q, k, attr, adiff)
+                  for (ll, hh, q, k, attr, adiff) in ie_circuit_cells
+                  if ll == l and hh == h]
+    n_cells    = len(head_cells)
+    total_attr = sum(a for _, _, a, _ in head_cells)
+
+    if n_cells == 0:
+        summary_rows.append((rank, l, h, 0, 0.0, "—", ""))
+        print(f"  L{l:2d} H{h:2d} [rank#{rank:2d}]: 0 cells in top-{topk_cell}")
+        continue
+
+    # Key mass: signed sum per key position
+    key_mass = defaultdict(float)
+    for q, k, attr, _ in head_cells:
+        key_mass[k] += attr
+    key_sorted  = sorted(key_mass.items(), key=lambda x: x[1], reverse=True)
+    total_abs_k = sum(abs(v) for v in key_mass.values())
+
+    # Query mass: signed sum per query position
+    qry_mass = defaultdict(float)
+    for q, k, attr, _ in head_cells:
+        qry_mass[q] += attr
+    qry_sorted  = sorted(qry_mass.items(), key=lambda x: x[1], reverse=True)
+    total_abs_q = sum(abs(v) for v in qry_mass.values())
+
+    # Offset distribution (q - k), weighted by abs(attr)
+    off_mass = defaultdict(float)
+    for q, k, attr, _ in head_cells:
+        off_mass[q - k] += abs(attr)
+    off_sorted  = sorted(off_mass.items(), key=lambda x: x[1], reverse=True)
+    total_off   = sum(off_mass.values())
+
+    # Anchor classification
+    t1 = abs(key_sorted[0][1]) / total_abs_k if total_abs_k else 0
+    t2 = sum(abs(key_sorted[i][1]) for i in range(min(2, len(key_sorted)))) / total_abs_k if total_abs_k else 0
+    t3 = sum(abs(key_sorted[i][1]) for i in range(min(3, len(key_sorted)))) / total_abs_k if total_abs_k else 0
+    anchor = ("SINGLE-ANCHOR" if t1 >= ANCHOR_T1 else
+              "DUAL-ANCHOR"   if t2 >= ANCHOR_T2 else
+              "MULTI-ANCHOR"  if t3 >= ANCHOR_T3 else
+              "DISTRIBUTED")
+
+    # Positional classification (distinguish cross-SSE offset from local positional)
+    top2_off_frac = sum(v for _, v in off_sorted[:2]) / total_off if total_off else 0
+    top_offset    = off_sorted[0][0] if off_sorted else 0
+    is_cross_sse  = abs(abs(top_offset) - SSE_GAP) <= 3
+    if is_cross_sse and top2_off_frac >= POSITIONAL_T:
+        pos_tag = "CROSS_SSE"
+    elif top2_off_frac >= POSITIONAL_T and abs(top_offset) <= 10:
+        pos_tag = "POSITIONAL"
+    else:
+        pos_tag = ""
+
+    tags = anchor + (f" | {pos_tag}" if pos_tag else "")
+    summary_rows.append((rank, l, h, n_cells, total_attr, anchor, pos_tag))
+    print(f"  L{l:2d} H{h:2d} [rank#{rank:2d}]: {n_cells} cells | attr={total_attr:+.4f} | {tags}")
+
+    # Key mass
+    print(f"       Keys  (top-1={t1:.0%}, top-2={t2:.0%}, top-3={t3:.0%}):")
+    for k_pos, k_attr in key_sorted[:5]:
+        frac = abs(k_attr) / total_abs_k * 100
+        bar  = "█" * int(frac / 5)
+        print(f"         k={k_pos:>4d} [{classify_pos(k_pos):5s}]  {k_attr:>+7.4f}  {frac:>5.1f}%  {bar}")
+    if len(key_sorted) > 5:
+        rest_pct = sum(abs(v) for _, v in key_sorted[5:]) / total_abs_k * 100
+        print(f"         … {len(key_sorted)-5} more keys  ({rest_pct:.1f}% of mass)")
+
+    # Query mass
+    print(f"       Queries:")
+    for q_pos, q_attr in qry_sorted[:5]:
+        frac = abs(q_attr) / total_abs_q * 100
+        print(f"         q={q_pos:>4d} [{classify_pos(q_pos):5s}]  {q_attr:>+7.4f}  {frac:>5.1f}%")
+    if len(qry_sorted) > 5:
+        print(f"         … {len(qry_sorted)-5} more queries")
+
+    # Offset distribution
+    dom_offsets = ", ".join(f"{o:+d}" for o, _ in off_sorted[:2])
+    print(f"       Offsets (q−k), top-2 coverage={top2_off_frac:.0%}  [{dom_offsets}]:")
+    for offset, o_mass in off_sorted[:5]:
+        frac = o_mass / total_off * 100
+        note = (" ← self"        if offset == 0 else
+                " ← attend-prev" if offset == 1 else
+                " ← attend-next" if offset == -1 else
+                f" ← ±{abs(offset)} pos" if abs(offset) <= 5 else
+                f" ← ~SSE_GAP"   if abs(abs(offset) - SSE_GAP) <= 3 else "")
+        print(f"         Δ={offset:>+6d}  {frac:>5.1f}%{note}")
+
+    # Top 5 cells
+    cells_by_attr = sorted(head_cells, key=lambda x: x[2], reverse=True)
+    print(f"       Top 5 cells (by attribution):")
+    for q, k, attr, adiff in cells_by_attr[:5]:
+        print(f"         q={q:>4d}[{classify_pos(q):5s}]  k={k:>4d}[{classify_pos(k):5s}]  "
+              f"attr={attr:>+7.4f}  |diff|={adiff:.4f}")
+
+    # Path patching connections
+    paths_info = path_srcdst.get((l, h), {'as_src': [], 'as_dst': []})
+    if paths_info['as_dst']:
+        print(f"       Receives from (top 5 src heads):")
+        for sl, sh, ch, eff in paths_info['as_dst'][:5]:
+            sl_rank = ie_rank.get((sl, sh), "–")
+            print(f"         L{sl:2d}H{sh:2d} [rank#{sl_rank}] via {ch}  eff={eff:>+7.4f}")
+    if paths_info['as_src']:
+        print(f"       Sends to (top 5 dst heads):")
+        for dl, dh, ch, eff in paths_info['as_src'][:5]:
+            dl_rank = ie_rank.get((dl, dh), "–")
+            print(f"         L{dl:2d}H{dh:2d} [rank#{dl_rank}] via {ch}  eff={eff:>+7.4f}")
+    print()
+
+# Compact summary table (also sorted by layer/head)
+print(f"\n{'='*70}")
+print(f"SUMMARY  (top-{topk_cell} cells, ordered by layer/head)")
+print(f"{'='*70}")
+print(f"{'rank':>5} {'L':>3} {'H':>3} {'cells':>6} {'total_attr':>11}  {'anchor':>14}  {'pos_type':>10}")
+print("-" * 62)
+for rank, l, h, n, attr, anchor, pos_tag in sorted(summary_rows, key=lambda x: (x[1], x[2])):
+    print(f" #{rank:2d}   L{l:2d} H{h:2d}  {n:>5d}  {attr:>+10.4f}  {anchor:>14}  {pos_tag}")
+
+
+
 
 # %%
 # =============================================================================
