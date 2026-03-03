@@ -275,6 +275,27 @@ def make_classify_pos(seg: ContactSegment, flank: int):
     return _classify
 
 
+def _anchor_label(anchor: str, sorted_items: list, seq: str) -> str:
+    """Return 'AA<pos>' label(s) for SINGLE/DUAL anchor types.
+
+    sorted_items contains token indices (BOS=0).  We display positions as
+    0-indexed sequence positions (token - 1) to match CONTACT_PAIR indexing,
+    so 'V182' means seq_S[182] — the same '182' as in CONTACT_PAIR=(182,316).
+    """
+    if anchor == "SINGLE-ANCHOR" and sorted_items:
+        tok = sorted_items[0][0]
+        seq_pos = tok - 1                      # 0-indexed sequence position
+        aa = seq[seq_pos] if 0 <= seq_pos < len(seq) else "?"
+        return f"{aa}{seq_pos}"
+    elif anchor == "DUAL-ANCHOR" and len(sorted_items) >= 2:
+        tok1, tok2 = sorted_items[0][0], sorted_items[1][0]
+        p1, p2 = tok1 - 1, tok2 - 1
+        a1 = seq[p1] if 0 <= p1 < len(seq) else "?"
+        a2 = seq[p2] if 0 <= p2 < len(seq) else "?"
+        return f"{a1}{p1}/{a2}{p2}"
+    return ""
+
+
 # %% ── Model + Data Loading ───────────────────────────────────────────────────
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
@@ -304,6 +325,15 @@ print(f"Segment : ss1=[{seg.ss1_start}:{seg.ss1_end}]  ss2=[{seg.ss2_start}:{seg
 print(f"Flanks  : clean={CLEAN_FLANK}  corrupt={CORRUPT_FLANK}")
 
 classify_pos = make_classify_pos(seg, CLEAN_FLANK)
+
+def _cpos(tok: int) -> str:
+    """Classify a raw attention token index into a region name.
+
+    Cell attributions store token indices where BOS=0 and first amino acid=1,
+    so token i corresponds to seq_S[i-1].  classify_pos expects 0-indexed
+    sequence positions, so we subtract 1 before dispatching.
+    """
+    return classify_pos(tok - 1) if tok > 0 else "other"
 
 # Extract contact head params (for differentiable metric)
 contact_head_module = esm_model.esm.contact_head
@@ -733,14 +763,14 @@ else:
 print(f"\nTotal cells with attribution: {len(cell_attr_sorted):,d}")
 print(f"\nTop 20 cells by attribution (positive = helpful):")
 print(f"  (= indirect via residual stream + direct via contact head)")
-print(f"{'Layer':>5} {'Head':>4} {'q':>5} {'k':>5} {'attr':>12} {'|diff|':>10}")
-print("-" * 50)
+print(f"{'Layer':>5} {'Head':>4} {'q(0-idx)':>9} {'k(0-idx)':>9} {'attr':>12} {'|diff|':>10}")
+print("-" * 58)
 for layer, head, q, k, attr, adiff in cell_attr_sorted[:20]:
-    print(f"  L{layer:2d}  H{head:2d}  {q:>4d}  {k:>4d}  {attr:>+11.6f}  {adiff:>10.6f}")
+    print(f"  L{layer:2d}  H{head:2d}  {q-1:>8d}  {k-1:>8d}  {attr:>+11.6f}  {adiff:>10.6f}")
 
 print(f"\nBottom 20 cells (negative = harmful):")
 for layer, head, q, k, attr, adiff in cell_attr_sorted[-20:]:
-    print(f"  L{layer:2d}  H{head:2d}  {q:>4d}  {k:>4d}  {attr:>+11.6f}  {adiff:>10.6f}")
+    print(f"  L{layer:2d}  H{head:2d}  {q-1:>8d}  {k-1:>8d}  {attr:>+11.6f}  {adiff:>10.6f}")
 
 print(f"\nAttribution distribution (indirect + direct):")
 print(f"  Positive: {(all_attrs > 0).sum().item():,d} cells")
@@ -836,6 +866,10 @@ ANCHOR_T1    = cfg["anchor_t1"]
 ANCHOR_T2    = cfg["anchor_t2"]
 ANCHOR_T3    = cfg["anchor_t3"]
 POSITIONAL_T = cfg["positional_t"]
+# Regions on each "side" of the contact pair (for cross-region tagging)
+LEFT_REGIONS  = {"ss1", "flkL"}
+RIGHT_REGIONS = {"ss2", "flkR"}
+RPAIR_T = 0.40  # min fraction for a region pair to be called "dominant"
 
 # --- Load path patching data ---
 path_pt = Path(cfg["report_dir"]) / f"{PROTEIN}_path_patching_full.pt"
@@ -860,6 +894,8 @@ else:
 
 print(f"\n{'='*70}")
 print(f"MOTIF ANALYSIS — top {TOPK_CELL} cells by attribution")
+print(f"  All positions are 0-indexed sequence positions (same as CONTACT_PAIR).")
+print(f"  Internally cells store token indices (BOS=0); displayed as tok-1.")
 print(f"{'='*70}")
 print(f"  ss1={seg.ss1_start}–{seg.ss1_end-1}  "
       f"ss2={seg.ss2_start}–{seg.ss2_end-1}  "
@@ -880,7 +916,7 @@ for l, h in heads_sorted:
     total_attr = sum(a for _, _, a, _ in head_cells)
 
     if n_cells == 0:
-        summary_rows.append((rank, l, h, 0, 0.0, "—", "", "—"))
+        summary_rows.append((rank, l, h, 0, 0.0, "—", "", "—", ""))
         motif_data.append({
             "rank": rank, "layer": l, "head": h, "n_cells": 0,
             "total_attr": 0.0, "anchor": "—", "pos_tag": "",
@@ -888,6 +924,7 @@ for l, h in heads_sorted:
             "q_anchor": "—", "qt1": 0.0, "qt2": 0.0, "qt3": 0.0,
             "key_sorted": [], "qry_sorted": [], "off_sorted": [],
             "top_cells": [], "top2_off_frac": 0.0,
+            "rpair_sorted": [], "top_rpair_frac": 0.0, "region_tag": "",
             "paths": {"as_src": [], "as_dst": []},
         })
         print(f"  L{l:2d} H{h:2d} [rank#{rank:2d}]: 0 cells in top-{TOPK_CELL}")
@@ -932,19 +969,41 @@ for l, h in heads_sorted:
               "MULTI-ANCHOR"  if t3 >= ANCHOR_T3 else
               "DISTRIBUTED")
 
+    # Region-pair profile (q_region → k_region), frequency-based
+    rpair_count = defaultdict(int)
+    for q, k, attr, _ in head_cells:
+        rpair_count[(_cpos(q), _cpos(k))] += 1
+    rpair_sorted   = sorted(rpair_count.items(), key=lambda x: x[1], reverse=True)
+    top_rpair_frac = rpair_sorted[0][1] / n_cells if rpair_sorted else 0.0
+
+    # Region-pair tag: label the dominant cross-region pattern
+    _qr0, _kr0 = rpair_sorted[0][0] if rpair_sorted else ("other", "other")
+    if top_rpair_frac >= RPAIR_T and _qr0 != "other" and _kr0 != "other":
+        _q_left = _qr0 in LEFT_REGIONS
+        _k_left = _kr0 in LEFT_REGIONS
+        if _q_left != _k_left:         # q and k on opposite sides of the contact
+            region_tag = f"CROSS:{_qr0}→{_kr0}"
+        elif _qr0 == _kr0:
+            region_tag = f"INTRA:{_qr0}"
+        else:
+            region_tag = f"{_qr0}→{_kr0}"
+    else:
+        region_tag = ""
+
     # Positional classification
     top2_off_frac = sum(v for _, v in off_sorted[:2]) / total_off if total_off else 0.0
     top_offset    = off_sorted[0][0] if off_sorted else 0
     is_cross_sse  = abs(abs(top_offset) - SSE_GAP) <= 3
     if is_cross_sse and top2_off_frac >= POSITIONAL_T:
         pos_tag = "CROSS_SSE"
-    elif top2_off_frac >= POSITIONAL_T and abs(top_offset) <= 10:
+    elif (top2_off_frac >= POSITIONAL_T and abs(top_offset) <= 10
+          and q_anchor not in ("SINGLE-ANCHOR", "DUAL-ANCHOR")):
         pos_tag = "POSITIONAL"
     else:
         pos_tag = ""
 
-    tags = anchor + (f" | {pos_tag}" if pos_tag else "")
-    summary_rows.append((rank, l, h, n_cells, total_attr, anchor, pos_tag, q_anchor))
+    tags = anchor + (f" | {pos_tag}" if pos_tag else "") + (f" | {region_tag}" if region_tag else "")
+    summary_rows.append((rank, l, h, n_cells, total_attr, anchor, pos_tag, q_anchor, region_tag))
 
     cells_by_attr = sorted(head_cells, key=lambda x: x[2], reverse=True)
     paths_info    = path_srcdst.get((l, h), {'as_src': [], 'as_dst': []})
@@ -958,6 +1017,7 @@ for l, h in heads_sorted:
         "key_sorted": key_sorted, "qry_sorted": qry_sorted, "off_sorted": off_sorted,
         "top_cells": cells_by_attr[:5],
         "top2_off_frac": top2_off_frac,
+        "rpair_sorted": rpair_sorted, "top_rpair_frac": top_rpair_frac, "region_tag": region_tag,
         "paths": paths_info,
     })
 
@@ -968,7 +1028,7 @@ for l, h in heads_sorted:
     for k_pos, k_attr in key_sorted[:5]:
         frac = abs(k_attr) / total_abs_k * 100
         bar  = "█" * int(frac / 5)
-        print(f"         k={k_pos:>4d} [{classify_pos(k_pos):5s}]  {k_attr:>+7.4f}  {frac:>5.1f}%  {bar}")
+        print(f"         k={k_pos-1:>4d} [{_cpos(k_pos):5s}]  {k_attr:>+7.4f}  {frac:>5.1f}%  {bar}")
     if len(key_sorted) > 5:
         rest_pct = sum(abs(v) for _, v in key_sorted[5:]) / total_abs_k * 100
         print(f"         … {len(key_sorted)-5} more keys  ({rest_pct:.1f}% of mass)")
@@ -978,7 +1038,7 @@ for l, h in heads_sorted:
     for q_pos, q_attr in qry_sorted[:5]:
         frac = abs(q_attr) / total_abs_q * 100
         bar  = "█" * int(frac / 5)
-        print(f"         q={q_pos:>4d} [{classify_pos(q_pos):5s}]  {q_attr:>+7.4f}  {frac:>5.1f}%  {bar}")
+        print(f"         q={q_pos-1:>4d} [{_cpos(q_pos):5s}]  {q_attr:>+7.4f}  {frac:>5.1f}%  {bar}")
     if len(qry_sorted) > 5:
         rest_pct = sum(abs(v) for _, v in qry_sorted[5:]) / total_abs_q * 100
         print(f"         … {len(qry_sorted)-5} more queries  ({rest_pct:.1f}% of mass)")
@@ -995,10 +1055,17 @@ for l, h in heads_sorted:
                 f" ← ~SSE_GAP"   if abs(abs(offset) - SSE_GAP) <= 3 else "")
         print(f"         Δ={offset:>+6d}  {frac:>5.1f}%{note}")
 
+    # Region-pair profile
+    print(f"       Region pairs (q→k) [freq]  [top={top_rpair_frac:.0%}]" +
+          (f"  {region_tag}" if region_tag else "") + ":")
+    for (qr, kr), cnt in rpair_sorted[:5]:
+        frac = cnt / n_cells * 100
+        print(f"         {qr:5s}→{kr:5s}  {cnt:3d} cells  {frac:>5.1f}%")
+
     # Top 5 cells
     print(f"       Top 5 cells (by attribution):")
     for q, k, attr, adiff in cells_by_attr[:5]:
-        print(f"         q={q:>4d}[{classify_pos(q):5s}]  k={k:>4d}[{classify_pos(k):5s}]  "
+        print(f"         q={q-1:>4d}[{_cpos(q):5s}]  k={k-1:>4d}[{_cpos(k):5s}]  "
               f"attr={attr:>+7.4f}  |diff|={adiff:.4f}")
 
     # Path patching connections
@@ -1018,10 +1085,16 @@ for l, h in heads_sorted:
 print(f"\n{'='*70}")
 print(f"SUMMARY  (top-{TOPK_CELL} cells, ordered by layer/head)")
 print(f"{'='*70}")
-print(f"{'rank':>5} {'L':>3} {'H':>3} {'cells':>6} {'total_attr':>11}  {'k_anchor':>14} / {'q_anchor':>14}  {'pos_type':>10}")
-print("-" * 80)
-for rank, l, h, n, attr, anchor, pos_tag, q_anchor in sorted(summary_rows, key=lambda x: (x[1], x[2])):
-    print(f" #{rank:2d}   L{l:2d} H{h:2d}  {n:>5d}  {attr:>+10.4f}  {anchor:>14} / {q_anchor:>14}  {pos_tag}")
+print(f"{'rank':>5} {'L':>3} {'H':>3} {'cells':>6} {'total_attr':>11}  {'k_anchor(label)':>22} / {'q_anchor(label)':>22}  {'pos':>10}  {'region'}")
+print("-" * 100)
+for rank, l, h, n, attr, anchor, pos_tag, q_anchor, region_tag in sorted(summary_rows, key=lambda x: (x[1], x[2])):
+    # Find matching motif entry for anchor labels
+    _md = next((m for m in motif_data if m["layer"] == l and m["head"] == h), {})
+    k_lbl = _anchor_label(anchor,   _md.get("key_sorted", []), sequence_S)
+    q_lbl = _anchor_label(q_anchor, _md.get("qry_sorted", []), sequence_S)
+    k_str = f"{anchor}({k_lbl})" if k_lbl else anchor
+    q_str = f"{q_anchor}({q_lbl})" if q_lbl else q_anchor
+    print(f" #{rank:2d}   L{l:2d} H{h:2d}  {n:>5d}  {attr:>+10.4f}  {k_str:>22} / {q_str:>22}  {pos_tag:>10}  {region_tag}")
 
 # %% ── Report Generation ───────────────────────────────────────────────────────
 
@@ -1033,6 +1106,9 @@ def _make_report() -> str:
     a(f"# Contact Pattern Analysis: {PROTEIN}")
     a(f"")
     a(f"Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}   Model: {MODEL_NAME}")
+    a(f"")
+    a(f"> **Position convention:** all `q`, `k`, and anchor positions are **0-indexed sequence positions**,")
+    a(f"> matching `CONTACT_PAIR` and `sequence_S` indexing.  `seq_S[pos]` gives the amino acid directly.")
     a(f"")
 
     # ── Configuration ──────────────────────────────────────────────────────
@@ -1127,7 +1203,7 @@ def _make_report() -> str:
     a(f"| Layer | Head | q | q-region | k | k-region | attr | \|diff\| |")
     a(f"|-------|------|---|----------|---|----------|------|--------|")
     for layer, head, q, k, attr, adiff in cell_attr_sorted[:20]:
-        a(f"| L{layer} | H{head} | {q} | {classify_pos(q)} | {k} | {classify_pos(k)} "
+        a(f"| L{layer} | H{head} | {q-1} | {_cpos(q)} | {k-1} | {_cpos(k)} "
           f"| {attr:+.6f} | {adiff:.6f} |")
     a(f"")
 
@@ -1136,7 +1212,7 @@ def _make_report() -> str:
     a(f"| Layer | Head | q | q-region | k | k-region | attr | \|diff\| |")
     a(f"|-------|------|---|----------|---|----------|------|--------|")
     for layer, head, q, k, attr, adiff in cell_attr_sorted[-20:]:
-        a(f"| L{layer} | H{head} | {q} | {classify_pos(q)} | {k} | {classify_pos(k)} "
+        a(f"| L{layer} | H{head} | {q-1} | {_cpos(q)} | {k-1} | {_cpos(k)} "
           f"| {attr:+.6f} | {adiff:.6f} |")
     a(f"")
 
@@ -1157,7 +1233,9 @@ def _make_report() -> str:
         li, hi, rank = md["layer"], md["head"], md["rank"]
         a(f"### L{li} H{hi} — Rank #{rank}")
         a(f"")
-        tags = f"k:{md['anchor']} / q:{md['q_anchor']}" + (f" | {md['pos_tag']}" if md["pos_tag"] else "")
+        tags = (f"k:{md['anchor']} / q:{md['q_anchor']}"
+                + (f" | {md['pos_tag']}" if md["pos_tag"] else "")
+                + (f" | {md['region_tag']}" if md["region_tag"] else ""))
         a(f"**Tags:** {tags}  |  cells: {md['n_cells']}  |  total attr: {md['total_attr']:+.4f}")
         a(f"")
         if md["n_cells"] == 0:
@@ -1172,7 +1250,7 @@ def _make_report() -> str:
         a(f"|-------|--------|------|----------|")
         for k_pos, k_attr in md["key_sorted"][:5]:
             frac = abs(k_attr) / total_abs_k * 100 if total_abs_k else 0.0
-            a(f"| {k_pos} | {classify_pos(k_pos)} | {k_attr:+.4f} | {frac:.1f}% |")
+            a(f"| {k_pos-1} | {_cpos(k_pos)} | {k_attr:+.4f} | {frac:.1f}% |")
         a(f"")
 
         total_abs_q = sum(abs(v) for _, v in md["qry_sorted"])
@@ -1182,17 +1260,28 @@ def _make_report() -> str:
         a(f"|-------|--------|------|----------|")
         for q_pos, q_attr in md["qry_sorted"][:5]:
             frac = abs(q_attr) / total_abs_q * 100 if total_abs_q else 0.0
-            a(f"| {q_pos} | {classify_pos(q_pos)} | {q_attr:+.4f} | {frac:.1f}% |")
+            a(f"| {q_pos-1} | {_cpos(q_pos)} | {q_attr:+.4f} | {frac:.1f}% |")
         a(f"")
 
         total_off = sum(v for _, v in md["off_sorted"])
         a(f"**Offset distribution [frequency]** (top-2 coverage: {md['top2_off_frac']:.0%}):")
         a(f"")
-        a(f"| offset (q−k) | fraction |")
-        a(f"|--------------|----------|")
-        for offset, o_mass in md["off_sorted"][:5]:
-            frac = o_mass / total_off * 100 if total_off else 0.0
-            a(f"| {offset:+d} | {frac:.1f}% |")
+        a(f"| offset (q−k) | count | fraction |")
+        a(f"|--------------|-------|----------|")
+        for offset, o_count in md["off_sorted"][:5]:
+            frac = o_count / total_off * 100 if total_off else 0.0
+            a(f"| {offset:+d} | {o_count} | {frac:.1f}% |")
+        a(f"")
+
+        _total_rp = sum(v for _, v in md["rpair_sorted"])
+        _rt = (f"  [{md['region_tag']}]" if md["region_tag"] else "")
+        a(f"**Region-pair profile** (q→k){_rt}  (top={md['top_rpair_frac']:.0%}):")
+        a(f"")
+        a(f"| q region | k region | count | fraction |")
+        a(f"|----------|----------|-------|----------|")
+        for (qr, kr), cnt in md["rpair_sorted"][:5]:
+            frac = cnt / _total_rp * 100 if _total_rp else 0.0
+            a(f"| {qr} | {kr} | {cnt} | {frac:.1f}% |")
         a(f"")
 
         a(f"**Top 5 cells:**")
@@ -1200,7 +1289,7 @@ def _make_report() -> str:
         a(f"| q | q-region | k | k-region | attr | \|diff\| |")
         a(f"|---|----------|---|----------|------|--------|")
         for q, k, attr, adiff in md["top_cells"]:
-            a(f"| {q} | {classify_pos(q)} | {k} | {classify_pos(k)} "
+            a(f"| {q-1} | {_cpos(q)} | {k-1} | {_cpos(k)} "
               f"| {attr:+.4f} | {adiff:.4f} |")
         a(f"")
 
@@ -1230,10 +1319,13 @@ def _make_report() -> str:
     # ── Summary Table ──────────────────────────────────────────────────────
     a(f"## Summary Table")
     a(f"")
-    a(f"| rank | L | H | cells | total_attr | k_anchor | q_anchor | pos_type |")
-    a(f"|------|---|---|-------|------------|----------|----------|----------|")
-    for rank, l, h, n, attr, anchor, pos_tag, q_anchor in sorted(summary_rows, key=lambda x: (x[1], x[2])):
-        a(f"| #{rank} | L{l} | H{h} | {n} | {attr:+.4f} | {anchor} | {q_anchor} | {pos_tag} |")
+    a(f"| rank | L | H | cells | total_attr | k_anchor | k_label | q_anchor | q_label | pos_type | region |")
+    a(f"|------|---|---|-------|------------|----------|---------|----------|---------|----------|--------|")
+    for rank, l, h, n, attr, anchor, pos_tag, q_anchor, region_tag in sorted(summary_rows, key=lambda x: (x[1], x[2])):
+        _md = next((m for m in motif_data if m["layer"] == l and m["head"] == h), {})
+        k_lbl = _anchor_label(anchor,   _md.get("key_sorted", []), sequence_S)
+        q_lbl = _anchor_label(q_anchor, _md.get("qry_sorted", []), sequence_S)
+        a(f"| #{rank} | L{l} | H{h} | {n} | {attr:+.4f} | {anchor} | {k_lbl} | {q_anchor} | {q_lbl} | {pos_tag} | {region_tag} |")
     a(f"")
 
     return "\n".join(lines)
