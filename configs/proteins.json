@@ -1,0 +1,346 @@
+{
+  "1BRTA": {
+    "contact_pair": [
+      119,
+      221
+    ],
+    "clean_flank": 32,
+    "corrupt_flank": 31
+  },
+  "1IN4A": {
+    "contact_pair": [
+      55,
+      174
+    ],
+    "clean_flank": 40,
+    "corrupt_flank": 39
+  },
+  "1MJ5A": {
+    "contact_pair": [
+      128,
+      240
+    ],
+    "clean_flank": 35,
+    "corrupt_flank": 34
+  },
+  "1NOXA": {
+    "contact_pair": [
+      64,
+      165
+    ],
+    "clean_flank": 25,
+    "corrupt_flank": 24
+  },
+  "1PVGA": {
+    "contact_pair": [
+      101,
+      202
+    ],
+    "clean_flank": 64,
+    "corrupt_flank": 63
+  },
+  "1YKIA": {
+    "contact_pair": [
+      83,
+      189
+    ],
+    "clean_flank": 51,
+    "corrupt_flank": 50
+  },
+  "2B61A": {
+    "contact_pair": [
+      182,
+      316
+    ],
+    "clean_flank": 44,
+    "corrupt_flank": 43
+  },
+  "2DPMA": {
+    "contact_pair": [
+      59,
+      172
+    ],
+    "clean_flank": 30,
+    "corrupt_flank": 29
+  },
+  "2EK8A": {
+    "contact_pair": [
+      59,
+      203
+    ],
+    "clean_flank": 50,
+    "corrupt_flank": 49
+  },
+  "2FBQA": {
+    "contact_pair": [
+      94,
+      201
+    ],
+    "clean_flank": 61,
+    "corrupt_flank": 60
+  },
+  "2HFSA": {
+    "contact_pair": [
+      190,
+      293
+    ],
+    "clean_flank": 68,
+    "corrupt_flank": 67
+  },
+  "2PKEA": {
+    "contact_pair": [
+      16,
+      131
+    ],
+    "clean_flank": 57,
+    "corrupt_flank": 56
+  },
+  "2QY6A": {
+    "contact_pair": [
+      63,
+      177
+    ],
+    "clean_flank": 32,
+    "corrupt_flank": 31
+  },
+  "2XD3A": {
+    "contact_pair": [
+      145,
+      280
+    ],
+    "clean_flank": 54,
+    "corrupt_flank": 53
+  },
+  "2YHWA": {
+    "contact_pair": [
+      161,
+      288
+    ],
+    "clean_flank": 62,
+    "corrupt_flank": 61
+  },
+  "2YXZA": {
+    "contact_pair": [
+      154,
+      262
+    ],
+    "clean_flank": 64,
+    "corrupt_flank": 63
+  },
+  "3BWXA": {
+    "contact_pair": [
+      125,
+      231
+    ],
+    "clean_flank": 33,
+    "corrupt_flank": 32
+  },
+  "3CSSA": {
+    "contact_pair": [
+      41,
+      159
+    ],
+    "clean_flank": 35,
+    "corrupt_flank": 34
+  },
+  "3DGTA": {
+    "contact_pair": [
+      122,
+      240
+    ],
+    "clean_flank": 67,
+    "corrupt_flank": 66
+  },
+  "3FD3A": {
+    "contact_pair": [
+      66,
+      177
+    ],
+    "clean_flank": 59,
+    "corrupt_flank": 58
+  },
+  "3HO7A": {
+    "contact_pair": [
+      76,
+      189
+    ],
+    "clean_flank": 43,
+    "corrupt_flank": 42
+  },
+  "3LEWA": {
+    "contact_pair": [
+      225,
+      352
+    ],
+    "clean_flank": 57,
+    "corrupt_flank": 56
+  },
+  "3OKPA": {
+    "contact_pair": [
+      219,
+      336
+    ],
+    "clean_flank": 69,
+    "corrupt_flank": 68
+  },
+  "3QDLA": {
+    "contact_pair": [
+      84,
+      186
+    ],
+    "clean_flank": 40,
+    "corrupt_flank": 39
+  },
+  "3T4LA": {
+    "contact_pair": [
+      78,
+      195
+    ],
+    "clean_flank": 56,
+    "corrupt_flank": 55
+  },
+  "3WJPA": {
+    "contact_pair": [
+      167,
+      277
+    ],
+    "clean_flank": 59,
+    "corrupt_flank": 58
+  },
+  "4DM7A": {
+    "contact_pair": [
+      126,
+      239
+    ],
+    "clean_flank": 36,
+    "corrupt_flank": 35
+  },
+  "4EHUA": {
+    "contact_pair": [
+      97,
+      211
+    ],
+    "clean_flank": 34,
+    "corrupt_flank": 33
+  },
+  "4EX6A": {
+    "contact_pair": [
+      22,
+      123
+    ],
+    "clean_flank": 40,
+    "corrupt_flank": 39
+  },
+  "4EZIA": {
+    "contact_pair": [
+      194,
+      311
+    ],
+    "clean_flank": 38,
+    "corrupt_flank": 37
+  },
+  "4G41A": {
+    "contact_pair": [
+      62,
+      184
+    ],
+    "clean_flank": 50,
+    "corrupt_flank": 49
+  },
+  "4HZIA": {
+    "contact_pair": [
+      63,
+      228
+    ],
+    "clean_flank": 33,
+    "corrupt_flank": 32
+  },
+  "4ME3A": {
+    "contact_pair": [
+      126,
+      238
+    ],
+    "clean_flank": 50,
+    "corrupt_flank": 49
+  },
+  "4MFIA": {
+    "contact_pair": [
+      157,
+      288
+    ],
+    "clean_flank": 69,
+    "corrupt_flank": 68
+  },
+  "4N9WA": {
+    "contact_pair": [
+      214,
+      325
+    ],
+    "clean_flank": 61,
+    "corrupt_flank": 60
+  },
+  "4OY3A": {
+    "contact_pair": [
+      61,
+      181
+    ],
+    "clean_flank": 39,
+    "corrupt_flank": 38
+  },
+  "4R6KA": {
+    "contact_pair": [
+      150,
+      289
+    ],
+    "clean_flank": 60,
+    "corrupt_flank": 59
+  },
+  "4TL6A": {
+    "contact_pair": [
+      43,
+      179
+    ],
+    "clean_flank": 50,
+    "corrupt_flank": 49
+  },
+  "4WY2A": {
+    "contact_pair": [
+      159,
+      271
+    ],
+    "clean_flank": 45,
+    "corrupt_flank": 44
+  },
+  "5AB4A": {
+    "contact_pair": [
+      127,
+      233
+    ],
+    "clean_flank": 66,
+    "corrupt_flank": 65
+  },
+  "5AJGA": {
+    "contact_pair": [
+      174,
+      287
+    ],
+    "clean_flank": 40,
+    "corrupt_flank": 39
+  },
+  "5HEEA": {
+    "contact_pair": [
+      43,
+      167
+    ],
+    "clean_flank": 33,
+    "corrupt_flank": 32
+  },
+  "5IVKA": {
+    "contact_pair": [
+      247,
+      352
+    ],
+    "clean_flank": 67,
+    "corrupt_flank": 66
+  }
+}

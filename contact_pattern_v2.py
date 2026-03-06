@@ -10,14 +10,15 @@
 #   6. Motif extraction for the identified circuit heads
 #   7. Markdown report
 #
-# Run as: `.plm_nn/bin/python contact_pattern_v2.py [--config configs/1PVGA.json]`
-# Or:    `.plm_nn/bin/python contact_pattern_v2.py --protein 2B61A`
+# Run as: `.plm_nn/bin/python contact_pattern_v2.py --protein 2B61A`
+# Or:    `.plm_nn/bin/python contact_pattern_v2.py --protein 2B61A --config configs/override.json`
 # Or run individual `# %%` cells in VS Code / Jupyter.
 
 # %% ── Imports ──────────────────────────────────────────────────────────────
 
 from __future__ import annotations
 
+import csv
 import gc
 import hashlib
 import json
@@ -36,59 +37,59 @@ from transformers import EsmForMaskedLM, EsmTokenizer
 
 import argparse as _ap
 
-PROTEINS = {
-    "2B61A": {"contact_pair": (182, 316), "clean_flank": 44, "corrupt_flank": 43},
-    "1PVGA": {"contact_pair": (101, 202), "clean_flank": 65, "corrupt_flank": 63},
-}
+_SCRIPT_DIR = Path(__file__).resolve().parent
+_COMMON_CFG  = _SCRIPT_DIR / "configs" / "common.json"
+_PROTEINS_CFG = _SCRIPT_DIR / "configs" / "proteins.json"
 
-DEFAULT_CONFIG = {
-    "protein": "1PVGA",
-    "model": "facebook/esm2_t33_650M_UR50D",
-    "data_path": "data/full_seq_dict.json",
-    "faith_target": 0.70,
-    "segment_radius": 5,
-    "force_recalc": False,
-    "path_top_n": 400,
-    "topk_cell": 1000,
-    "topk_heads": 30,
-    "anchor_t1": 0.60, "anchor_t2": 0.70, "anchor_t3": 0.80,
-    "positional_t": 0.50,
-    "attr_thresholds": [0, 10, 20, 50, 100, 200, 500, 1000, 2000, 5000, 10000, 20000, 50000],
-    "report_dir": "reports/outputs",
-    "cache_dir": "reports/cache",
-}
+with open(_PROTEINS_CFG) as _f:
+    PROTEINS: dict = json.load(_f)
 
 
-def load_config(path) -> dict:
-    cfg = dict(DEFAULT_CONFIG)
-    if path is not None:
-        with open(path) as f:
-            override = json.load(f)
-        cfg.update(override)
+def load_config(protein: str, config_path: str | None) -> dict:
+    """Layer: common.json → PROTEINS[protein] → optional --config override."""
+    cfg: dict = {}
+
+    # 1. shared defaults
+    with open(_COMMON_CFG) as f:
+        cfg.update(json.load(f))
+
+    # 2. protein-specific data (contact_pair, clean_flank, corrupt_flank)
+    if protein not in PROTEINS:
+        raise KeyError(
+            f"Protein '{protein}' not found in configs/proteins.json. "
+            f"Re-run scripts/build_proteins_config.py to rebuild."
+        )
+    cfg.update(PROTEINS[protein])
+
+    # 3. explicit --config override (e.g. sweep-specific settings)
+    if config_path is not None:
+        with open(config_path) as f:
+            cfg.update(json.load(f))
+
     return cfg
 
 
 _p = _ap.ArgumentParser()
-_p.add_argument("--config", default=None)
-_p.add_argument("--protein", default=None)   # quick override
+_p.add_argument("--protein", default="1PVGA")
+_p.add_argument("--config", default=None)    # optional extra overrides
 _args, _ = _p.parse_known_args()             # parse_known_args for notebook compat
-cfg = load_config(_args.config)
-if _args.protein:
-    cfg["protein"] = _args.protein
+cfg = load_config(_args.protein, _args.config)
 
-PROTEIN        = cfg["protein"]
-MODEL_NAME     = cfg["model"]
-DATA_PATH      = cfg["data_path"]
+PROTEIN        = _args.protein
+MODEL_NAME     = cfg.get("model", "facebook/esm2_t33_650M_UR50D")
+DATA_PATH      = cfg.get("data_path", "data/full_seq_dict.json")
 FAITH_TARGET   = cfg["faith_target"]
 SEGMENT_RADIUS = cfg["segment_radius"]
 
-_prot_cfg     = PROTEINS[PROTEIN]
-CLEAN_FLANK   = _prot_cfg["clean_flank"]
-CORRUPT_FLANK = _prot_cfg["corrupt_flank"]
-CONTACT_PAIR  = tuple(_prot_cfg["contact_pair"])
+CLEAN_FLANK   = cfg["clean_flank"]
+CORRUPT_FLANK = cfg["corrupt_flank"]
+CONTACT_PAIR  = tuple(cfg["contact_pair"])
+
+CONC_N    = cfg["conc_n"]
+CONC_MASS = cfg["conc_mass"]
 
 CACHE_DIR  = Path(cfg["cache_dir"]) / PROTEIN
-REPORT_DIR = Path(cfg["report_dir"])
+REPORT_DIR = Path(cfg["report_dir"]) / PROTEIN
 CACHE_DIR.mkdir(parents=True, exist_ok=True)
 REPORT_DIR.mkdir(parents=True, exist_ok=True)
 
@@ -294,6 +295,36 @@ def _anchor_label(anchor: str, sorted_items: list, seq: str) -> str:
         a2 = seq[p2] if 0 <= p2 < len(seq) else "?"
         return f"{a1}{p1}/{a2}{p2}"
     return ""
+
+
+def _distr_label(mass_dict: dict, total_abs: float, seq: str,
+                 max_n: int = None, mass_t: float = None) -> str:
+    """For a DISTRIBUTED pattern, return a '/'-joined label of the top positions
+    by abs mass that together cover *mass_t* of the total.  Returns '' if more
+    than *max_n* positions are needed (truly distributed).
+
+    Token indices (BOS=0) are converted to 0-indexed seq positions for display,
+    matching the CONTACT_PAIR convention.
+    """
+    if max_n  is None: max_n  = CONC_N
+    if mass_t is None: mass_t = CONC_MASS
+    if not mass_dict or total_abs < 1e-9:
+        return ""
+    by_abs = sorted(mass_dict.items(), key=lambda x: abs(x[1]), reverse=True)
+    cum, n_min = 0.0, len(by_abs)
+    for i, (_, v) in enumerate(by_abs):
+        cum += abs(v)
+        if cum / total_abs >= mass_t:
+            n_min = i + 1
+            break
+    if n_min > max_n:
+        return ""
+    labels = []
+    for tok, _ in by_abs[:n_min]:
+        p = tok - 1
+        aa = seq[p] if 0 <= p < len(seq) else "?"
+        labels.append(f"{aa}{p}")
+    return "/".join(labels)
 
 
 # %% ── Model + Data Loading ───────────────────────────────────────────────────
@@ -872,7 +903,7 @@ RIGHT_REGIONS = {"ss2", "flkR"}
 RPAIR_T = 0.40  # min fraction for a region pair to be called "dominant"
 
 # --- Load path patching data ---
-path_pt = Path(cfg["report_dir"]) / f"{PROTEIN}_path_patching_full.pt"
+path_pt = REPORT_DIR / f"{PROTEIN}_path_patching_full.pt"
 path_srcdst: dict = {}
 
 if path_pt.exists():
@@ -922,6 +953,7 @@ for l, h in heads_sorted:
             "total_attr": 0.0, "anchor": "—", "pos_tag": "",
             "t1": 0.0, "t2": 0.0, "t3": 0.0,
             "q_anchor": "—", "qt1": 0.0, "qt2": 0.0, "qt3": 0.0,
+            "k_conc_lbl": "", "q_conc_lbl": "",
             "key_sorted": [], "qry_sorted": [], "off_sorted": [],
             "top_cells": [], "top2_off_frac": 0.0,
             "rpair_sorted": [], "top_rpair_frac": 0.0, "region_tag": "",
@@ -969,6 +1001,12 @@ for l, h in heads_sorted:
               "MULTI-ANCHOR"  if t3 >= ANCHOR_T3 else
               "DISTRIBUTED")
 
+    # Concentrated-label for DISTRIBUTED dimensions: list top positions by abs mass
+    k_conc_lbl = (_distr_label(key_mass, total_abs_k, sequence_S)
+                  if anchor == "DISTRIBUTED" else "")
+    q_conc_lbl = (_distr_label(qry_mass, total_abs_q, sequence_S)
+                  if q_anchor == "DISTRIBUTED" else "")
+
     # Region-pair profile (q_region → k_region), frequency-based
     rpair_count = defaultdict(int)
     for q, k, attr, _ in head_cells:
@@ -1002,7 +1040,11 @@ for l, h in heads_sorted:
     else:
         pos_tag = ""
 
-    tags = anchor + (f" | {pos_tag}" if pos_tag else "") + (f" | {region_tag}" if region_tag else "")
+    k_disp = f"{anchor}({k_conc_lbl})" if k_conc_lbl else anchor
+    q_disp = f"{q_anchor}({q_conc_lbl})" if q_conc_lbl else q_anchor
+    tags = (f"k:{k_disp} / q:{q_disp}"
+            + (f" | {pos_tag}" if pos_tag else "")
+            + (f" | {region_tag}" if region_tag else ""))
     summary_rows.append((rank, l, h, n_cells, total_attr, anchor, pos_tag, q_anchor, region_tag))
 
     cells_by_attr = sorted(head_cells, key=lambda x: x[2], reverse=True)
@@ -1014,6 +1056,7 @@ for l, h in heads_sorted:
         "anchor": anchor, "pos_tag": pos_tag,
         "t1": t1, "t2": t2, "t3": t3,
         "q_anchor": q_anchor, "qt1": qt1, "qt2": qt2, "qt3": qt3,
+        "k_conc_lbl": k_conc_lbl, "q_conc_lbl": q_conc_lbl,
         "key_sorted": key_sorted, "qry_sorted": qry_sorted, "off_sorted": off_sorted,
         "top_cells": cells_by_attr[:5],
         "top2_off_frac": top2_off_frac,
@@ -1024,7 +1067,7 @@ for l, h in heads_sorted:
     print(f"  L{l:2d} H{h:2d} [rank#{rank:2d}]: {n_cells} cells | attr={total_attr:+.4f} | {tags}")
 
     # Key mass
-    print(f"       Keys  (top-1={t1:.0%}, top-2={t2:.0%}, top-3={t3:.0%}):")
+    print(f"       Keys  (top-1={t1:.0%}, top-2={t2:.0%}, top-3={t3:.0%}) [{k_disp}]:")
     for k_pos, k_attr in key_sorted[:5]:
         frac = abs(k_attr) / total_abs_k * 100
         bar  = "█" * int(frac / 5)
@@ -1034,7 +1077,7 @@ for l, h in heads_sorted:
         print(f"         … {len(key_sorted)-5} more keys  ({rest_pct:.1f}% of mass)")
 
     # Query mass
-    print(f"       Queries (top-1={qt1:.0%}, top-2={qt2:.0%}, top-3={qt3:.0%})  [{q_anchor}]:")
+    print(f"       Queries (top-1={qt1:.0%}, top-2={qt2:.0%}, top-3={qt3:.0%})  [{q_disp}]:")
     for q_pos, q_attr in qry_sorted[:5]:
         frac = abs(q_attr) / total_abs_q * 100
         bar  = "█" * int(frac / 5)
@@ -1090,10 +1133,18 @@ print("-" * 100)
 for rank, l, h, n, attr, anchor, pos_tag, q_anchor, region_tag in sorted(summary_rows, key=lambda x: (x[1], x[2])):
     # Find matching motif entry for anchor labels
     _md = next((m for m in motif_data if m["layer"] == l and m["head"] == h), {})
-    k_lbl = _anchor_label(anchor,   _md.get("key_sorted", []), sequence_S)
-    q_lbl = _anchor_label(q_anchor, _md.get("qry_sorted", []), sequence_S)
-    k_str = f"{anchor}({k_lbl})" if k_lbl else anchor
-    q_str = f"{q_anchor}({q_lbl})" if q_lbl else q_anchor
+    if anchor == "DISTRIBUTED":
+        _kl = _md.get("k_conc_lbl", "")
+        k_str = f"DISTR({_kl})" if _kl else "DISTRIBUTED"
+    else:
+        _kl = _anchor_label(anchor, _md.get("key_sorted", []), sequence_S)
+        k_str = f"{anchor}({_kl})" if _kl else anchor
+    if q_anchor == "DISTRIBUTED":
+        _ql = _md.get("q_conc_lbl", "")
+        q_str = f"DISTR({_ql})" if _ql else "DISTRIBUTED"
+    else:
+        _ql = _anchor_label(q_anchor, _md.get("qry_sorted", []), sequence_S)
+        q_str = f"{q_anchor}({_ql})" if _ql else q_anchor
     print(f" #{rank:2d}   L{l:2d} H{h:2d}  {n:>5d}  {attr:>+10.4f}  {k_str:>22} / {q_str:>22}  {pos_tag:>10}  {region_tag}")
 
 # %% ── Report Generation ───────────────────────────────────────────────────────
@@ -1244,7 +1295,9 @@ def _make_report() -> str:
             continue
 
         total_abs_k = sum(abs(v) for _, v in md["key_sorted"])
-        a(f"**Key mass** (top-1={md['t1']:.0%}, top-2={md['t2']:.0%}, top-3={md['t3']:.0%})  [{md['anchor']}]:")
+        _k_hdr = (f"DISTR({md['k_conc_lbl']})" if md["anchor"] == "DISTRIBUTED" and md.get("k_conc_lbl")
+                  else md["anchor"])
+        a(f"**Key mass** (top-1={md['t1']:.0%}, top-2={md['t2']:.0%}, top-3={md['t3']:.0%})  [{_k_hdr}]:")
         a(f"")
         a(f"| k pos | region | attr | fraction |")
         a(f"|-------|--------|------|----------|")
@@ -1254,7 +1307,9 @@ def _make_report() -> str:
         a(f"")
 
         total_abs_q = sum(abs(v) for _, v in md["qry_sorted"])
-        a(f"**Query mass** (top-1={md['qt1']:.0%}, top-2={md['qt2']:.0%}, top-3={md['qt3']:.0%})  [{md['q_anchor']}]:")
+        _q_hdr = (f"DISTR({md['q_conc_lbl']})" if md["q_anchor"] == "DISTRIBUTED" and md.get("q_conc_lbl")
+                  else md["q_anchor"])
+        a(f"**Query mass** (top-1={md['qt1']:.0%}, top-2={md['qt2']:.0%}, top-3={md['qt3']:.0%})  [{_q_hdr}]:")
         a(f"")
         a(f"| q pos | region | attr | fraction |")
         a(f"|-------|--------|------|----------|")
@@ -1323,8 +1378,10 @@ def _make_report() -> str:
     a(f"|------|---|---|-------|------------|----------|---------|----------|---------|----------|--------|")
     for rank, l, h, n, attr, anchor, pos_tag, q_anchor, region_tag in sorted(summary_rows, key=lambda x: (x[1], x[2])):
         _md = next((m for m in motif_data if m["layer"] == l and m["head"] == h), {})
-        k_lbl = _anchor_label(anchor,   _md.get("key_sorted", []), sequence_S)
-        q_lbl = _anchor_label(q_anchor, _md.get("qry_sorted", []), sequence_S)
+        k_lbl = (_md.get("k_conc_lbl", "") if anchor == "DISTRIBUTED"
+                 else _anchor_label(anchor, _md.get("key_sorted", []), sequence_S))
+        q_lbl = (_md.get("q_conc_lbl", "") if q_anchor == "DISTRIBUTED"
+                 else _anchor_label(q_anchor, _md.get("qry_sorted", []), sequence_S))
         a(f"| #{rank} | L{l} | H{h} | {n} | {attr:+.4f} | {anchor} | {k_lbl} | {q_anchor} | {q_lbl} | {pos_tag} | {region_tag} |")
     a(f"")
 
@@ -1334,3 +1391,22 @@ def _make_report() -> str:
 report_path = REPORT_DIR / f"{PROTEIN}_contact_report.md"
 report_path.write_text(_make_report())
 print(f"\nReport written to: {report_path}")
+
+# ── CSV summary table ───────────────────────────────────────────────────────
+csv_path = REPORT_DIR / f"{PROTEIN}_summary.csv"
+with open(csv_path, "w", newline="") as _csv_f:
+    _writer = csv.writer(_csv_f)
+    _writer.writerow(["rank", "layer", "head", "n_cells", "total_attr",
+                       "k_anchor", "k_label", "q_anchor", "q_label",
+                       "pos_type", "region"])
+    for rank, l, h, n, attr, anchor, pos_tag, q_anchor, region_tag in sorted(
+        summary_rows, key=lambda x: (x[1], x[2])
+    ):
+        _md = next((m for m in motif_data if m["layer"] == l and m["head"] == h), {})
+        k_lbl = (_md.get("k_conc_lbl", "") if anchor == "DISTRIBUTED"
+                 else _anchor_label(anchor, _md.get("key_sorted", []), sequence_S))
+        q_lbl = (_md.get("q_conc_lbl", "") if q_anchor == "DISTRIBUTED"
+                 else _anchor_label(q_anchor, _md.get("qry_sorted", []), sequence_S))
+        _writer.writerow([rank, l, h, n, f"{attr:.6f}",
+                          anchor, k_lbl, q_anchor, q_lbl, pos_tag, region_tag])
+print(f"CSV summary written to: {csv_path}")

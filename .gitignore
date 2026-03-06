@@ -15,3 +15,5 @@ testing
 *.pt 
 *.pkl
 *.npy
+*.npz
+logs/
