@@ -17,3 +17,5 @@ testing
 *.npy
 *.npz
 logs/
+**/TARGET*
+**/cache/
