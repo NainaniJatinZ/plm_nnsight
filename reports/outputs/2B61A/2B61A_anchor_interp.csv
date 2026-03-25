@@ -1,0 +1,15 @@
+pos,aa,region,role,n_heads,conservation,sse,sse_pos,seg_len,jump,k_heads,q_heads
+133,I,flkL,K(2),2,0.404,C,-,,YES,"L0H7(r11,d), L0H6(r18,d)",-
+157,I,flkL,K(2)+Q(1),3,0.565,E,interior,5,,"L11H16(r17,d), L17H18(r21,d)","L8H12(r29,d)"
+159,G,flkL,K(1),1,0.985,E,interior,5,,"L5H19(r14,s)",-
+163,G,flkL,K(4),4,0.978,H,interior,12,,"L11H1(r2,s), L16H17(r23,s), L15H2(r24,s), L9H1(r25,s)",-
+180,N,ss1,K(1),1,0.285,E,boundary,5,,"L32H18(r12,d)",-
+181,I,ss1,K(3)+Q(9),12,0.391,E,interior,5,,"L7H16(r9,d), L6H19(r10,s), L32H18(r12,d)","L11H1(r2,s), L10H9(r4,d), L14H9(r13,s), L5H19(r14,s), L17H18(r21,d), L14H14(r22,s), L16H17(r23,s), L15H2(r24,d), L8H12(r29,d)"
+183,N,ss1,K(1)+Q(2),3,0.392,E,interior,5,,"L17H18(r21,d)","L19H0(r20,s), L15H2(r24,d)"
+315,T,ss2,K(5)+Q(6),11,0.460,E,interior,7,,"L10H9(r4,s), L14H9(r13,s), L11H16(r17,d), L8H12(r29,s), L13H8(r30,s)","L6H3(r3,s), L10H9(r4,d), L8H19(r7,s), L7H16(r9,s), L6H19(r10,s), L6H8(r26,s)"
+316,L,ss2,Q(1),1,0.471,E,interior,7,,-,"L17H18(r21,d)"
+326,K,flkR,K(1),1,0.495,C,-,,,"L6H8(r26,s)",-
+337,L,flkR,K(1),1,0.503,H,interior,13,,"L8H19(r7,s)",-
+344,L,flkR,K(1),1,0.367,E,boundary,6,,"L7H16(r9,d)",-
+355,H,flkR,K(1),1,0.958,H,interior,7,,"L6H3(r3,s)",-
+365,F,flkR,K(3),3,0.303,H,interior,13,YES,"L0H7(r11,d), L0H6(r18,d), L1H13(r28,s)",-

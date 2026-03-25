@@ -1,0 +1,23 @@
+Residue letter checks (sequence index -> amino acid)
+157: I
+159: G
+163: G
+180: N
+181: I
+182: V
+183: N
+313: R
+314: Y
+315: T
+316: L
+326: K
+138: I
+169: Q
+174: Y
+331: Y
+333: S
+335: Q
+344: L
+347: Y
+365: F
+133: I

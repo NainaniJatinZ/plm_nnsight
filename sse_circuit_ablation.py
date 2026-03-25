@@ -7,8 +7,8 @@
 #   - contact metric (from attention via contact head)
 #   - SSE accuracy   (from final-layer hidden states via linear probe)
 #
-# Run:  .plm_nn/bin/python sse_circuit_ablation.py --protein 2B61A
-#       .plm_nn/bin/python sse_circuit_ablation.py   # all ready proteins
+# Run:  uv run python sse_circuit_ablation.py --protein 2B61A
+#       uv run python sse_circuit_ablation.py   # all ready proteins
 # =============================================================================
 from __future__ import annotations
 

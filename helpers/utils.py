@@ -104,10 +104,17 @@ def load_sae_prot(ESM_DIM=1280, SAE_DIM=4096, LAYER=24, device="cuda"):
 
     This is the original InterProt SAE loader for ESM2-650M model.
     Available layers: 4, 8, 12, 16, 20, 24, 28, 32
+
+    For layer 24, loads the original 100K-sequence SAE (the default on interprot.com).
+    For all other layers, loads the standard checkpoint.
     """
+    if LAYER == 24:
+        filename = f"esm2_plm{ESM_DIM}_l{LAYER}_sae{SAE_DIM}_100k.safetensors"
+    else:
+        filename = f"esm2_plm{ESM_DIM}_l{LAYER}_sae{SAE_DIM}.safetensors"
     checkpoint_path = hf_hub_download(
-    repo_id="liambai/InterProt-ESM2-SAEs",
-    filename=f"esm2_plm{ESM_DIM}_l{LAYER}_sae{SAE_DIM}.safetensors"
+        repo_id="liambai/InterProt-ESM2-SAEs",
+        filename=filename,
     )
     sae_model = SparseAutoencoder(ESM_DIM, SAE_DIM)
     sae_model.load_state_dict(load_file(checkpoint_path))

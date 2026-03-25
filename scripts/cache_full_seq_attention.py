@@ -1,8 +1,8 @@
 """Cache attention patterns for the full (unmasked) sequence and generate plots.
 
 Usage:
-    .plm_nn/bin/python scripts/cache_full_seq_attention.py --protein 2B61A
-    .plm_nn/bin/python scripts/cache_full_seq_attention.py --protein 2B61A --plot-only
+    uv run python scripts/cache_full_seq_attention.py --protein 2B61A
+    uv run python scripts/cache_full_seq_attention.py --protein 2B61A --plot-only
 """
 
 from __future__ import annotations
@@ -24,23 +24,23 @@ NUM_LAYERS = 33
 NUM_HEADS = 20
 
 
-def cache_full_attention(protein: str, device: str) -> Path:
+def _load_model(device: str):
     from nnsight import NNsight
     from transformers import EsmForMaskedLM, EsmTokenizer
-
-    cache_dir = _ROOT / "reports" / "cache" / protein
-    cache_dir.mkdir(parents=True, exist_ok=True)
-    out_path = cache_dir / "full_seq_attn_cache.pt"
-
-    with open(_ROOT / "data" / "full_seq_dict.json") as f:
-        seqs = json.load(f)
-    seq = seqs[protein]
-    print(f"Protein {protein}: {len(seq)} residues")
 
     model_name = "facebook/esm2_t33_650M_UR50D"
     tokenizer = EsmTokenizer.from_pretrained(model_name)
     esm_model = EsmForMaskedLM.from_pretrained(model_name, attn_implementation="eager").to(device).eval()
     model = NNsight(esm_model)
+    return model, tokenizer
+
+
+def _cache_one_protein(protein: str, seq: str, model, tokenizer, device: str) -> Path:
+    cache_dir = _ROOT / "reports" / "cache" / protein
+    cache_dir.mkdir(parents=True, exist_ok=True)
+    out_path = cache_dir / "full_seq_attn_cache.pt"
+
+    print(f"Protein {protein}: {len(seq)} residues")
 
     inputs = tokenizer(seq, return_tensors="pt").to(device)
     inputs_with_attn = {**inputs, "output_attentions": True}
@@ -66,6 +66,34 @@ def cache_full_attention(protein: str, device: str) -> Path:
 
     print(f"Saved full-sequence attention to {out_path}")
     return out_path
+
+
+def cache_full_attention(protein: str, device: str) -> Path:
+    with open(_ROOT / "data" / "full_seq_dict.json") as f:
+        seqs = json.load(f)
+    model, tokenizer = _load_model(device)
+    return _cache_one_protein(protein, seqs[protein], model, tokenizer, device)
+
+
+def cache_all_proteins(device: str):
+    with open(_ROOT / "data" / "full_seq_dict.json") as f:
+        seqs = json.load(f)
+
+    cache_root = _ROOT / "reports" / "cache"
+    proteins = sorted(p for p in seqs if (cache_root / p / "attn_cache.pt").exists())
+
+    todo = [p for p in proteins if not (cache_root / p / "full_seq_attn_cache.pt").exists()]
+    if not todo:
+        print("All proteins already cached.")
+        return
+    print(f"Need to cache {len(todo)} proteins: {todo}")
+
+    model, tokenizer = _load_model(device)
+    for i, protein in enumerate(todo):
+        print(f"\n[{i+1}/{len(todo)}] {protein}")
+        _cache_one_protein(protein, seqs[protein], model, tokenizer, device)
+
+    print(f"\nDone — cached {len(todo)} proteins.")
 
 
 def load_cached_attention(protein: str):
@@ -167,14 +195,23 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--protein", default="2B61A")
     parser.add_argument("--device", default=None)
+    parser.add_argument("--all", action="store_true", help="Cache all proteins that have attn_cache.pt but not full_seq_attn_cache.pt")
+    parser.add_argument("--cache-only", action="store_true", help="Skip plot generation")
     parser.add_argument("--plot-only", action="store_true", help="Skip forward pass, use existing cache")
     parser.add_argument("--head", nargs=2, type=int, metavar=("LAYER", "HEAD"), help="Also generate a single high-res head plot (e.g. --head 6 11)")
     args = parser.parse_args()
 
     device = args.device or ("cuda" if torch.cuda.is_available() else "cpu")
 
+    if args.all:
+        cache_all_proteins(device)
+        return
+
     if not args.plot_only:
         cache_full_attention(args.protein, device)
+
+    if args.cache_only:
+        return
 
     print("\nGenerating plots...")
     attn, seq = load_cached_attention(args.protein)

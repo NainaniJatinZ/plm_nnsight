@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-import argparse, json, os, pickle, random
+import argparse, json, os, pickle, random, sys, time
 from datetime import datetime
 from pathlib import Path
 from dataclasses import dataclass
@@ -30,8 +30,8 @@ from transformers import EsmForMaskedLM, EsmTokenizer
 #   - Regularization sweep on validation set
 #   - Separate cache directory (v2) to avoid stale cache conflicts
 #
-# Run on all proteins:  .plm_nn/bin/python pfam_probe.py
-# Run on one protein:   .plm_nn/bin/python pfam_probe.py --protein 2B61A
+# Run on all proteins:  uv run python pfam_probe.py
+# Run on one protein:   uv run python pfam_probe.py --protein 2B61A
 # =============================================================================
 
 
@@ -98,7 +98,7 @@ class ContactSegment:
 # ── Device + Model ────────────────────────────────────────────────────────────
 
 device    = "cuda" if torch.cuda.is_available() else "cpu"
-print(f"Device: {device}")
+print(f"Device: {device}", flush=True)
 
 esm_model = EsmForMaskedLM.from_pretrained(MODEL_NAME, attn_implementation="eager").to(device)
 tokenizer = EsmTokenizer.from_pretrained(MODEL_NAME)
@@ -252,20 +252,25 @@ print(f"Sizes — train: {len(train_rows):,}, val: {len(val_rows):,}, test: {len
 
 def extract_sequence_embeddings(
     rows: list[dict],
+    split_name: str = "unknown",
     layer: int = -1,
     cache_path: str | None = None,
     max_length: int = 1022,
     batch_size: int = 8,
 ) -> tuple[np.ndarray, np.ndarray]:
     if cache_path and os.path.exists(cache_path):
-        print(f"  Loading from cache: {cache_path}")
+        print(f"  [{split_name}] Loading from cache: {cache_path}", flush=True)
         d = np.load(cache_path, allow_pickle=True)
         return d["embs"], d["labels"]
 
     esm_model.eval()
     all_embs, all_labels = [], []
+    n_batches = (len(rows) + batch_size - 1) // batch_size
+    t0 = time.time()
 
-    for i in range(0, len(rows), batch_size):
+    print(f"  [{split_name}] Extracting {len(rows):,} sequences in {n_batches:,} batches (batch_size={batch_size})", flush=True)
+
+    for batch_idx, i in enumerate(range(0, len(rows), batch_size)):
         batch = rows[i:i+batch_size]
         seqs = [r["sequence"] for r in batch]
         labs = [label_to_idx[r["label"]] for r in batch]
@@ -283,9 +288,16 @@ def extract_sequence_embeddings(
             all_embs.append(pooled.cpu().float().numpy())
             all_labels.append(labs[j])
 
-        if i % (batch_size * 50) == 0:
-            print(f"  {i}/{len(rows)}", end="\r")
-    print()
+        done = batch_idx + 1
+        if done % 100 == 0 or done == n_batches:
+            elapsed = time.time() - t0
+            rate = done / elapsed
+            eta = (n_batches - done) / rate if rate > 0 else 0
+            pct = 100.0 * done / n_batches
+            print(f"  [{split_name}] {done}/{n_batches} batches ({pct:.1f}%)  elapsed={elapsed:.0f}s  ETA={eta:.0f}s  ({rate:.1f} batch/s)", flush=True)
+
+    elapsed_total = time.time() - t0
+    print(f"  [{split_name}] Done in {elapsed_total:.0f}s", flush=True)
 
     embs   = np.stack(all_embs, axis=0)
     labels = np.array(all_labels, dtype=np.int32)
@@ -295,18 +307,18 @@ def extract_sequence_embeddings(
 
     if cache_path:
         np.savez(cache_path, embs=embs, labels=labels)
-        print(f"  Saved to {cache_path}  ({embs.shape[0]:,} seqs)")
+        print(f"  [{split_name}] Saved to {cache_path}  ({embs.shape[0]:,} seqs)", flush=True)
 
     return embs, labels
 
 
-print("\nExtracting pooled sequence embeddings (L2-normalized)...")
+print("\nExtracting pooled sequence embeddings (L2-normalized)...", flush=True)
 train_embs, train_labels = extract_sequence_embeddings(
-    train_rows, cache_path=f"{PROBE_CACHE_DIR}/train_seq.npz", max_length=_args.max_length, batch_size=_args.batch_size)
+    train_rows, split_name="train", cache_path=f"{PROBE_CACHE_DIR}/train_seq.npz", max_length=_args.max_length, batch_size=_args.batch_size)
 val_embs, val_labels = extract_sequence_embeddings(
-    val_rows, cache_path=f"{PROBE_CACHE_DIR}/val_seq.npz", max_length=_args.max_length, batch_size=_args.batch_size)
+    val_rows, split_name="val", cache_path=f"{PROBE_CACHE_DIR}/val_seq.npz", max_length=_args.max_length, batch_size=_args.batch_size)
 test_embs, test_labels = extract_sequence_embeddings(
-    test_rows, cache_path=f"{PROBE_CACHE_DIR}/test_seq.npz", max_length=_args.max_length, batch_size=_args.batch_size)
+    test_rows, split_name="test", cache_path=f"{PROBE_CACHE_DIR}/test_seq.npz", max_length=_args.max_length, batch_size=_args.batch_size)
 
 print(f"\nSequences — train: {len(train_labels):,}, val: {len(val_labels):,}, test: {len(test_labels):,}")
 
@@ -315,22 +327,23 @@ print(f"\nSequences — train: {len(train_labels):,}, val: {len(val_labels):,}, 
 # 3. Train linear probe with regularization sweep
 # =============================================================================
 
-print("\nRegularization sweep on validation set...")
+print(f"\nRegularization sweep on validation set ({len(train_labels):,} train, {len(val_labels):,} val)...", flush=True)
 C_values = [0.001, 0.01, 0.1, 1.0, 10.0]
 best_C, best_val_acc = None, -1.0
 
-for C in C_values:
+for ci, C in enumerate(C_values):
+    t_c = time.time()
     probe = LogisticRegression(max_iter=500, C=C, solver="lbfgs", class_weight="balanced", verbose=0)
     probe.fit(train_embs, train_labels)
     val_preds = probe.predict(val_embs)
     acc = accuracy_score(val_labels, val_preds)
-    print(f"  C={C:<8}  val_acc={acc:.4f}")
+    print(f"  [{ci+1}/{len(C_values)}] C={C:<8}  val_acc={acc:.4f}  ({time.time()-t_c:.0f}s)", flush=True)
     if acc > best_val_acc:
         best_val_acc = acc
         best_C = C
 
-print(f"\nBest C={best_C}  (val_acc={best_val_acc:.4f})")
-print("Training final probe with best C...")
+print(f"\nBest C={best_C}  (val_acc={best_val_acc:.4f})", flush=True)
+print("Training final probe with best C...", flush=True)
 
 pfam_probe = LogisticRegression(max_iter=1000, C=best_C, solver="lbfgs", class_weight="balanced", verbose=1)
 pfam_probe.fit(train_embs, train_labels)
@@ -594,8 +607,10 @@ for protein in _run_proteins:
     print(f"  {'─'*170}")
 
     pfam_results = []
+    n_flanks = FLANK_END - FLANK_START + 1
+    t_sweep = time.time()
 
-    for flank in range(FLANK_START, FLANK_END + 1):
+    for fi, flank in enumerate(range(FLANK_START, FLANK_END + 1)):
         masked_seq  = mask_with_flanks(sequence_S, segment, flank)
         contacts_AA = compute_contact_map(masked_seq)
         contact_val = patching_metric(contacts_AA, orig_contacts_AA, segment)
@@ -637,11 +652,16 @@ for protein in _run_proteins:
             "local_top1_prob": float(mk_local_pfam["pred_prob"]),
         })
 
+        sweep_elapsed = time.time() - t_sweep
+        sweep_rate = (fi + 1) / sweep_elapsed if sweep_elapsed > 0 else 0
+        sweep_eta = (n_flanks - fi - 1) / sweep_rate if sweep_rate > 0 else 0
         print(
             f"  {flank:>6}  {contact_val:>9.4f}  "
             f"{full_ref_pfam_prob:>10.4f}  {full_same_top1:>9d}  {kl_full_masked:>10.4f}  "
             f"{local_ref_pfam_prob:>11.4f}  {local_same_top1:>10d}  {kl_local_masked:>10.4f}  "
             f"{top1_prob:>10.4f}  {margin:>8.4f}"
+            f"  [{fi+1}/{n_flanks} ETA={sweep_eta:.0f}s]",
+            flush=True,
         )
 
     print(f"  {'─'*170}")

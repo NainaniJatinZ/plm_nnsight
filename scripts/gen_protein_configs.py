@@ -6,8 +6,8 @@ Proteins with a known contact_pair should already have a handwritten config;
 this script fills in flank info for the rest and leaves contact_pair as null.
 
 Usage:
-    .plm_nn/bin/python scripts/gen_protein_configs.py
-    .plm_nn/bin/python scripts/gen_protein_configs.py --overwrite   # overwrite existing
+    uv run python scripts/gen_protein_configs.py
+    uv run python scripts/gen_protein_configs.py --overwrite   # overwrite existing
 """
 import argparse
 import json

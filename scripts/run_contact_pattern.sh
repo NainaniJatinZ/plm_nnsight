@@ -30,7 +30,7 @@ echo "Working directory: $(pwd)"
 START=${START:-0}
 END=${END:-""}
 
-PROTEINS=$(.plm_nn/bin/python -c "
+PROTEINS=$(.venv/bin/python -c "
 import json
 with open('configs/proteins.json') as f:
     keys = list(json.load(f).keys())
@@ -46,7 +46,7 @@ for PROTEIN in $PROTEINS; do
     echo "========================================"
     echo "Running protein: $PROTEIN  ($(date))"
     echo "========================================"
-    .plm_nn/bin/python -u contact_pattern_v2.py --protein "$PROTEIN"
+    .venv/bin/python -u contact_pattern_v2.py --protein "$PROTEIN"
     STATUS=$?
     if [ $STATUS -ne 0 ]; then
         echo "ERROR: $PROTEIN failed with exit code $STATUS" >&2

@@ -2138,6 +2138,6 @@ Total cells: 6,028,033
 | #19  | L27 | H15 | 15    | +0.0744    | DISTRIBUTED   | N180/S333/A156 | DISTRIBUTED   | Y314/R313/N180 |            | CROSS:ss2→ss1  |
 | #15  | L30 | H1  | 12    | +0.0659    | DISTRIBUTED   | T315/R313/I181 | DISTRIBUTED   | N180/Y314/V182 | CROSS_SSE  | CROSS:ss1→ss2  |
 | #8   | L32 | H13 | 13    | +0.1089    | DISTRIBUTED   | I181/N180/Y314 | DISTRIBUTED   | I181/N180/R313 |            | CROSS:ss1→ss2  |
-| #12  | L32 | H18 | 12    | +0.0804    | DUAL-ANCHOR   | N180/I181      | DISTRIBUTED   | R313/Y314/A312 | CROSS_SSE  | CROSS:ss2→ss1  |
+| #12  | L32 | H18 | 12    | +0.0804    | DUAL-ANCHOR   | N180/181I      | DISTRIBUTED   | R313/Y314/A312 | CROSS_SSE  | CROSS:ss2→ss1  |
 
 

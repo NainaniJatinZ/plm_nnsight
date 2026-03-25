@@ -1,0 +1,9 @@
+pos,aa,region,role,n_heads,conservation,sse,sse_pos,seg_len,jump,k_heads,q_heads
+32,Y,flkL,K(2),2,0.872,H,interior,4,YES,"L0H9(r10,s), L0H12(r19,d)",-
+92,I,flkL,K(1),1,0.588,E,interior,7,,"L4H5(r25,s)",-
+97,H,ss1,K(1)+Q(1),2,0.474,C,-,,,"L5H9(r7,s)","L4H5(r25,s)"
+101,V,ss1,K(10)+Q(4),14,0.775,E,interior,6,,"L10H9(r1,s), L11H16(r11,s), L8H2(r12,s), L15H8(r13,s), L14H4(r14,s), L7H7(r18,s), L14H9(r20,d), L13H18(r22,s), L11H14(r28,s), L12H15(r30,s)","L5H9(r7,s), L6H0(r17,s), L4H14(r26,s), L9H15(r29,s)"
+198,Y,ss2,K(1),1,0.780,E,boundary,8,,"L14H9(r20,d)",-
+201,V,ss2,K(2)+Q(7),9,0.651,E,interior,8,,"L17H10(r8,s), L13H2(r27,d)","L9H17(r2,s), L15H8(r13,s), L14H4(r14,s), L12H10(r16,s), L14H9(r20,s), L17H18(r24,d), L13H2(r27,s)"
+203,F,ss2,K(1)+Q(1),2,0.849,E,interior,8,,"L13H2(r27,d)","L17H18(r24,d)"
+271,G,flkR,K(1),1,0.217,C,-,,YES,"L0H12(r19,d)",-

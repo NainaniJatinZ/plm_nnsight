@@ -8,7 +8,7 @@
 #      → find minimum K to reach 70% faithfulness
 #   4. Motif extraction for the identified circuit heads
 #
-# Run as: `.plm_nn/bin/python -u contact_pattern.py [--protein 2B61A] [--model ...]`
+# Run as: `uv run python -u contact_pattern.py [--protein 2B61A] [--model ...]`
 # Or run individual `# %%` cells in VS Code / Jupyter.
 
 # %% ── Imports ──────────────────────────────────────────────────────────────

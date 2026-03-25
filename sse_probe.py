@@ -5,8 +5,8 @@
 # Flanking sweep with masking approach:
 #   run masked sequence through ESM2, extract hidden states at segment
 #
-# Run on all proteins:  .plm_nn/bin/python sse_probe.py
-# Run on one protein:   .plm_nn/bin/python sse_probe.py --protein 2B61A
+# Run on all proteins:  uv run python sse_probe.py
+# Run on one protein:   uv run python sse_probe.py --protein 2B61A
 # =============================================================================
 from __future__ import annotations
 

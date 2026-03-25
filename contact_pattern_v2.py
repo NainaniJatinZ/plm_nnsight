@@ -10,8 +10,8 @@
 #   6. Motif extraction for the identified circuit heads
 #   7. Markdown report
 #
-# Run as: `.plm_nn/bin/python contact_pattern_v2.py --protein 2B61A`
-# Or:    `.plm_nn/bin/python contact_pattern_v2.py --protein 2B61A --config configs/override.json`
+# Run as: `uv run python contact_pattern_v2.py --protein 2B61A`
+# Or:    `uv run python contact_pattern_v2.py --protein 2B61A --config configs/override.json`
 # Or run individual `# %%` cells in VS Code / Jupyter.
 
 # %% ── Imports ──────────────────────────────────────────────────────────────

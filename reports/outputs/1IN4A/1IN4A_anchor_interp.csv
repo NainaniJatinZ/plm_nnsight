@@ -1,0 +1,15 @@
+pos,aa,region,role,n_heads,conservation,sse,sse_pos,seg_len,jump,k_heads,q_heads
+29,Q,flkL,K(1),1,0.858,C,-,,,"L4H8(r7,s)",-
+55,L,ss1,K(1),1,0.679,E,interior,4,,"L14H9(r8,d)",-
+62,G,flkL,K(1)+Q(1),2,0.986,C,-,,,"L5H19(r19,s)","L4H8(r7,s)"
+106,F,other,K(2)+Q(1),3,0.585,E,interior,5,,"L19H1(r26,d), L21H17(r30,d)","L7H6(r27,d)"
+107,I,other,K(2),2,0.654,E,interior,5,,"L19H1(r26,d), L21H17(r30,d)",-
+150,F,flkR,Q(1),1,0.440,C,-,,,-,"L13H19(r10,s)"
+170,F,ss2,Q(1),1,0.512,C,-,,,-,"L19H1(r26,d)"
+173,I,ss2,Q(1),1,0.564,E,interior,4,,-,"L19H1(r26,d)"
+174,L,ss2,K(1),1,0.424,E,interior,4,,"L16H18(r12,s)",-
+180,T,flkR,K(1),1,0.281,C,-,,,"L20H5(r18,s)",-
+184,L,flkR,K(1),1,0.528,H,interior,14,,"L20H1(r21,d)",-
+213,G,flkR,K(1),1,0.899,C,-,,,"L19H9(r28,d)",-
+214,T,flkR,Q(1),1,0.514,C,-,,,-,"L17H19(r9,s)"
+218,A,flkR,K(11)+Q(1),12,0.583,H,interior,18,,"L13H8(r3,s), L13H12(r4,s), L14H9(r8,d), L17H19(r9,s), L13H19(r10,s), L16H7(r13,s), L20H1(r21,d), L17H3(r23,s), L15H4(r24,s), L19H9(r28,d), L15H2(r29,s)","L7H6(r27,d)"

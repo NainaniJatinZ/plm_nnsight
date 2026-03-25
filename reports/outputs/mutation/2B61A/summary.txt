@@ -1,0 +1,49 @@
+Protein: 2B61A
+Model: facebook/esm2_t33_650M_UR50D
+Contact pair: (182, 316)
+Flanks: clean=44 corrupt=43
+Clean metric: 0.5738
+Corrupt metric: 0.0279
+Gap: 0.5460
+
+Top contacts (clean segment):
+  182->315: 0.9950
+  181->314: 0.8158
+  180->313: 0.6287
+  183->316: 0.5875
+
+Residues analyzed:
+  I157 (seq_index=157, display_index=157)
+  G159 (seq_index=159, display_index=159)
+  G163 (seq_index=163, display_index=163)
+  N180 (seq_index=180, display_index=180)
+  I181 (seq_index=181, display_index=181)
+  V182 (seq_index=182, display_index=182)
+  N183 (seq_index=183, display_index=183)
+  R313 (seq_index=313, display_index=313)
+  Y314 (seq_index=314, display_index=314)
+  T315 (seq_index=315, display_index=315)
+  L316 (seq_index=316, display_index=316)
+  K326 (seq_index=326, display_index=326)
+  I138 (seq_index=138, display_index=138)
+  Q169 (seq_index=169, display_index=169)
+  Y174 (seq_index=174, display_index=174)
+  Y331 (seq_index=331, display_index=331)
+  S333 (seq_index=333, display_index=333)
+  Q335 (seq_index=335, display_index=335)
+  L344 (seq_index=344, display_index=344)
+  Y347 (seq_index=347, display_index=347)
+
+Control residues:
+  I138 (seq_index=138, display_index=138)
+  Q169 (seq_index=169, display_index=169)
+  Y174 (seq_index=174, display_index=174)
+  Y331 (seq_index=331, display_index=331)
+  S333 (seq_index=333, display_index=333)
+  Q335 (seq_index=335, display_index=335)
+  L344 (seq_index=344, display_index=344)
+  Y347 (seq_index=347, display_index=347)
+
+Jump residues:
+  F365 (seq_index=365, display_index=365)
+  I133 (seq_index=133, display_index=133)

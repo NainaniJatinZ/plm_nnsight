@@ -1,0 +1,38 @@
+Single-contact circuit analysis: 2B61A
+Contact pair: (182, 316)
+Faith target: 70%
+Sort orders: ['abs', 'pos', 'neg'], primary: pos
+
+Full-segment circuit:
+  clean=0.5738 corrupt=0.0279 gap=0.5459
+  [abs] k_70=250 faith=0.8159 size=250
+  [pos] k_70=45 faith=0.7336 size=45
+  [neg] k_70=660 faith=1.0000 size=660
+  [pos] heads: L7H13 L11H1 L6H3 L10H9 L26H16 L22H14 L8H19 L32H13 L7H16 L6H19 L0H7 L32H18 L14H9 L5H19 L30H1 L6H17 L11H16 L0H6 L27H15 L19H0 L17H18 L14H14 L16H17 L15H2 L9H1 L6H8 L1H8 L1H13 L8H12 L13H8 L5H6 L0H8 L11H6 L17H5 L14H0 L9H2 L16H15 L13H18 L12H3 L14H19 L7H0 L16H7 L7H15 L19H15 L14H13
+
+Per-contact circuits (top 4):
+  (182,315) [abs] clean=0.9950 corrupt=0.0722 gap=0.9228 k70=17 faith=0.7284 size=17
+  (182,315) [pos] clean=0.9950 corrupt=0.0722 gap=0.9228 k70=13 faith=0.7131 size=13
+    heads: L30H1 L7H13 L11H1 L6H3 L10H9 L32H18 L26H16 L27H15 L8H19 L22H14 L14H9 L7H16 L0H7
+  (182,315) [neg] clean=0.9950 corrupt=0.0722 gap=0.9228 k70=660 faith=1.0000 size=660
+  (181,314) [abs] clean=0.8158 corrupt=0.0141 gap=0.8017 k70=250 faith=0.8473 size=250
+  (181,314) [pos] clean=0.8158 corrupt=0.0141 gap=0.8017 k70=40 faith=0.8123 size=40
+    heads: L7H13 L26H16 L11H1 L6H3 L22H14 L10H9 L32H13 L8H19 L14H9 L32H18 L15H2 L0H7 L7H16 L30H1 L6H19 L6H17 L5H19 L11H16 L0H6 L16H17 L12H2 L14H13 L9H1 L13H8 L14H14 L16H15 L17H5 L6H8 L17H2 L27H15 L13H4 L1H8 L8H12 L1H13 L0H8 L24H18 L5H6 L16H7 L15H7 L12H9
+  (181,314) [neg] clean=0.8158 corrupt=0.0141 gap=0.8017 k70=660 faith=1.0000 size=660
+  (180,313) [abs] clean=0.6287 corrupt=0.0103 gap=0.6184 k70=400 faith=0.7648 size=400
+  (180,313) [pos] clean=0.6287 corrupt=0.0103 gap=0.6184 k70=60 faith=0.8791 size=60
+    heads: L6H3 L7H13 L10H9 L11H1 L8H19 L32H18 L6H19 L7H16 L0H7 L5H19 L26H16 L32H13 L11H16 L14H9 L0H6 L27H15 L16H7 L14H0 L6H17 L9H1 L13H12 L6H8 L13H18 L30H1 L19H0 L16H17 L14H14 L17H5 L19H15 L17H18 L1H8 L0H8 L24H0 L15H17 L1H13 L14H19 L8H12 L13H8 L5H6 L11H6 L12H1 L12H10 L29H18 L15H7 L7H15 L22H14 L7H0 L3H1 L9H2 L15H2 L15H6 L12H3 L12H11 L12H15 L15H10 L10H12 L5H0 L13H13 L15H13 L10H11
+  (180,313) [neg] clean=0.6287 corrupt=0.0103 gap=0.6184 k70=660 faith=1.0000 size=660
+  (183,316) [abs] clean=0.5875 corrupt=0.0216 gap=0.5659 k70=250 faith=0.7628 size=250
+  (183,316) [pos] clean=0.5875 corrupt=0.0216 gap=0.5659 k70=40 faith=0.8219 size=40
+    heads: L26H16 L7H13 L11H1 L6H3 L22H14 L10H9 L8H19 L32H13 L17H18 L7H16 L6H17 L0H7 L19H0 L6H19 L14H14 L16H17 L5H19 L0H6 L30H1 L15H2 L14H13 L27H15 L14H9 L11H16 L16H15 L13H17 L9H2 L8H12 L13H5 L9H1 L5H6 L1H8 L6H8 L1H13 L12H9 L11H6 L12H3 L7H0 L24H12 L13H15
+  (183,316) [neg] clean=0.5875 corrupt=0.0216 gap=0.5659 k70=660 faith=1.0000 size=660
+
+Overlap analysis (sort=pos):
+  Contact 1: jaccard_vs_full=0.289 intersection=13 contact_only=0 full_only=32
+  Contact 2: jaccard_vs_full=0.667 intersection=34 contact_only=6 full_only=11
+  Contact 3: jaccard_vs_full=0.694 intersection=43 contact_only=17 full_only=2
+  Contact 4: jaccard_vs_full=0.700 intersection=35 contact_only=5 full_only=10
+  Mean pairwise Jaccard: 0.403
+  Union: 71 heads, Intersection: 12 heads
+  Union vs full Jaccard: 0.634

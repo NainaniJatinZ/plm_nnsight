@@ -8,7 +8,7 @@ proteins with a confirmed flank jump; reproduce_pair gives contact_pair).
 For proteins with multiple contact pairs in reproduce_pair, the first is used.
 
 Usage:
-    .plm_nn/bin/python scripts/build_proteins_config.py
+    uv run python scripts/build_proteins_config.py
 """
 import json
 from pathlib import Path
