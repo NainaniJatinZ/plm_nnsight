@@ -806,10 +806,7 @@ for layer, head, q, k, attr, adiff in cell_attr_sorted[-20:]:
 print(f"\nAttribution distribution (indirect + direct):")
 print(f"  Positive: {(all_attrs > 0).sum().item():,d} cells")
 print(f"  Negative: {(all_attrs < 0).sum().item():,d} cells")
-for pct in [90, 95, 99, 99.5, 99.9]:
-    val     = torch.quantile(all_attrs, pct / 100).item()
-    n_above = (all_attrs >= val).sum().item()
-    print(f"  {pct}th percentile: {val:+.8f}  ({n_above:,d} cells above)")
+# percentile display skipped (tensor too large for torch.quantile on long sequences)
 
 # %% ── Sufficiency Test ────────────────────────────────────────────────────────
 
@@ -1239,15 +1236,7 @@ def _make_report() -> str:
     a(f"- Positive: {(all_attrs > 0).sum().item():,}")
     a(f"- Negative: {(all_attrs < 0).sum().item():,}")
     a(f"")
-    a(f"**Percentile table:**")
-    a(f"")
-    a(f"| Percentile | Value | Cells above |")
-    a(f"|------------|-------|-------------|")
-    for pct in [90, 95, 99, 99.5, 99.9]:
-        val     = torch.quantile(all_attrs, pct / 100).item()
-        n_above = (all_attrs >= val).sum().item()
-        a(f"| {pct}th | {val:+.8f} | {n_above:,} |")
-    a(f"")
+    # percentile table skipped (tensor too large for torch.quantile on long sequences)
 
     a(f"**Top 20 positive cells:**")
     a(f"")
