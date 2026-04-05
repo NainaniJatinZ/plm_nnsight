@@ -1,0 +1,8 @@
+feature,coefficient,abs_coefficient
+pos_in_sse,-0.333734,0.333734
+frac_pos,-0.282166,0.282166
+n_sse_segments,-0.037610,0.037610
+sse_seg_len,-0.011750,0.011750
+n_sse_transitions,-0.007315,0.007315
+dist_cterm,-0.001951,0.001951
+dist_nterm,0.001471,0.001471
