@@ -1,0 +1,7 @@
+family,n_removed,auprc,auprc_drop,auroc,bal_acc
+contact_cluster (1-7),7,0.4922,+0.0098,0.8234,0.7480
+burial_pattern (8-11),4,0.5056,-0.0036,0.8303,0.7629
+contact_density (12-14),3,0.4997,+0.0023,0.8296,0.7625
+spatial_dist (15-16),2,0.5051,-0.0031,0.8313,0.7667
+H5_helper (17-23),7,0.4950,+0.0070,0.8289,0.7588
+bridge_topology,4,0.5035,-0.0015,0.8313,0.7627

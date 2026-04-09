@@ -1,0 +1,12 @@
+feature,coefficient,abs_coefficient
+bridge_score,1.201563,1.201563
+n_components_without_center,-1.080712,1.080712
+betweenness_in_window,-0.870906,0.870906
+frac_nonredundant_contacts,0.789899,0.789899
+pos_in_sse,-0.624124,0.624124
+frac_pos,-0.314070,0.314070
+n_sse_transitions_window,-0.050550,0.050550
+sse_seg_len,-0.003503,0.003503
+dist_cterm,-0.002392,0.002392
+dist_nterm,0.001584,0.001584
+n_sse_segments_window,-0.001087,0.001087
