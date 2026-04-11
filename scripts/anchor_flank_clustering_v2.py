@@ -581,7 +581,7 @@ def main():
     # Similarity matrices (ordered by embedding clustering)
     plot_sim_matrix(id_matrix[np.ix_(emb_order, emb_order)], ord_labels,
                     f"Pairwise sequence identity of minimal flanks (n={n})",
-                    REPORT_DIR / "anchor_flank_v2_seq_identity.png", cmap="YlOrRd", vmin=0, vmax=0.4)
+                    REPORT_DIR / "anchor_flank_v2_seq_identity.png", cmap="YlOrRd", vmin=0, vmax=1.0)
 
     plot_sim_matrix(mean_cos[np.ix_(emb_order, emb_order)], ord_labels,
                     f"Mean flank embedding cosine similarity (n={n})",

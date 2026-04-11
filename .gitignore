@@ -23,3 +23,6 @@ logs/
 reports/outputs/2B61A/attention_heads/all_heads_summary.png
 reports/outputs/2B61A/attention_heads_full/all_heads_summary.png
 *.pdb
+foldseek**
+data/fold**
+anchor_plm/.git*
