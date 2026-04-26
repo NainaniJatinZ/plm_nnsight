@@ -1,0 +1,32 @@
+[
+  {
+    "protein": "2B61A",
+    "full_anchor_positions": [
+      62,
+      315,
+      100
+    ],
+    "flank_anchor_positions": [
+      315,
+      163,
+      181
+    ],
+    "full_metric": 1.0,
+    "flank_metric": 0.573798656463623
+  },
+  {
+    "protein": "1PVGA",
+    "full_anchor_positions": [
+      101,
+      149,
+      103
+    ],
+    "flank_anchor_positions": [
+      101,
+      226,
+      90
+    ],
+    "full_metric": 1.0,
+    "flank_metric": 0.5921317934989929
+  }
+]

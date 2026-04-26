@@ -15,7 +15,7 @@ Phases:
   6. 3Di flank motif analysis (PWM, IC, sequence logo).
 
 Usage:
-    uv run python scripts/structure_anchor_transfer_v2.py --device cuda
+    uv run python scripts/structure_anchor_transfer_v2.py --device cuda --alignment data/foldmason_top2_tm_gt_06_seq_lt_02/foldmason_aa.fa --label 1pvg
 """
 
 from __future__ import annotations
@@ -737,45 +737,80 @@ def compute_information_content(counts: np.ndarray, n_seqs: np.ndarray, alpha_si
     return ic
 
 
+def _draw_letter(ax, letter: str, x: float, y: float, width: float, height: float, color: str):
+    """Draw a single letter stretched to fill (x, y, width, height) using matplotlib transforms."""
+    from matplotlib.transforms import Affine2D
+    from matplotlib.textpath import TextPath
+    from matplotlib.patches import PathPatch
+
+    tp = TextPath((0, 0), letter, size=1, prop={"weight": "bold", "family": "monospace"})
+    bbox = tp.get_extents()
+    if bbox.width == 0 or bbox.height == 0:
+        return
+
+    transform = Affine2D()
+    transform.translate(-bbox.x0, -bbox.y0)
+    transform.scale(width / bbox.width, height / bbox.height)
+    transform.translate(x - width / 2, y)
+
+    tp_transformed = tp.transformed(transform)
+    patch = PathPatch(tp_transformed, facecolor=color, edgecolor="none", lw=0)
+    ax.add_patch(patch)
+
+
 def plot_sequence_logo(counts: np.ndarray, n_seqs: np.ndarray, ic: np.ndarray, alphabet: str, colors: dict, window: int, title: str, out_path: Path):
-    """Plot a sequence logo with letter heights proportional to IC x frequency."""
+    """Plot a sequence logo with IC-scaled letter heights, normalized to [0, 1].
+
+    Letter height = freq × (IC / max_possible_IC), so a perfectly conserved
+    position stacks to 1.0 and a uniform position stacks to ~0. This preserves
+    the standard logo semantics (height encodes information) while keeping all
+    letters readable by avoiding the 4.32-bit y-axis stretch.
+    """
     n_pos = 2 * window + 1
     positions = list(range(-window, window + 1))
+    max_possible_ic = np.log2(len(alphabet))
+    letter_width = 0.8
 
-    fig, ax = plt.subplots(figsize=(max(12, n_pos * 0.3), 3))
+    fig, (ax_logo, ax_ic) = plt.subplots(2, 1, figsize=(max(14, window * 0.5), 5.0), gridspec_kw={"height_ratios": [2.2, 1.2]}, sharex=True)
 
-    for pos_idx in range(n_pos):
-        if n_seqs[pos_idx] == 0:
+    letter_gap = 0.008  # tiny gap between stacked letters for readability
+    for i in range(n_pos):
+        if n_seqs[i] == 0:
             continue
-        freq = counts[pos_idx] / n_seqs[pos_idx]
-        ic_val = ic[pos_idx]
-        heights = freq * ic_val
-        # Sort by height (smallest first, so tallest on top)
+        freq = counts[i] / n_seqs[i]
+        # Normalize IC to [0, 1] so max stack height = 1.0
+        ic_norm = ic[i] / max_possible_ic
+        heights = freq * ic_norm
         order = np.argsort(heights)
-        y_offset = 0
-        for aa_idx in order:
-            h = heights[aa_idx]
-            if h < 0.001:
+        y_offset = 0.0
+        for j in order:
+            h = heights[j]
+            if h < 0.003:
                 continue
-            aa = alphabet[aa_idx]
-            color = colors.get(aa, "#888888")
-            ax.text(pos_idx, y_offset + h / 2, aa, ha="center", va="center",
-                    fontsize=max(4, min(10, h * 15)), fontweight="bold", color=color,
-                    fontfamily="monospace")
+            letter = alphabet[j]
+            color = colors.get(letter, "#888888")
+            _draw_letter(ax_logo, letter, positions[i], y_offset, letter_width, max(h - letter_gap, 0.002), color)
             y_offset += h
 
-    ax.set_xlim(-0.5, n_pos - 0.5)
-    ax.set_ylim(0, max(ic) * 1.1 if max(ic) > 0 else 1)
-    tick_step = max(1, window // 10)
-    tick_positions = list(range(0, n_pos, tick_step))
-    ax.set_xticks(tick_positions)
-    ax.set_xticklabels([str(positions[i]) for i in tick_positions], fontsize=7)
-    ax.set_xlabel("Position relative to anchor")
-    ax.set_ylabel("Information content (bits)")
-    ax.set_title(title)
-    ax.axvline(window, color="red", alpha=0.3, linestyle="--", label="Anchor")
-    ax.spines["top"].set_visible(False)
-    ax.spines["right"].set_visible(False)
+    ax_logo.set_xlim(-window - 0.5, window + 0.5)
+    ax_logo.set_ylim(0, 1.05)
+    ax_logo.set_ylabel("Normalized IC\n(1.0 = max conservation)")
+    ax_logo.axvline(0, color="#D64550", ls="--", lw=1, alpha=0.7)
+    ax_logo.set_title(title)
+    ax_logo.spines["top"].set_visible(False)
+    ax_logo.spines["right"].set_visible(False)
+
+    # IC bar plot below in bits
+    bar_colors = ["#D64550" if p == 0 else "#5B7FA3" for p in positions]
+    ax_ic.bar(positions, ic, color=bar_colors, width=0.8, edgecolor="none")
+    ax_ic.axhline(max_possible_ic, color="gray", ls=":", lw=0.7, alpha=0.5, label=f"max = {max_possible_ic:.2f} bits")
+    ax_ic.set_xlabel("Position relative to anchor")
+    ax_ic.set_ylabel("IC (bits)")
+    ax_ic.set_ylim(0, max_possible_ic * 1.1)
+    ax_ic.legend(fontsize=7, loc="upper right")
+    ax_ic.spines["top"].set_visible(False)
+    ax_ic.spines["right"].set_visible(False)
+
     plt.tight_layout()
     fig.savefig(out_path, dpi=200, bbox_inches="tight")
     plt.close(fig)
@@ -910,9 +945,15 @@ def main():
     parser.add_argument("--device", default="cuda" if torch.cuda.is_available() else "cpu")
     parser.add_argument("--skip-pdb-download", action="store_true")
     parser.add_argument("--skip-3di", action="store_true", help="Skip 3Di generation")
+    parser.add_argument("--alignment", type=str, default=str(FOLDMASON_DIR / "foldmason_aa.fa"), help="Path to foldmason alignment FASTA")
+    parser.add_argument("--label", type=str, default="1pvg", help="Short label for this run (used for output directory)")
+    parser.add_argument("--ref-protein", type=str, default=None, help="Reference protein key in full_seq_dict.json for primary d_ref (auto-detected from label if not set: 1pvg->1PVGA, 2b61a->2B61A)")
     args = parser.parse_args()
 
-    REPORT_DIR.mkdir(parents=True, exist_ok=True)
+    # One folder per experiment, files named by protein target
+    out_dir = ROOT / "reports" / "out2" / "structure_anchor_transfer_v2"
+    out_dir.mkdir(parents=True, exist_ok=True)
+    label = args.label  # used as file prefix
     PDB_DIR.mkdir(parents=True, exist_ok=True)
 
     report = []
@@ -924,8 +965,8 @@ def main():
     print("Phase 0: Data preparation")
     print("=" * 70)
 
-    print("\nParsing foldmason alignment...")
-    aligned_seqs_raw = parse_fasta_alignment(FOLDMASON_DIR / "foldmason_aa.fa")
+    print(f"\nParsing foldmason alignment: {args.alignment}")
+    aligned_seqs_raw = parse_fasta_alignment(Path(args.alignment))
     aln_len = len(next(iter(aligned_seqs_raw.values())))
     print(f"  {len(aligned_seqs_raw)} entries, alignment length = {aln_len}")
 
@@ -951,29 +992,23 @@ def main():
     for n in names:
         print(f"  {extract_pdb_id(n)}: {len(ungapped_seqs[n])} residues")
 
-    # Identify 1pvg
-    pvg_names = [n for n in names if n.startswith("1pvg")]
-    if not pvg_names:
-        print("ERROR: 1pvg not found in deduplicated set!")
+    # Identify the reference protein in the alignment based on label
+    ref_pdb_prefix = args.label.lower().rstrip("a")  # "1pvg" or "2b61"
+    ref_names = [n for n in names if n.startswith(ref_pdb_prefix)]
+    if not ref_names:
+        print(f"ERROR: {ref_pdb_prefix} not found in deduplicated set!")
         return
-    pvg_name = pvg_names[0]
-
-    # Verify anchor position
-    if REFERENCE_ANCHOR_POS < len(pos_to_col[pvg_name]):
-        pvg_anchor_col = pos_to_col[pvg_name][REFERENCE_ANCHOR_POS]
-        pvg_anchor_aa = ungapped_seqs[pvg_name][REFERENCE_ANCHOR_POS]
-        print(f"\n1PVGA anchor at seq pos {REFERENCE_ANCHOR_POS} (AA: {pvg_anchor_aa}) -> aln col {pvg_anchor_col}")
-    else:
-        print(f"WARNING: 1PVGA anchor pos {REFERENCE_ANCHOR_POS} out of range")
-        pvg_anchor_col = None
+    ref_aln_name = ref_names[0]
+    ref_pdb_id = extract_pdb_id(ref_aln_name)
+    print(f"\nReference protein in alignment: {ref_aln_name} ({ref_pdb_id})")
 
     # Pairwise identities (for the final set)
-    print("\nPairwise sequence identity to 1PVG:")
+    print(f"\nPairwise sequence identity to {ref_pdb_id}:")
     final_identities = compute_pairwise_identity(aligned_seqs_dedup)
     for n in names:
-        if n == pvg_name:
+        if n == ref_aln_name:
             continue
-        ident = final_identities.get((pvg_name, n), 0.0)
+        ident = final_identities.get((ref_aln_name, n), 0.0)
         print(f"  {extract_pdb_id(n)}: {ident:.1%}")
 
     # Check for remaining high-identity pairs
@@ -1022,7 +1057,7 @@ def main():
             print(f"  Loaded {len(three_di_seqs)} 3Di sequences")
 
     # Save dedup log
-    dedup_csv_path = REPORT_DIR / "structure_anchor_transfer_v2_dedup.csv"
+    dedup_csv_path = out_dir / f"{label}_dedup.csv"
     with open(dedup_csv_path, "w", newline="") as f:
         writer = csv.writer(f)
         writer.writerow(["step", "kept", "dropped", "detail"])
@@ -1043,23 +1078,30 @@ def main():
     model, tokenizer = load_model(args.device)
     weights = extract_head_weights(model, TARGET_LAYER, TARGET_HEAD)
 
+    # Determine primary reference protein
+    ref_protein_map = {"1pvg": "1PVGA", "2b61a": "2B61A", "2b61": "2B61A"}
+    if args.ref_protein:
+        primary_ref = args.ref_protein
+    else:
+        primary_ref = ref_protein_map.get(args.label.lower(), REFERENCE_PROTEIN_1PVG)
+    secondary_ref = REFERENCE_PROTEIN_2B61 if primary_ref != REFERENCE_PROTEIN_2B61 else REFERENCE_PROTEIN_1PVG
+
     # Reference directions
     with open(DATA_DIR / "full_seq_dict.json") as f:
         all_seqs = json.load(f)
 
-    print("Computing reference search direction from 1PVGA...")
-    d_ref_1pvg = compute_search_dir(model, tokenizer, all_seqs[REFERENCE_PROTEIN_1PVG], weights, args.device)
-    d_ref_1pvg_unit = (d_ref_1pvg / d_ref_1pvg.norm().clamp(min=1e-8)).to(args.device)
+    print(f"Computing primary reference search direction from {primary_ref}...")
+    d_ref_primary = compute_search_dir(model, tokenizer, all_seqs[primary_ref], weights, args.device)
+    d_ref_primary_unit = (d_ref_primary / d_ref_primary.norm().clamp(min=1e-8)).to(args.device)
 
-    print("Computing reference search direction from 2B61A (sanity check)...")
-    d_ref_2b61 = compute_search_dir(model, tokenizer, all_seqs[REFERENCE_PROTEIN_2B61], weights, args.device)
-    d_ref_2b61_unit = (d_ref_2b61 / d_ref_2b61.norm().clamp(min=1e-8)).to(args.device)
+    print(f"Computing secondary reference search direction from {secondary_ref} (sanity check)...")
+    d_ref_secondary = compute_search_dir(model, tokenizer, all_seqs[secondary_ref], weights, args.device)
+    d_ref_secondary_unit = (d_ref_secondary / d_ref_secondary.norm().clamp(min=1e-8)).to(args.device)
 
-    cos_d_refs = float(torch.dot(d_ref_1pvg_unit.cpu(), d_ref_2b61_unit.cpu()))
-    print(f"  cos(d_ref_1pvg, d_ref_2b61) = {cos_d_refs:.4f}")
+    cos_d_refs = float(torch.dot(d_ref_primary_unit.cpu(), d_ref_secondary_unit.cpu()))
+    print(f"  cos(d_ref_{primary_ref}, d_ref_{secondary_ref}) = {cos_d_refs:.4f}")
 
-    # Use 1PVGA as primary reference
-    d_ref = d_ref_1pvg_unit
+    d_ref = d_ref_primary_unit
 
     print(f"\nAnalyzing {len(names)} proteins...")
     results = []
@@ -1082,7 +1124,7 @@ def main():
     print(f"\n  {n_anchor_like}/{len(results)} proteins are anchor-like")
 
     # Save audit CSV
-    audit_path = REPORT_DIR / "structure_anchor_transfer_v2_audit.csv"
+    audit_path = out_dir / f"{label}_audit.csv"
     fields = ["protein", "pdb_id", "n_res", "top1_mass", "top3_mass", "eff_keys", "rank_corr", "rank_corr_p", "top3_overlap", "cos_sim_d", "anchor_pos", "anchor_aa", "is_anchor_like", "top3_positions"]
     with open(audit_path, "w", newline="") as f:
         writer = csv.DictWriter(f, fieldnames=fields, extrasaction="ignore")
@@ -1097,6 +1139,43 @@ def main():
     if n_anchor_like < 2:
         print("\nSTOP: Fewer than 2 anchor-like proteins.")
         return
+
+    # Fetch protein family annotations from RCSB
+    print("\nFetching protein family annotations from RCSB...")
+    family_annotations = {}
+    try:
+        import requests
+        for name in names:
+            pdb_id = extract_pdb_id(name)
+            try:
+                url = f"https://data.rcsb.org/rest/v1/core/entry/{pdb_id}"
+                r = requests.get(url, timeout=10)
+                entry_data = r.json()
+                title = entry_data.get("struct", {}).get("title", "N/A")
+
+                url2 = f"https://data.rcsb.org/rest/v1/core/polymer_entity/{pdb_id}/1"
+                r2 = requests.get(url2, timeout=10)
+                d2 = r2.json()
+
+                ec = "N/A"
+                ec_annots = d2.get("rcsb_polymer_entity", {}).get("rcsb_ec_lineage", [])
+                if ec_annots:
+                    ec = ec_annots[0].get("id", "N/A")
+
+                pfam = "N/A"
+                pfam_annots = d2.get("rcsb_polymer_entity_annotation", [])
+                for a in pfam_annots:
+                    if a.get("type") == "Pfam":
+                        pfam = a.get("annotation_id", "") + " " + a.get("name", "")
+                        break
+
+                family_annotations[pdb_id] = {"title": title[:80], "ec": ec, "pfam": pfam}
+                print(f"  {pdb_id}: {pfam}")
+            except Exception as e:
+                family_annotations[pdb_id] = {"title": "N/A", "ec": "N/A", "pfam": "N/A"}
+                print(f"  {pdb_id}: failed ({e})")
+    except ImportError:
+        print("  requests not available, skipping family annotations")
 
     # ===================================================================
     # Phase 2: Top-1 anchor column concordance
@@ -1125,7 +1204,7 @@ def main():
         print(f"  Within 10: {sum(1 for d in dists if d <= 10)}/{len(dists)}")
 
     # Save concordance CSV
-    conc_path = REPORT_DIR / "structure_anchor_transfer_v2_concordance.csv"
+    conc_path = out_dir / f"{label}_concordance.csv"
     if pairs:
         with open(conc_path, "w", newline="") as f:
             writer = csv.DictWriter(f, fieldnames=list(pairs[0].keys()))
@@ -1205,8 +1284,10 @@ def main():
     # Use the top consensus column as the anchor reference
     if consensus_cols:
         primary_anchor_col = consensus_cols[0]["center_col"]
-    elif pvg_anchor_col is not None:
-        primary_anchor_col = pvg_anchor_col
+    elif len(anchor_cols) > 0:
+        # Use the most common anchor column as fallback
+        col_counts = Counter(anchor_cols.values())
+        primary_anchor_col = col_counts.most_common(1)[0][0]
     else:
         primary_anchor_col = 98  # fallback
 
@@ -1389,25 +1470,25 @@ def main():
     plt.rcParams.update({"font.size": 9, "axes.titlesize": 10, "figure.dpi": 200})
 
     # Top-1 null distribution
-    plot_concordance_control(anchor_mean_dist, random_dists, "Top-1 anchor column clustering vs random", REPORT_DIR / "structure_anchor_transfer_v2_top1_null.png")
+    plot_concordance_control(anchor_mean_dist, random_dists, "Top-1 anchor column clustering vs random", out_dir / f"{label}_top1_null.png")
 
     # Top-3 null distribution
     if pair_min_dists and len(random_min_dists) > 0:
-        plot_concordance_control(np.mean(pair_min_dists), random_min_dists, "Top-3 anchor set overlap vs random", REPORT_DIR / "structure_anchor_transfer_v2_top3_null.png")
+        plot_concordance_control(np.mean(pair_min_dists), random_min_dists, "Top-3 anchor set overlap vs random", out_dir / f"{label}_top3_null.png")
 
     # Conservation profile
     if cons_result is not None:
-        plot_conservation_profile(cons_result["col_conservation"], primary_anchor_col, 25, REPORT_DIR / "structure_anchor_transfer_v2_conservation.png")
+        plot_conservation_profile(cons_result["col_conservation"], primary_anchor_col, 25, out_dir / f"{label}_conservation.png")
 
     # Projection heatmap
-    plot_projection_heatmap(results, col_to_pos, pos_to_col, names, REPORT_DIR / "structure_anchor_transfer_v2_heatmap.png")
+    plot_projection_heatmap(results, col_to_pos, pos_to_col, names, out_dir / f"{label}_heatmap.png")
 
     # AA sequence logo
-    plot_sequence_logo(aa_counts, aa_nseqs, aa_ic, STANDARD_AA, AA_COLORS, 25, f"AA motif around anchor (n={len(anchor_like_results)})", REPORT_DIR / "structure_anchor_transfer_v2_aa_logo.png")
+    plot_sequence_logo(aa_counts, aa_nseqs, aa_ic, STANDARD_AA, AA_COLORS, 25, f"AA motif around anchor (n={len(anchor_like_results)})", out_dir / f"{label}_aa_logo.png")
 
     # 3Di sequence logo
     if di_ic is not None:
-        plot_sequence_logo(di_counts, di_nseqs, di_ic, DI_ALPHABET, DI_COLORS, 25, f"3Di motif around anchor (n={len(di_sequences)})", REPORT_DIR / "structure_anchor_transfer_v2_3di_logo.png")
+        plot_sequence_logo(di_counts, di_nseqs, di_ic, DI_ALPHABET, DI_COLORS, 25, f"3Di motif around anchor (n={len(di_sequences)})", out_dir / f"{label}_3di_logo.png")
 
     # ===================================================================
     # Write report
@@ -1431,8 +1512,8 @@ def main():
         report.append("\n")
 
     report.append("## Phase 1: Anchor behavior audit\n\n")
-    report.append(f"Reference search direction: d_ref from 1PVGA.\n")
-    report.append(f"Sanity check: cos(d_ref_1pvg, d_ref_2b61) = {cos_d_refs:.4f}.\n")
+    report.append(f"Reference search direction: d_ref from {primary_ref}.\n")
+    report.append(f"Sanity check: cos(d_ref_{primary_ref}, d_ref_{secondary_ref}) = {cos_d_refs:.4f}.\n")
     report.append(f"Anchor-like thresholds: top1_mass > {ANCHOR_TOP1_THRESH}, rank_corr > {ANCHOR_RANKCORR_THRESH}.\n\n")
 
     report.append("| PDB | N res | top1_mass | rank_corr | cos(d_self, d_ref) | Anchor pos | Anchor AA | Anchor-like |\n")
@@ -1442,6 +1523,23 @@ def main():
         al = "YES" if r["is_anchor_like"] else "no"
         report.append(f"| {pdb} | {r['n_res']} | {r['top1_mass']:.3f} | {r['rank_corr']:.3f} | {r['cos_sim_d']:.3f} | {r['anchor_pos']} | {r['anchor_aa']} | {al} |\n")
     report.append(f"\n{n_anchor_like}/{len(results)} proteins pass the anchor-like gate.\n\n")
+
+    if family_annotations:
+        report.append("### Protein family annotations (RCSB/Pfam)\n\n")
+        report.append("| PDB | Pfam | Title |\n")
+        report.append("|-----|------|-------|\n")
+        for n in names:
+            pdb = extract_pdb_id(n)
+            ann = family_annotations.get(pdb, {})
+            report.append(f"| {pdb} | {ann.get('pfam', 'N/A')} | {ann.get('title', 'N/A')[:60]} |\n")
+        report.append("\n")
+
+        # Summarize unique families
+        pfam_counts = Counter(ann.get("pfam", "N/A") for ann in family_annotations.values())
+        report.append("Pfam family distribution:\n")
+        for pfam, count in pfam_counts.most_common():
+            report.append(f"- {pfam}: {count} proteins\n")
+        report.append("\n")
 
     report.append("## Phase 2: Top-1 anchor column concordance\n\n")
 
@@ -1553,15 +1651,15 @@ def main():
                 report.append(f"3Di vs AA: 3Di IC at anchor ({di_ic[25]:.3f}) <= AA IC ({aa_ic[25]:.3f}). No evidence for stronger structural than sequence conservation.\n")
 
     report.append("\n## Plots\n\n")
-    report.append("![Top-1 null](structure_anchor_transfer_v2_top1_null.png)\n")
-    report.append("![Top-3 null](structure_anchor_transfer_v2_top3_null.png)\n")
-    report.append("![Conservation](structure_anchor_transfer_v2_conservation.png)\n")
-    report.append("![Heatmap](structure_anchor_transfer_v2_heatmap.png)\n")
-    report.append("![AA logo](structure_anchor_transfer_v2_aa_logo.png)\n")
+    report.append(f"![Top-1 null]({label}_top1_null.png)\n")
+    report.append(f"![Top-3 null]({label}_top3_null.png)\n")
+    report.append(f"![Conservation]({label}_conservation.png)\n")
+    report.append(f"![Heatmap]({label}_heatmap.png)\n")
+    report.append(f"![AA logo]({label}_aa_logo.png)\n")
     if di_ic is not None:
-        report.append("![3Di logo](structure_anchor_transfer_v2_3di_logo.png)\n")
+        report.append(f"![3Di logo]({label}_3di_logo.png)\n")
 
-    report_path = REPORT_DIR / "structure_anchor_transfer_v2.md"
+    report_path = out_dir / f"{label}_report.md"
     write_report(report, report_path)
 
     print("\nDone.")

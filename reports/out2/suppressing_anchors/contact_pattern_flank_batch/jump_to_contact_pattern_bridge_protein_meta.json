@@ -1,0 +1,904 @@
+[
+  {
+    "protein": "1BRTA",
+    "contact_pair": [
+      119,
+      221
+    ],
+    "segment_radius": 5,
+    "clean_flank": 32,
+    "corrupt_flank": 31,
+    "clean_anchor_positions": [
+      220,
+      93,
+      108
+    ],
+    "corrupt_anchor_positions": [
+      220,
+      108,
+      92
+    ],
+    "clean_metric": 0.736717700958252,
+    "corrupt_metric": 0.015240747481584549
+  },
+  {
+    "protein": "1IN4A",
+    "contact_pair": [
+      55,
+      174
+    ],
+    "segment_radius": 5,
+    "clean_flank": 40,
+    "corrupt_flank": 39,
+    "clean_anchor_positions": [
+      55,
+      106,
+      151
+    ],
+    "corrupt_anchor_positions": [
+      55,
+      151,
+      106
+    ],
+    "clean_metric": 0.9656463861465454,
+    "corrupt_metric": 0.37357404828071594
+  },
+  {
+    "protein": "1MJ5A",
+    "contact_pair": [
+      128,
+      240
+    ],
+    "segment_radius": 5,
+    "clean_flank": 35,
+    "corrupt_flank": 34,
+    "clean_anchor_positions": [
+      238,
+      103,
+      127
+    ],
+    "corrupt_anchor_positions": [
+      238,
+      103,
+      108
+    ],
+    "clean_metric": 0.8945257067680359,
+    "corrupt_metric": 0.0078092156909406185
+  },
+  {
+    "protein": "1NOXA",
+    "contact_pair": [
+      64,
+      165
+    ],
+    "segment_radius": 5,
+    "clean_flank": 25,
+    "corrupt_flank": 24,
+    "clean_anchor_positions": [
+      141,
+      142,
+      184
+    ],
+    "corrupt_anchor_positions": [
+      184,
+      176,
+      190
+    ],
+    "clean_metric": 0.6426877975463867,
+    "corrupt_metric": 0.013175503350794315
+  },
+  {
+    "protein": "1YKIA",
+    "contact_pair": [
+      83,
+      189
+    ],
+    "segment_radius": 5,
+    "clean_flank": 51,
+    "corrupt_flank": 50,
+    "clean_anchor_positions": [
+      49,
+      69,
+      129
+    ],
+    "corrupt_anchor_positions": [
+      60,
+      93,
+      77
+    ],
+    "clean_metric": 0.7542582750320435,
+    "corrupt_metric": 0.17913879454135895
+  },
+  {
+    "protein": "2DPMA",
+    "contact_pair": [
+      59,
+      172
+    ],
+    "segment_radius": 5,
+    "clean_flank": 30,
+    "corrupt_flank": 29,
+    "clean_anchor_positions": [
+      39,
+      190,
+      42
+    ],
+    "corrupt_anchor_positions": [
+      39,
+      181,
+      42
+    ],
+    "clean_metric": 0.939429521560669,
+    "corrupt_metric": 0.01685342937707901
+  },
+  {
+    "protein": "2EK8A",
+    "contact_pair": [
+      59,
+      203
+    ],
+    "segment_radius": 5,
+    "clean_flank": 50,
+    "corrupt_flank": 49,
+    "clean_anchor_positions": [
+      43,
+      224,
+      267
+    ],
+    "corrupt_anchor_positions": [
+      43,
+      224,
+      60
+    ],
+    "clean_metric": 0.6519160270690918,
+    "corrupt_metric": 0.02347438782453537
+  },
+  {
+    "protein": "2FBQA",
+    "contact_pair": [
+      94,
+      201
+    ],
+    "segment_radius": 5,
+    "clean_flank": 61,
+    "corrupt_flank": 60,
+    "clean_anchor_positions": [
+      47,
+      37,
+      32
+    ],
+    "corrupt_anchor_positions": [
+      47,
+      37,
+      32
+    ],
+    "clean_metric": 0.8185389041900635,
+    "corrupt_metric": 0.012977154925465584
+  },
+  {
+    "protein": "2HFSA",
+    "contact_pair": [
+      190,
+      293
+    ],
+    "segment_radius": 5,
+    "clean_flank": 68,
+    "corrupt_flank": 67,
+    "clean_anchor_positions": [
+      114,
+      291,
+      290
+    ],
+    "corrupt_anchor_positions": [
+      114,
+      290,
+      291
+    ],
+    "clean_metric": 0.6437638401985168,
+    "corrupt_metric": 0.08225049078464508
+  },
+  {
+    "protein": "2PKEA",
+    "contact_pair": [
+      16,
+      131
+    ],
+    "segment_radius": 5,
+    "clean_flank": 57,
+    "corrupt_flank": 56,
+    "clean_anchor_positions": [
+      131,
+      183,
+      16
+    ],
+    "corrupt_anchor_positions": [
+      131,
+      183,
+      16
+    ],
+    "clean_metric": 0.6155218482017517,
+    "corrupt_metric": 0.018207404762506485
+  },
+  {
+    "protein": "2QY6A",
+    "contact_pair": [
+      63,
+      177
+    ],
+    "segment_radius": 5,
+    "clean_flank": 32,
+    "corrupt_flank": 31,
+    "clean_anchor_positions": [
+      64,
+      176,
+      56
+    ],
+    "corrupt_anchor_positions": [
+      176,
+      56,
+      64
+    ],
+    "clean_metric": 0.5565283298492432,
+    "corrupt_metric": 0.031690217554569244
+  },
+  {
+    "protein": "2XD3A",
+    "contact_pair": [
+      145,
+      280
+    ],
+    "segment_radius": 5,
+    "clean_flank": 54,
+    "corrupt_flank": 53,
+    "clean_anchor_positions": [
+      317,
+      94,
+      135
+    ],
+    "corrupt_anchor_positions": [
+      317,
+      94,
+      135
+    ],
+    "clean_metric": 0.8758501410484314,
+    "corrupt_metric": 0.013050857000052929
+  },
+  {
+    "protein": "2YHWA",
+    "contact_pair": [
+      161,
+      288
+    ],
+    "segment_radius": 5,
+    "clean_flank": 62,
+    "corrupt_flank": 61,
+    "clean_anchor_positions": [
+      164,
+      165,
+      287
+    ],
+    "corrupt_anchor_positions": [
+      164,
+      106,
+      165
+    ],
+    "clean_metric": 0.8795609474182129,
+    "corrupt_metric": 0.01039587240666151
+  },
+  {
+    "protein": "2YXZA",
+    "contact_pair": [
+      154,
+      262
+    ],
+    "segment_radius": 5,
+    "clean_flank": 64,
+    "corrupt_flank": 63,
+    "clean_anchor_positions": [
+      85,
+      262,
+      252
+    ],
+    "corrupt_anchor_positions": [
+      85,
+      262,
+      87
+    ],
+    "clean_metric": 0.694659948348999,
+    "corrupt_metric": 0.019154496490955353
+  },
+  {
+    "protein": "3BWXA",
+    "contact_pair": [
+      125,
+      231
+    ],
+    "segment_radius": 5,
+    "clean_flank": 33,
+    "corrupt_flank": 32,
+    "clean_anchor_positions": [
+      230,
+      100,
+      101
+    ],
+    "corrupt_anchor_positions": [
+      230,
+      101,
+      119
+    ],
+    "clean_metric": 1.0199869871139526,
+    "corrupt_metric": 0.009474920108914375
+  },
+  {
+    "protein": "3CSSA",
+    "contact_pair": [
+      41,
+      159
+    ],
+    "segment_radius": 5,
+    "clean_flank": 35,
+    "corrupt_flank": 34,
+    "clean_anchor_positions": [
+      40,
+      158,
+      167
+    ],
+    "corrupt_anchor_positions": [
+      164,
+      17,
+      2
+    ],
+    "clean_metric": 0.9002285599708557,
+    "corrupt_metric": 0.008212209679186344
+  },
+  {
+    "protein": "3DGTA",
+    "contact_pair": [
+      122,
+      240
+    ],
+    "segment_radius": 5,
+    "clean_flank": 67,
+    "corrupt_flank": 66,
+    "clean_anchor_positions": [
+      103,
+      101,
+      119
+    ],
+    "corrupt_anchor_positions": [
+      103,
+      101,
+      119
+    ],
+    "clean_metric": 0.7477116584777832,
+    "corrupt_metric": 0.04276195541024208
+  },
+  {
+    "protein": "3FD3A",
+    "contact_pair": [
+      66,
+      177
+    ],
+    "segment_radius": 5,
+    "clean_flank": 59,
+    "corrupt_flank": 58,
+    "clean_anchor_positions": [
+      31,
+      30,
+      71
+    ],
+    "corrupt_anchor_positions": [
+      30,
+      31,
+      33
+    ],
+    "clean_metric": 0.5525997877120972,
+    "corrupt_metric": 0.01118523720651865
+  },
+  {
+    "protein": "3HO7A",
+    "contact_pair": [
+      76,
+      189
+    ],
+    "segment_radius": 5,
+    "clean_flank": 43,
+    "corrupt_flank": 42,
+    "clean_anchor_positions": [
+      63,
+      17,
+      18
+    ],
+    "corrupt_anchor_positions": [
+      63,
+      64,
+      17
+    ],
+    "clean_metric": 0.8569397926330566,
+    "corrupt_metric": 0.3557305335998535
+  },
+  {
+    "protein": "3LEWA",
+    "contact_pair": [
+      225,
+      352
+    ],
+    "segment_radius": 5,
+    "clean_flank": 57,
+    "corrupt_flank": 56,
+    "clean_anchor_positions": [
+      209,
+      174,
+      353
+    ],
+    "corrupt_anchor_positions": [
+      209,
+      170,
+      349
+    ],
+    "clean_metric": 0.527385413646698,
+    "corrupt_metric": 0.009947138838469982
+  },
+  {
+    "protein": "3OKPA",
+    "contact_pair": [
+      219,
+      336
+    ],
+    "segment_radius": 5,
+    "clean_flank": 69,
+    "corrupt_flank": 68,
+    "clean_anchor_positions": [
+      200,
+      293,
+      3
+    ],
+    "corrupt_anchor_positions": [
+      200,
+      156,
+      201
+    ],
+    "clean_metric": 0.8964419960975647,
+    "corrupt_metric": 0.1103203222155571
+  },
+  {
+    "protein": "3QDLA",
+    "contact_pair": [
+      84,
+      186
+    ],
+    "segment_radius": 5,
+    "clean_flank": 40,
+    "corrupt_flank": 39,
+    "clean_anchor_positions": [
+      114,
+      113,
+      115
+    ],
+    "corrupt_anchor_positions": [
+      45,
+      114,
+      113
+    ],
+    "clean_metric": 0.718527615070343,
+    "corrupt_metric": 0.14921444654464722
+  },
+  {
+    "protein": "3T4LA",
+    "contact_pair": [
+      78,
+      195
+    ],
+    "segment_radius": 5,
+    "clean_flank": 56,
+    "corrupt_flank": 55,
+    "clean_anchor_positions": [
+      201,
+      30,
+      88
+    ],
+    "corrupt_anchor_positions": [
+      201,
+      30,
+      88
+    ],
+    "clean_metric": 1.0757637023925781,
+    "corrupt_metric": 0.4086620509624481
+  },
+  {
+    "protein": "3WJPA",
+    "contact_pair": [
+      167,
+      277
+    ],
+    "segment_radius": 5,
+    "clean_flank": 59,
+    "corrupt_flank": 58,
+    "clean_anchor_positions": [
+      276,
+      94,
+      93
+    ],
+    "corrupt_anchor_positions": [
+      276,
+      129,
+      125
+    ],
+    "clean_metric": 1.111226201057434,
+    "corrupt_metric": 0.03637147694826126
+  },
+  {
+    "protein": "4DM7A",
+    "contact_pair": [
+      126,
+      239
+    ],
+    "segment_radius": 5,
+    "clean_flank": 36,
+    "corrupt_flank": 35,
+    "clean_anchor_positions": [
+      237,
+      238,
+      236
+    ],
+    "corrupt_anchor_positions": [
+      236,
+      107,
+      237
+    ],
+    "clean_metric": 0.9652304649353027,
+    "corrupt_metric": 0.01082891970872879
+  },
+  {
+    "protein": "4EHUA",
+    "contact_pair": [
+      97,
+      211
+    ],
+    "segment_radius": 5,
+    "clean_flank": 34,
+    "corrupt_flank": 33,
+    "clean_anchor_positions": [
+      209,
+      100,
+      59
+    ],
+    "corrupt_anchor_positions": [
+      209,
+      59,
+      100
+    ],
+    "clean_metric": 0.6809027791023254,
+    "corrupt_metric": 0.06450647860765457
+  },
+  {
+    "protein": "4EX6A",
+    "contact_pair": [
+      22,
+      123
+    ],
+    "segment_radius": 5,
+    "clean_flank": 40,
+    "corrupt_flank": 39,
+    "clean_anchor_positions": [
+      124,
+      180,
+      135
+    ],
+    "corrupt_anchor_positions": [
+      124,
+      135,
+      22
+    ],
+    "clean_metric": 0.8467612266540527,
+    "corrupt_metric": 0.024156412109732628
+  },
+  {
+    "protein": "4EZIA",
+    "contact_pair": [
+      194,
+      311
+    ],
+    "segment_radius": 5,
+    "clean_flank": 38,
+    "corrupt_flank": 37,
+    "clean_anchor_positions": [
+      310,
+      170,
+      164
+    ],
+    "corrupt_anchor_positions": [
+      310,
+      156,
+      198
+    ],
+    "clean_metric": 0.7957424521446228,
+    "corrupt_metric": 0.013264237903058529
+  },
+  {
+    "protein": "4G41A",
+    "contact_pair": [
+      62,
+      184
+    ],
+    "segment_radius": 5,
+    "clean_flank": 50,
+    "corrupt_flank": 49,
+    "clean_anchor_positions": [
+      196,
+      76,
+      77
+    ],
+    "corrupt_anchor_positions": [
+      196,
+      76,
+      77
+    ],
+    "clean_metric": 0.9031475186347961,
+    "corrupt_metric": 0.2965782582759857
+  },
+  {
+    "protein": "4HZIA",
+    "contact_pair": [
+      63,
+      228
+    ],
+    "segment_radius": 5,
+    "clean_flank": 33,
+    "corrupt_flank": 32,
+    "clean_anchor_positions": [
+      64,
+      227,
+      200
+    ],
+    "corrupt_anchor_positions": [
+      64,
+      241,
+      72
+    ],
+    "clean_metric": 0.8631985783576965,
+    "corrupt_metric": 0.14813613891601562
+  },
+  {
+    "protein": "4ME3A",
+    "contact_pair": [
+      126,
+      238
+    ],
+    "segment_radius": 5,
+    "clean_flank": 50,
+    "corrupt_flank": 49,
+    "clean_anchor_positions": [
+      75,
+      230,
+      127
+    ],
+    "corrupt_anchor_positions": [
+      75,
+      230,
+      127
+    ],
+    "clean_metric": 1.046533465385437,
+    "corrupt_metric": 0.369900643825531
+  },
+  {
+    "protein": "4MFIA",
+    "contact_pair": [
+      157,
+      288
+    ],
+    "segment_radius": 5,
+    "clean_flank": 69,
+    "corrupt_flank": 68,
+    "clean_anchor_positions": [
+      326,
+      95,
+      102
+    ],
+    "corrupt_anchor_positions": [
+      326,
+      95,
+      102
+    ],
+    "clean_metric": 0.6302300691604614,
+    "corrupt_metric": 0.07959368079900742
+  },
+  {
+    "protein": "4N9WA",
+    "contact_pair": [
+      214,
+      325
+    ],
+    "segment_radius": 5,
+    "clean_flank": 61,
+    "corrupt_flank": 60,
+    "clean_anchor_positions": [
+      194,
+      147,
+      289
+    ],
+    "corrupt_anchor_positions": [
+      194,
+      147,
+      289
+    ],
+    "clean_metric": 0.7790738940238953,
+    "corrupt_metric": 0.02123437076807022
+  },
+  {
+    "protein": "4OY3A",
+    "contact_pair": [
+      61,
+      181
+    ],
+    "segment_radius": 5,
+    "clean_flank": 39,
+    "corrupt_flank": 38,
+    "clean_anchor_positions": [
+      193,
+      168,
+      65
+    ],
+    "corrupt_anchor_positions": [
+      193,
+      168,
+      22
+    ],
+    "clean_metric": 0.5170277953147888,
+    "corrupt_metric": 0.013689234852790833
+  },
+  {
+    "protein": "4R6KA",
+    "contact_pair": [
+      150,
+      289
+    ],
+    "segment_radius": 5,
+    "clean_flank": 60,
+    "corrupt_flank": 59,
+    "clean_anchor_positions": [
+      325,
+      90,
+      92
+    ],
+    "corrupt_anchor_positions": [
+      325,
+      90,
+      92
+    ],
+    "clean_metric": 0.6466605067253113,
+    "corrupt_metric": 0.025584107264876366
+  },
+  {
+    "protein": "4TL6A",
+    "contact_pair": [
+      43,
+      179
+    ],
+    "segment_radius": 5,
+    "clean_flank": 50,
+    "corrupt_flank": 49,
+    "clean_anchor_positions": [
+      149,
+      150,
+      151
+    ],
+    "corrupt_anchor_positions": [
+      41,
+      50,
+      195
+    ],
+    "clean_metric": 0.8672376275062561,
+    "corrupt_metric": 0.006885874085128307
+  },
+  {
+    "protein": "4WY2A",
+    "contact_pair": [
+      159,
+      271
+    ],
+    "segment_radius": 5,
+    "clean_flank": 45,
+    "corrupt_flank": 44,
+    "clean_anchor_positions": [
+      114,
+      269,
+      115
+    ],
+    "corrupt_anchor_positions": [
+      114,
+      269,
+      115
+    ],
+    "clean_metric": 0.6507430672645569,
+    "corrupt_metric": 0.07178173214197159
+  },
+  {
+    "protein": "5AB4A",
+    "contact_pair": [
+      127,
+      233
+    ],
+    "segment_radius": 5,
+    "clean_flank": 66,
+    "corrupt_flank": 65,
+    "clean_anchor_positions": [
+      104,
+      80,
+      82
+    ],
+    "corrupt_anchor_positions": [
+      104,
+      80,
+      82
+    ],
+    "clean_metric": 1.0715651512145996,
+    "corrupt_metric": 0.057149745523929596
+  },
+  {
+    "protein": "5AJGA",
+    "contact_pair": [
+      174,
+      287
+    ],
+    "segment_radius": 5,
+    "clean_flank": 40,
+    "corrupt_flank": 39,
+    "clean_anchor_positions": [
+      174,
+      134,
+      149
+    ],
+    "corrupt_anchor_positions": [
+      134,
+      149,
+      174
+    ],
+    "clean_metric": 1.1175976991653442,
+    "corrupt_metric": 0.11391227692365646
+  },
+  {
+    "protein": "5HEEA",
+    "contact_pair": [
+      43,
+      167
+    ],
+    "segment_radius": 5,
+    "clean_flank": 33,
+    "corrupt_flank": 32,
+    "clean_anchor_positions": [
+      168,
+      24,
+      195
+    ],
+    "corrupt_anchor_positions": [
+      168,
+      24,
+      164
+    ],
+    "clean_metric": 1.0468759536743164,
+    "corrupt_metric": 0.020710693672299385
+  },
+  {
+    "protein": "5IVKA",
+    "contact_pair": [
+      247,
+      352
+    ],
+    "segment_radius": 5,
+    "clean_flank": 67,
+    "corrupt_flank": 66,
+    "clean_anchor_positions": [
+      204,
+      246,
+      220
+    ],
+    "corrupt_anchor_positions": [
+      246,
+      204,
+      220
+    ],
+    "clean_metric": 1.1892549991607666,
+    "corrupt_metric": 0.013094061054289341
+  }
+]

@@ -146,11 +146,9 @@ Mean: AA=2.212, 3Di=2.790.
 
 ## Interpretation
 
-Top-1 concordance: STRONG POSITIVE. All 20 proteins anchor at exact same alignment column (122). 190/190 pairwise exact matches. Projection transfer: 100% top-1 hit rate.
-Top-3 concordance: Two consensus columns emerge — column 123 (20/20 proteins, 100%) and column 179 (19/20 proteins, 95%). A third cluster at column 536 appears in 8/20 proteins.
-Local conservation: local sequence identity around anchor (0.327) IS significantly higher than global (0.298) by paired t-test (p=3.83e-06). The effect size is small (+0.03 absolute) but statistically significant. This means local sequence conservation contributes partially to the concordance, though it cannot fully explain it (the anchor concordance is perfect while the local identity increase is modest).
-3Di vs AA: 3Di IC at anchor (4.322) > AA IC (3.065). All 17 matched proteins share identical backbone geometry (3Di letter) at the anchor. Structural conservation exceeds sequence conservation at the anchor.
-Caveat: Mean pairwise global identity among the 20 deduplicated proteins is 0.298 (not near-zero). While each protein is <20% identical to 1PVGA, many are ~30% identical to each other. The perfect anchor concordance may partly reflect this residual shared ancestry. Repeating with a stricter dedup threshold (e.g., 50% or 30%) would test robustness.
+Top-1 concordance: POSITIVE. Anchor positions cluster in structural alignment space.
+Local conservation: local sequence identity around anchor IS higher than global. Cannot fully separate structural signal from local sequence signal.
+3Di vs AA: 3Di IC at anchor (4.322) > AA IC (3.065). Structural conservation exceeds sequence conservation at the anchor.
 
 ## Plots
 

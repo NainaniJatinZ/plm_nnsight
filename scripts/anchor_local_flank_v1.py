@@ -34,7 +34,9 @@ from scipy import optimize as sp_opt
 
 ROOT = Path(__file__).resolve().parent.parent
 DATA_DIR = ROOT / "data"
-REPORT_DIR = ROOT / "reports" / "outputs" / "multi_protein"
+LEGACY_REPORT_DIR = ROOT / "reports" / "outputs" / "multi_protein"
+EXPERIMENT_ROOT = ROOT / "reports" / "out2" / "suppressing_anchors"
+DEFAULT_OUTPUT_DIR = EXPERIMENT_ROOT / "local_flank_v1"
 WEIGHTS_DIR = "/work/pi_jensen_umass_edu/jnainani_umass_edu/ESM_Interp/weights/"
 sys.path.insert(0, str(ROOT))
 
@@ -197,14 +199,22 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--device", default="cuda" if torch.cuda.is_available() else "cpu")
     parser.add_argument("--top-n", type=int, default=TOP_N)
+    parser.add_argument("--output-dir", type=str, default=str(DEFAULT_OUTPUT_DIR))
+    parser.add_argument(
+        "--audit-csv",
+        type=str,
+        default=str(LEGACY_REPORT_DIR / "anchor_behavior_audit.csv"),
+        help="Input audit CSV used to select the anchor proteins.",
+    )
     args = parser.parse_args()
-    REPORT_DIR.mkdir(parents=True, exist_ok=True)
+    output_dir = Path(args.output_dir)
+    output_dir.mkdir(parents=True, exist_ok=True)
 
     print("Loading sequences...")
     with open(DATA_DIR / "full_seq_dict.json") as f:
         all_seqs = json.load(f)
 
-    audit_csv = REPORT_DIR / "anchor_behavior_audit.csv"
+    audit_csv = Path(args.audit_csv)
     print(f"Selecting top {args.top_n} proteins from {audit_csv}...")
     proteins = select_top_proteins(audit_csv, all_seqs, args.top_n)
     print(f"  Selected {len(proteins)} proteins")
@@ -297,7 +307,7 @@ def main():
     print(f"\nProcessed {len(proteins)} proteins, {len(all_rows)} rows in {elapsed:.0f}s")
 
     # Save per-protein CSV
-    csv_path = REPORT_DIR / "anchor_local_flank_v1_per_protein.csv"
+    csv_path = output_dir / "anchor_local_flank_v1_per_protein.csv"
     fields = ["protein", "n_res", "anchor_pos", "radius", "radius_int", "alpha", "alpha_norm", "proj_rank", "score", "score_norm", "score_rank", "attn_mass", "attn_norm", "attn_rank", "top1_overlap", "top3_overlap"]
     with open(csv_path, "w", newline="") as f:
         writer = csv.DictWriter(f, fieldnames=fields, extrasaction="ignore")
@@ -329,7 +339,7 @@ def main():
                 trow[f"R_{int(thr*100)}"] = found if found is not None else "never"
             threshold_rows.append(trow)
 
-    thr_csv = REPORT_DIR / "anchor_local_flank_v1_thresholds.csv"
+    thr_csv = output_dir / "anchor_local_flank_v1_thresholds.csv"
     thr_fields = ["protein", "n_res", "metric", "R_25", "R_50", "R_80", "R_90"]
     with open(thr_csv, "w", newline="") as f:
         writer = csv.DictWriter(f, fieldnames=thr_fields)
@@ -424,7 +434,7 @@ def main():
         ax.spines["right"].set_visible(False)
 
     plt.tight_layout()
-    out1 = REPORT_DIR / "anchor_local_flank_v1_recovery.png"
+    out1 = output_dir / "anchor_local_flank_v1_recovery.png"
     fig.savefig(out1, dpi=200, bbox_inches="tight")
     plt.close(fig)
     print(f"  Saved: {out1}")
@@ -455,7 +465,7 @@ def main():
         ax.spines["right"].set_visible(False)
 
     plt.tight_layout()
-    out2 = REPORT_DIR / "anchor_local_flank_v1_per_protein.png"
+    out2 = output_dir / "anchor_local_flank_v1_per_protein.png"
     fig.savefig(out2, dpi=200, bbox_inches="tight")
     plt.close(fig)
     print(f"  Saved: {out2}")
@@ -480,7 +490,7 @@ def main():
         ax.spines["right"].set_visible(False)
 
     plt.tight_layout()
-    out3 = REPORT_DIR / "anchor_local_flank_v1_thresholds.png"
+    out3 = output_dir / "anchor_local_flank_v1_thresholds.png"
     fig.savefig(out3, dpi=200, bbox_inches="tight")
     plt.close(fig)
     print(f"  Saved: {out3}")
@@ -505,7 +515,7 @@ def main():
         ax.spines["right"].set_visible(False)
 
     plt.tight_layout()
-    out4 = REPORT_DIR / "anchor_local_flank_v1_jumps.png"
+    out4 = output_dir / "anchor_local_flank_v1_jumps.png"
     fig.savefig(out4, dpi=200, bbox_inches="tight")
     plt.close(fig)
     print(f"  Saved: {out4}")
@@ -533,7 +543,7 @@ def main():
     ax2.spines["right"].set_visible(False)
 
     plt.tight_layout()
-    out5 = REPORT_DIR / "anchor_local_flank_v1_topk.png"
+    out5 = output_dir / "anchor_local_flank_v1_topk.png"
     fig.savefig(out5, dpi=200, bbox_inches="tight")
     plt.close(fig)
     print(f"  Saved: {out5}")
@@ -620,7 +630,7 @@ def main():
     report.append("![Jump radii](anchor_local_flank_v1_jumps.png)\n\n")
     report.append("![Top-k overlap](anchor_local_flank_v1_topk.png)\n\n")
 
-    out_report = REPORT_DIR / "anchor_local_flank_v1.md"
+    out_report = output_dir / "anchor_local_flank_v1.md"
     with open(out_report, "w") as f:
         f.writelines(report)
     print(f"Saved: {out_report}")
