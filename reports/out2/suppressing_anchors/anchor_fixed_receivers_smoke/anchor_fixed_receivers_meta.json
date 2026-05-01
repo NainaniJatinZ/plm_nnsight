@@ -1,0 +1,40 @@
+[
+  {
+    "protein": "2B61A",
+    "contact_pair": [
+      182,
+      316
+    ],
+    "clean_flank": 44,
+    "corrupt_flank": 43,
+    "clean_anchor_positions": [
+      315,
+      163,
+      181
+    ],
+    "receiver_min_layer": 26,
+    "fixed_receivers": [
+      [
+        26,
+        16
+      ],
+      [
+        32,
+        13
+      ],
+      [
+        32,
+        18
+      ],
+      [
+        30,
+        1
+      ],
+      [
+        27,
+        15
+      ]
+    ],
+    "source_count": 2
+  }
+]

@@ -1,0 +1,245 @@
+{
+  "manifest_name": "anchor_path_patching_receivers",
+  "selection_rule": "Use a fixed downstream receiver set per protein. Restrict to layer > 10 and exclude source head L10H9.",
+  "source_head": {
+    "layer": 10,
+    "head": 9
+  },
+  "proteins": {
+    "2B61A": {
+      "receiver_source": "reports/outputs/2B61A/2B61A_single_contact_circuits.json full_segment.sort_results.pos.circuit_heads",
+      "receivers": [
+        {
+          "layer": 11,
+          "head": 1
+        },
+        {
+          "layer": 26,
+          "head": 16
+        },
+        {
+          "layer": 22,
+          "head": 14
+        },
+        {
+          "layer": 32,
+          "head": 13
+        },
+        {
+          "layer": 32,
+          "head": 18
+        },
+        {
+          "layer": 14,
+          "head": 9
+        },
+        {
+          "layer": 30,
+          "head": 1
+        },
+        {
+          "layer": 11,
+          "head": 16
+        },
+        {
+          "layer": 27,
+          "head": 15
+        },
+        {
+          "layer": 19,
+          "head": 0
+        },
+        {
+          "layer": 17,
+          "head": 18
+        },
+        {
+          "layer": 14,
+          "head": 14
+        },
+        {
+          "layer": 16,
+          "head": 17
+        },
+        {
+          "layer": 15,
+          "head": 2
+        },
+        {
+          "layer": 13,
+          "head": 8
+        },
+        {
+          "layer": 11,
+          "head": 6
+        },
+        {
+          "layer": 17,
+          "head": 5
+        },
+        {
+          "layer": 14,
+          "head": 0
+        },
+        {
+          "layer": 16,
+          "head": 15
+        },
+        {
+          "layer": 13,
+          "head": 18
+        },
+        {
+          "layer": 12,
+          "head": 3
+        },
+        {
+          "layer": 14,
+          "head": 19
+        },
+        {
+          "layer": 16,
+          "head": 7
+        },
+        {
+          "layer": 19,
+          "head": 15
+        },
+        {
+          "layer": 14,
+          "head": 13
+        }
+      ]
+    },
+    "1PVGA": {
+      "receiver_source": "reports/outputs/1PVGA/1PVGA_sse_circuit_ablation.md union of INTRA/CROSS/ANCHOR/OTHER head lists",
+      "receivers": [
+        {
+          "layer": 13,
+          "head": 2,
+          "group": "INTRA"
+        },
+        {
+          "layer": 17,
+          "head": 10,
+          "group": "INTRA"
+        },
+        {
+          "layer": 14,
+          "head": 4,
+          "group": "CROSS"
+        },
+        {
+          "layer": 15,
+          "head": 8,
+          "group": "CROSS"
+        },
+        {
+          "layer": 26,
+          "head": 16,
+          "group": "CROSS"
+        },
+        {
+          "layer": 27,
+          "head": 15,
+          "group": "CROSS"
+        },
+        {
+          "layer": 29,
+          "head": 18,
+          "group": "CROSS"
+        },
+        {
+          "layer": 32,
+          "head": 13,
+          "group": "CROSS"
+        },
+        {
+          "layer": 32,
+          "head": 18,
+          "group": "CROSS"
+        },
+        {
+          "layer": 11,
+          "head": 14,
+          "group": "ANCHOR"
+        },
+        {
+          "layer": 11,
+          "head": 16,
+          "group": "ANCHOR"
+        },
+        {
+          "layer": 12,
+          "head": 10,
+          "group": "ANCHOR"
+        },
+        {
+          "layer": 12,
+          "head": 15,
+          "group": "ANCHOR"
+        },
+        {
+          "layer": 13,
+          "head": 18,
+          "group": "ANCHOR"
+        },
+        {
+          "layer": 14,
+          "head": 9,
+          "group": "ANCHOR"
+        },
+        {
+          "layer": 17,
+          "head": 18,
+          "group": "ANCHOR"
+        },
+        {
+          "layer": 12,
+          "head": 8,
+          "group": "OTHER"
+        },
+        {
+          "layer": 13,
+          "head": 17,
+          "group": "OTHER"
+        },
+        {
+          "layer": 14,
+          "head": 0,
+          "group": "OTHER"
+        },
+        {
+          "layer": 14,
+          "head": 3,
+          "group": "OTHER"
+        },
+        {
+          "layer": 16,
+          "head": 7,
+          "group": "OTHER"
+        },
+        {
+          "layer": 16,
+          "head": 14,
+          "group": "OTHER"
+        },
+        {
+          "layer": 20,
+          "head": 3,
+          "group": "OTHER"
+        },
+        {
+          "layer": 21,
+          "head": 13,
+          "group": "OTHER"
+        },
+        {
+          "layer": 24,
+          "head": 18,
+          "group": "OTHER"
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,471 @@
+[
+  {
+    "protein": "2B61A",
+    "contact_pair": [
+      182,
+      316
+    ],
+    "clean_anchor_positions": [
+      315,
+      163,
+      181
+    ],
+    "circuit_heads": [
+      [
+        10,
+        9
+      ],
+      [
+        11,
+        1
+      ],
+      [
+        11,
+        6
+      ],
+      [
+        11,
+        16
+      ],
+      [
+        12,
+        3
+      ],
+      [
+        13,
+        8
+      ],
+      [
+        13,
+        18
+      ],
+      [
+        14,
+        0
+      ],
+      [
+        14,
+        9
+      ],
+      [
+        14,
+        13
+      ],
+      [
+        14,
+        14
+      ],
+      [
+        14,
+        19
+      ],
+      [
+        15,
+        2
+      ],
+      [
+        16,
+        7
+      ],
+      [
+        16,
+        15
+      ],
+      [
+        16,
+        17
+      ],
+      [
+        17,
+        5
+      ],
+      [
+        17,
+        18
+      ],
+      [
+        19,
+        0
+      ],
+      [
+        19,
+        15
+      ],
+      [
+        22,
+        14
+      ],
+      [
+        26,
+        16
+      ],
+      [
+        27,
+        15
+      ],
+      [
+        30,
+        1
+      ],
+      [
+        32,
+        13
+      ],
+      [
+        32,
+        18
+      ]
+    ],
+    "ordered_targets": [
+      {
+        "layer": 11,
+        "head": 1
+      },
+      {
+        "layer": 11,
+        "head": 6
+      },
+      {
+        "layer": 11,
+        "head": 16
+      },
+      {
+        "layer": 12,
+        "head": 3
+      },
+      {
+        "layer": 13,
+        "head": 8
+      },
+      {
+        "layer": 13,
+        "head": 18
+      },
+      {
+        "layer": 14,
+        "head": 0
+      },
+      {
+        "layer": 14,
+        "head": 9
+      },
+      {
+        "layer": 14,
+        "head": 13
+      },
+      {
+        "layer": 14,
+        "head": 14
+      },
+      {
+        "layer": 14,
+        "head": 19
+      },
+      {
+        "layer": 15,
+        "head": 2
+      },
+      {
+        "layer": 16,
+        "head": 7
+      },
+      {
+        "layer": 16,
+        "head": 15
+      },
+      {
+        "layer": 16,
+        "head": 17
+      },
+      {
+        "layer": 17,
+        "head": 5
+      },
+      {
+        "layer": 17,
+        "head": 18
+      },
+      {
+        "layer": 19,
+        "head": 0
+      },
+      {
+        "layer": 19,
+        "head": 15
+      },
+      {
+        "layer": 22,
+        "head": 14
+      },
+      {
+        "layer": 26,
+        "head": 16
+      },
+      {
+        "layer": 27,
+        "head": 15
+      },
+      {
+        "layer": 30,
+        "head": 1
+      },
+      {
+        "layer": 32,
+        "head": 13
+      },
+      {
+        "layer": 32,
+        "head": 18
+      }
+    ],
+    "edge_count": 305,
+    "upstream_mode": "free"
+  },
+  {
+    "protein": "1PVGA",
+    "contact_pair": [
+      101,
+      202
+    ],
+    "clean_anchor_positions": [
+      101,
+      226,
+      90
+    ],
+    "circuit_heads": [
+      [
+        10,
+        9
+      ],
+      [
+        11,
+        14
+      ],
+      [
+        11,
+        16
+      ],
+      [
+        12,
+        8
+      ],
+      [
+        12,
+        10
+      ],
+      [
+        12,
+        15
+      ],
+      [
+        13,
+        2
+      ],
+      [
+        13,
+        17
+      ],
+      [
+        13,
+        18
+      ],
+      [
+        14,
+        0
+      ],
+      [
+        14,
+        3
+      ],
+      [
+        14,
+        4
+      ],
+      [
+        14,
+        9
+      ],
+      [
+        15,
+        8
+      ],
+      [
+        16,
+        7
+      ],
+      [
+        16,
+        14
+      ],
+      [
+        17,
+        10
+      ],
+      [
+        17,
+        18
+      ],
+      [
+        20,
+        3
+      ],
+      [
+        21,
+        13
+      ],
+      [
+        24,
+        18
+      ],
+      [
+        26,
+        16
+      ],
+      [
+        27,
+        15
+      ],
+      [
+        29,
+        18
+      ],
+      [
+        32,
+        13
+      ],
+      [
+        32,
+        18
+      ]
+    ],
+    "ordered_targets": [
+      {
+        "layer": 11,
+        "head": 14,
+        "group": "ANCHOR"
+      },
+      {
+        "layer": 11,
+        "head": 16,
+        "group": "ANCHOR"
+      },
+      {
+        "layer": 12,
+        "head": 8,
+        "group": "OTHER"
+      },
+      {
+        "layer": 12,
+        "head": 10,
+        "group": "ANCHOR"
+      },
+      {
+        "layer": 12,
+        "head": 15,
+        "group": "ANCHOR"
+      },
+      {
+        "layer": 13,
+        "head": 2,
+        "group": "INTRA"
+      },
+      {
+        "layer": 13,
+        "head": 17,
+        "group": "OTHER"
+      },
+      {
+        "layer": 13,
+        "head": 18,
+        "group": "ANCHOR"
+      },
+      {
+        "layer": 14,
+        "head": 0,
+        "group": "OTHER"
+      },
+      {
+        "layer": 14,
+        "head": 3,
+        "group": "OTHER"
+      },
+      {
+        "layer": 14,
+        "head": 4,
+        "group": "CROSS"
+      },
+      {
+        "layer": 14,
+        "head": 9,
+        "group": "ANCHOR"
+      },
+      {
+        "layer": 15,
+        "head": 8,
+        "group": "CROSS"
+      },
+      {
+        "layer": 16,
+        "head": 7,
+        "group": "OTHER"
+      },
+      {
+        "layer": 16,
+        "head": 14,
+        "group": "OTHER"
+      },
+      {
+        "layer": 17,
+        "head": 10,
+        "group": "INTRA"
+      },
+      {
+        "layer": 17,
+        "head": 18,
+        "group": "ANCHOR"
+      },
+      {
+        "layer": 20,
+        "head": 3,
+        "group": "OTHER"
+      },
+      {
+        "layer": 21,
+        "head": 13,
+        "group": "OTHER"
+      },
+      {
+        "layer": 24,
+        "head": 18,
+        "group": "OTHER"
+      },
+      {
+        "layer": 26,
+        "head": 16,
+        "group": "CROSS"
+      },
+      {
+        "layer": 27,
+        "head": 15,
+        "group": "CROSS"
+      },
+      {
+        "layer": 29,
+        "head": 18,
+        "group": "CROSS"
+      },
+      {
+        "layer": 32,
+        "head": 13,
+        "group": "CROSS"
+      },
+      {
+        "layer": 32,
+        "head": 18,
+        "group": "CROSS"
+      }
+    ],
+    "edge_count": 309,
+    "upstream_mode": "free"
+  }
+]

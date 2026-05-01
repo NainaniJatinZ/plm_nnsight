@@ -1,0 +1,2 @@
+protein,alpha_star,clean_metric,corrupt_metric,total_metric,total_drop,upstream_mode
+2B61A,0.25,0.5737944841384888,0.027853066101670265,0.331472247838974,0.24232223629951477,free

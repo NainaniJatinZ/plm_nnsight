@@ -1,0 +1,114 @@
+{
+  "manifest_name": "anchor_indirect_per_target",
+  "source_of_heads": "reports/out2/suppressing_anchors/inputs/anchor_path_patching_receiver_manifest.json",
+  "receiver_min_layer": 26,
+  "proteins": {
+    "2B61A": {
+      "late_targets": [
+        {
+          "layer": 26,
+          "head": 16
+        },
+        {
+          "layer": 32,
+          "head": 13
+        },
+        {
+          "layer": 32,
+          "head": 18
+        },
+        {
+          "layer": 30,
+          "head": 1
+        },
+        {
+          "layer": 27,
+          "head": 15
+        }
+      ],
+      "source_candidates": [
+        {
+          "layer": 11,
+          "head": 1
+        },
+        {
+          "layer": 22,
+          "head": 14
+        },
+        {
+          "layer": 14,
+          "head": 9
+        },
+        {
+          "layer": 11,
+          "head": 16
+        },
+        {
+          "layer": 19,
+          "head": 0
+        },
+        {
+          "layer": 17,
+          "head": 18
+        },
+        {
+          "layer": 14,
+          "head": 14
+        },
+        {
+          "layer": 16,
+          "head": 17
+        },
+        {
+          "layer": 15,
+          "head": 2
+        },
+        {
+          "layer": 13,
+          "head": 8
+        },
+        {
+          "layer": 11,
+          "head": 6
+        },
+        {
+          "layer": 17,
+          "head": 5
+        },
+        {
+          "layer": 14,
+          "head": 0
+        },
+        {
+          "layer": 16,
+          "head": 15
+        },
+        {
+          "layer": 13,
+          "head": 18
+        },
+        {
+          "layer": 12,
+          "head": 3
+        },
+        {
+          "layer": 14,
+          "head": 19
+        },
+        {
+          "layer": 16,
+          "head": 7
+        },
+        {
+          "layer": 19,
+          "head": 15
+        },
+        {
+          "layer": 14,
+          "head": 13
+        }
+      ],
+      "receiver_source": "reports/outputs/2B61A/2B61A_single_contact_circuits.json full_segment.sort_results.pos.circuit_heads"
+    }
+  }
+}

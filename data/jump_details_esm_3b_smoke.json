@@ -1,0 +1,58 @@
+{
+  "1BRTA": {
+    "clean_flank_length": 22,
+    "clean_recovery": 0.923020601272583,
+    "corrupted_flank_length": 21,
+    "corrupted_recovery": 0.0052569834515452385,
+    "jump_delta": 0.9177636178210378,
+    "pair_index": 0,
+    "contact_pair": [
+      119,
+      221
+    ],
+    "sequence_length": 277,
+    "segment_radius": 5
+  },
+  "1BS0A": {
+    "clean_flank_length": 35,
+    "clean_recovery": 0.5097788572311401,
+    "corrupted_flank_length": 34,
+    "corrupted_recovery": 0.00912968348711729,
+    "jump_delta": 0.5006491737440228,
+    "pair_index": 0,
+    "contact_pair": [
+      90,
+      276
+    ],
+    "sequence_length": 384,
+    "segment_radius": 5
+  },
+  "1E6UA": {
+    "clean_flank_length": 32,
+    "clean_recovery": 0.8365715146064758,
+    "corrupted_flank_length": 31,
+    "corrupted_recovery": 0.02782098576426506,
+    "jump_delta": 0.8087505288422108,
+    "pair_index": 0,
+    "contact_pair": [
+      19,
+      219
+    ],
+    "sequence_length": 321,
+    "segment_radius": 5
+  },
+  "1ELUA": {
+    "clean_flank_length": 38,
+    "clean_recovery": 0.6876119375228882,
+    "corrupted_flank_length": 37,
+    "corrupted_recovery": 0.03786548599600792,
+    "jump_delta": 0.6497464515268803,
+    "pair_index": 0,
+    "contact_pair": [
+      61,
+      281
+    ],
+    "sequence_length": 390,
+    "segment_radius": 5
+  }
+}

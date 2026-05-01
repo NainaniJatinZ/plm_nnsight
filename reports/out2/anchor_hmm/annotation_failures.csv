@@ -1,0 +1,9 @@
+protein,error
+3R6DA,HTTPError: 404 Client Error: Not Found for url: https://www.ebi.ac.uk/pdbe/api/mappings/uniprot/3r6d
+4FOJA,HTTPError: 404 Client Error: Not Found for url: https://www.ebi.ac.uk/pdbe/api/mappings/uniprot/4foj
+3L8DA,HTTPError: 404 Client Error: Not Found for url: https://www.ebi.ac.uk/pdbe/api/mappings/uniprot/3l8d
+5IVNA,RuntimeError: No UniProt mapping for 5ivnA
+4LFLB,HTTPError: 404 Client Error: Not Found for url: https://www.ebi.ac.uk/pdbe/api/mappings/uniprot/4lfl
+3GNLA,HTTPError: 404 Client Error: Not Found for url: https://www.ebi.ac.uk/pdbe/api/mappings/uniprot/3gnl
+4JD0A,HTTPError: 404 Client Error: Not Found for url: https://www.ebi.ac.uk/pdbe/api/mappings/uniprot/4jd0
+4LWRA,HTTPError: 404 Client Error: Not Found for url: https://www.ebi.ac.uk/pdbe/api/mappings/uniprot/4lwr

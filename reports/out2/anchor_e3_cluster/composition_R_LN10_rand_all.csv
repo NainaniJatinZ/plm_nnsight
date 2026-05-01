@@ -1,0 +1,2 @@
+cluster,n_chains,L_Pfam_dom,L_Pfam_purity,L_Pfam_n_unique,L_HSF_dom,L_HSF_purity,L_HSF_n_unique,L_fold_dom,L_fold_purity,L_fold_n_unique,L_foldseek_cluster_dom,L_foldseek_cluster_purity,L_foldseek_cluster_n_unique
+-1,123,PF13561,0.08130081300813008,13,3.40.50.720,0.4878048780487805,3,alpha_beta,0.8048780487804879,2,2hrz_A,0.24390243902439024,9

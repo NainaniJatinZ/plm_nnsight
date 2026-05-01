@@ -1,0 +1,4 @@
+control,n_pfams,anchor_lower_count,sign_test_p
+random,1,1,1.0
+buried,1,1,1.0
+sse,1,0,1.0

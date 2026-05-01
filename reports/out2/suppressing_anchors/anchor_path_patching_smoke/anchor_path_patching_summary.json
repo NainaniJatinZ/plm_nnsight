@@ -1,0 +1,27 @@
+{
+  "proteins": [
+    "2B61A"
+  ],
+  "alpha_values": [
+    0.0,
+    0.25,
+    0.5,
+    0.75,
+    1.0,
+    2.0,
+    4.0,
+    6.0,
+    8.0
+  ],
+  "source_head": {
+    "layer": 10,
+    "head": 9
+  },
+  "output_files": {
+    "alpha_calibration_csv": "anchor_path_patching_alpha_calibration.csv",
+    "baselines_csv": "anchor_path_patching_baselines.csv",
+    "receivers_csv": "anchor_path_patching_receivers.csv",
+    "diagnostics_pt": "anchor_path_patching_diagnostics.pt",
+    "report_md": "anchor_path_patching.md"
+  }
+}

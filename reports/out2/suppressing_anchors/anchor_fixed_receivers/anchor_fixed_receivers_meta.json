@@ -1,0 +1,78 @@
+[
+  {
+    "protein": "2B61A",
+    "contact_pair": [
+      182,
+      316
+    ],
+    "clean_flank": 44,
+    "corrupt_flank": 43,
+    "clean_anchor_positions": [
+      315,
+      163,
+      181
+    ],
+    "receiver_min_layer": 26,
+    "fixed_receivers": [
+      [
+        26,
+        16
+      ],
+      [
+        32,
+        13
+      ],
+      [
+        32,
+        18
+      ],
+      [
+        30,
+        1
+      ],
+      [
+        27,
+        15
+      ]
+    ],
+    "source_count": 20
+  },
+  {
+    "protein": "1PVGA",
+    "contact_pair": [
+      101,
+      202
+    ],
+    "clean_flank": 64,
+    "corrupt_flank": 63,
+    "clean_anchor_positions": [
+      101,
+      226,
+      90
+    ],
+    "receiver_min_layer": 26,
+    "fixed_receivers": [
+      [
+        26,
+        16
+      ],
+      [
+        27,
+        15
+      ],
+      [
+        29,
+        18
+      ],
+      [
+        32,
+        13
+      ],
+      [
+        32,
+        18
+      ]
+    ],
+    "source_count": 20
+  }
+]

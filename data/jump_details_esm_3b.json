@@ -1,0 +1,1906 @@
+{
+  "1BRTA": {
+    "clean_flank_length": 22,
+    "clean_recovery": 0.9230204820632935,
+    "corrupted_flank_length": 21,
+    "corrupted_recovery": 0.0052572512067854404,
+    "jump_delta": 0.917763230856508,
+    "pair_index": 0,
+    "contact_pair": [
+      119,
+      221
+    ],
+    "sequence_length": 277,
+    "segment_radius": 5
+  },
+  "1BS0A": {
+    "clean_flank_length": 35,
+    "clean_recovery": 0.5097801089286804,
+    "corrupted_flank_length": 34,
+    "corrupted_recovery": 0.009129702113568783,
+    "jump_delta": 0.5006504068151116,
+    "pair_index": 0,
+    "contact_pair": [
+      90,
+      276
+    ],
+    "sequence_length": 384,
+    "segment_radius": 5
+  },
+  "1E6UA": {
+    "clean_flank_length": 32,
+    "clean_recovery": 0.8365703225135803,
+    "corrupted_flank_length": 31,
+    "corrupted_recovery": 0.02782091312110424,
+    "jump_delta": 0.8087494093924761,
+    "pair_index": 0,
+    "contact_pair": [
+      19,
+      219
+    ],
+    "sequence_length": 321,
+    "segment_radius": 5
+  },
+  "1ELUA": {
+    "clean_flank_length": 38,
+    "clean_recovery": 0.6876131296157837,
+    "corrupted_flank_length": 37,
+    "corrupted_recovery": 0.03786499798297882,
+    "jump_delta": 0.6497481316328049,
+    "pair_index": 0,
+    "contact_pair": [
+      61,
+      281
+    ],
+    "sequence_length": 390,
+    "segment_radius": 5
+  },
+  "1F0KA": {
+    "clean_flank_length": 35,
+    "clean_recovery": 0.8165996670722961,
+    "corrupted_flank_length": 34,
+    "corrupted_recovery": 0.005294010043144226,
+    "jump_delta": 0.8113056570291519,
+    "pair_index": 0,
+    "contact_pair": [
+      203,
+      315
+    ],
+    "sequence_length": 364,
+    "segment_radius": 5
+  },
+  "1FNNA": {
+    "clean_flank_length": 37,
+    "clean_recovery": 0.7151103615760803,
+    "corrupted_flank_length": 36,
+    "corrupted_recovery": 0.03726590424776077,
+    "jump_delta": 0.6778444573283195,
+    "pair_index": 0,
+    "contact_pair": [
+      48,
+      162
+    ],
+    "sequence_length": 389,
+    "segment_radius": 5
+  },
+  "1IN4A": {
+    "clean_flank_length": 20,
+    "clean_recovery": 0.8045094609260559,
+    "corrupted_flank_length": 19,
+    "corrupted_recovery": 0.00621219864115119,
+    "jump_delta": 0.7982972622849047,
+    "pair_index": 0,
+    "contact_pair": [
+      55,
+      174
+    ],
+    "sequence_length": 334,
+    "segment_radius": 5
+  },
+  "1K7JA": {
+    "clean_flank_length": 27,
+    "clean_recovery": 0.9818600416183472,
+    "corrupted_flank_length": 26,
+    "corrupted_recovery": 0.45507049560546875,
+    "jump_delta": 0.5267895460128784,
+    "pair_index": 0,
+    "contact_pair": [
+      19,
+      131
+    ],
+    "sequence_length": 206,
+    "segment_radius": 5
+  },
+  "1MJ5A": {
+    "clean_flank_length": 24,
+    "clean_recovery": 1.0428197383880615,
+    "corrupted_flank_length": 23,
+    "corrupted_recovery": 0.005879539996385574,
+    "jump_delta": 1.036940198391676,
+    "pair_index": 0,
+    "contact_pair": [
+      128,
+      240
+    ],
+    "sequence_length": 302,
+    "segment_radius": 5
+  },
+  "1MO9A": {
+    "clean_flank_length": 38,
+    "clean_recovery": 0.9665228128433228,
+    "corrupted_flank_length": 37,
+    "corrupted_recovery": 0.007887725718319416,
+    "jump_delta": 0.9586350871250033,
+    "pair_index": 0,
+    "contact_pair": [
+      47,
+      172
+    ],
+    "sequence_length": 523,
+    "segment_radius": 5
+  },
+  "1NNLA": {
+    "clean_flank_length": 10,
+    "clean_recovery": 0.7254877686500549,
+    "corrupted_flank_length": 9,
+    "corrupted_recovery": 0.006366688758134842,
+    "jump_delta": 0.7191210798919201,
+    "pair_index": 0,
+    "contact_pair": [
+      17,
+      175
+    ],
+    "sequence_length": 225,
+    "segment_radius": 5
+  },
+  "1NOXA": {
+    "clean_flank_length": 11,
+    "clean_recovery": 0.9017406105995178,
+    "corrupted_flank_length": 10,
+    "corrupted_recovery": 0.009720634669065475,
+    "jump_delta": 0.8920199759304523,
+    "pair_index": 0,
+    "contact_pair": [
+      64,
+      165
+    ],
+    "sequence_length": 205,
+    "segment_radius": 5
+  },
+  "1PVGA": {
+    "clean_flank_length": 35,
+    "clean_recovery": 0.9922766089439392,
+    "corrupted_flank_length": 34,
+    "corrupted_recovery": 0.006885206326842308,
+    "jump_delta": 0.9853914026170969,
+    "pair_index": 0,
+    "contact_pair": [
+      101,
+      202
+    ],
+    "sequence_length": 418,
+    "segment_radius": 5
+  },
+  "1Q0RA": {
+    "clean_flank_length": 24,
+    "clean_recovery": 0.9465105533599854,
+    "corrupted_flank_length": 23,
+    "corrupted_recovery": 0.00609884737059474,
+    "jump_delta": 0.9404117059893906,
+    "pair_index": 0,
+    "contact_pair": [
+      122,
+      242
+    ],
+    "sequence_length": 298,
+    "segment_radius": 5
+  },
+  "1Q6ZA": {
+    "clean_flank_length": 57,
+    "clean_recovery": 0.6966611742973328,
+    "corrupted_flank_length": 56,
+    "corrupted_recovery": 0.007087807171046734,
+    "jump_delta": 0.689573367126286,
+    "pair_index": 0,
+    "contact_pair": [
+      221,
+      322
+    ],
+    "sequence_length": 528,
+    "segment_radius": 5
+  },
+  "1RM6B": {
+    "clean_flank_length": 56,
+    "clean_recovery": 0.6291894912719727,
+    "corrupted_flank_length": 55,
+    "corrupted_recovery": 0.009105485863983631,
+    "jump_delta": 0.620084005407989,
+    "pair_index": 0,
+    "contact_pair": [
+      71,
+      210
+    ],
+    "sequence_length": 324,
+    "segment_radius": 5
+  },
+  "1S0AA": {
+    "clean_flank_length": 34,
+    "clean_recovery": 0.9608903527259827,
+    "corrupted_flank_length": 33,
+    "corrupted_recovery": 0.006728142499923706,
+    "jump_delta": 0.954162210226059,
+    "pair_index": 0,
+    "contact_pair": [
+      67,
+      321
+    ],
+    "sequence_length": 429,
+    "segment_radius": 5
+  },
+  "1SZWA": {
+    "clean_flank_length": 40,
+    "clean_recovery": 0.9286355972290039,
+    "corrupted_flank_length": 39,
+    "corrupted_recovery": 0.005306371487677097,
+    "jump_delta": 0.9233292257413268,
+    "pair_index": 0,
+    "contact_pair": [
+      153,
+      343
+    ],
+    "sequence_length": 379,
+    "segment_radius": 5
+  },
+  "1UJ2A": {
+    "clean_flank_length": 13,
+    "clean_recovery": 0.6798723340034485,
+    "corrupted_flank_length": 12,
+    "corrupted_recovery": 0.008651179261505604,
+    "jump_delta": 0.6712211547419429,
+    "pair_index": 0,
+    "contact_pair": [
+      25,
+      135
+    ],
+    "sequence_length": 252,
+    "segment_radius": 5
+  },
+  "1URSA": {
+    "clean_flank_length": 37,
+    "clean_recovery": 0.7825183272361755,
+    "corrupted_flank_length": 36,
+    "corrupted_recovery": 0.006671646144241095,
+    "jump_delta": 0.7758466810919344,
+    "pair_index": 0,
+    "contact_pair": [
+      145,
+      268
+    ],
+    "sequence_length": 402,
+    "segment_radius": 5
+  },
+  "1YKIA": {
+    "clean_flank_length": 33,
+    "clean_recovery": 0.7991612553596497,
+    "corrupted_flank_length": 32,
+    "corrupted_recovery": 0.09110864251852036,
+    "jump_delta": 0.7080526128411293,
+    "pair_index": 0,
+    "contact_pair": [
+      83,
+      189
+    ],
+    "sequence_length": 217,
+    "segment_radius": 5
+  },
+  "1ZR6A": {
+    "clean_flank_length": 53,
+    "clean_recovery": 0.6611807346343994,
+    "corrupted_flank_length": 52,
+    "corrupted_recovery": 0.005686193238943815,
+    "jump_delta": 0.6554945413954556,
+    "pair_index": 0,
+    "contact_pair": [
+      233,
+      340
+    ],
+    "sequence_length": 503,
+    "segment_radius": 5
+  },
+  "2AQJA": {
+    "clean_flank_length": 46,
+    "clean_recovery": 0.9843229651451111,
+    "corrupted_flank_length": 45,
+    "corrupted_recovery": 0.006297171115875244,
+    "jump_delta": 0.9780257940292358,
+    "pair_index": 0,
+    "contact_pair": [
+      35,
+      182
+    ],
+    "sequence_length": 538,
+    "segment_radius": 5
+  },
+  "2B61A": {
+    "clean_flank_length": 34,
+    "clean_recovery": 0.913246750831604,
+    "corrupted_flank_length": 33,
+    "corrupted_recovery": 0.006387328263372183,
+    "jump_delta": 0.9068594225682318,
+    "pair_index": 0,
+    "contact_pair": [
+      182,
+      316
+    ],
+    "sequence_length": 377,
+    "segment_radius": 5
+  },
+  "2BD0A": {
+    "clean_flank_length": 15,
+    "clean_recovery": 0.6667612195014954,
+    "corrupted_flank_length": 14,
+    "corrupted_recovery": 0.020715748891234398,
+    "jump_delta": 0.646045470610261,
+    "pair_index": 0,
+    "contact_pair": [
+      20,
+      215
+    ],
+    "sequence_length": 244,
+    "segment_radius": 5
+  },
+  "2D1SA": {
+    "clean_flank_length": 41,
+    "clean_recovery": 0.5166183114051819,
+    "corrupted_flank_length": 40,
+    "corrupted_recovery": 0.009528467431664467,
+    "jump_delta": 0.5070898439735174,
+    "pair_index": 0,
+    "contact_pair": [
+      63,
+      169
+    ],
+    "sequence_length": 548,
+    "segment_radius": 5
+  },
+  "2DBYA": {
+    "clean_flank_length": 30,
+    "clean_recovery": 0.8769423365592957,
+    "corrupted_flank_length": 29,
+    "corrupted_recovery": 0.005851432681083679,
+    "jump_delta": 0.871090903878212,
+    "pair_index": 0,
+    "contact_pair": [
+      104,
+      205
+    ],
+    "sequence_length": 368,
+    "segment_radius": 5
+  },
+  "2DEJA": {
+    "clean_flank_length": 30,
+    "clean_recovery": 0.8931752443313599,
+    "corrupted_flank_length": 29,
+    "corrupted_recovery": 0.006488819606602192,
+    "jump_delta": 0.8866864247247577,
+    "pair_index": 0,
+    "contact_pair": [
+      182,
+      310
+    ],
+    "sequence_length": 350,
+    "segment_radius": 5
+  },
+  "2DPMA": {
+    "clean_flank_length": 15,
+    "clean_recovery": 0.8737539649009705,
+    "corrupted_flank_length": 14,
+    "corrupted_recovery": 0.0057500856928527355,
+    "jump_delta": 0.8680038792081177,
+    "pair_index": 0,
+    "contact_pair": [
+      59,
+      172
+    ],
+    "sequence_length": 284,
+    "segment_radius": 5
+  },
+  "2EK8A": {
+    "clean_flank_length": 33,
+    "clean_recovery": 0.9828422665596008,
+    "corrupted_flank_length": 32,
+    "corrupted_recovery": 0.006346974056214094,
+    "jump_delta": 0.9764952925033867,
+    "pair_index": 0,
+    "contact_pair": [
+      59,
+      203
+    ],
+    "sequence_length": 421,
+    "segment_radius": 5
+  },
+  "2FWMX": {
+    "clean_flank_length": 13,
+    "clean_recovery": 0.9460899829864502,
+    "corrupted_flank_length": 12,
+    "corrupted_recovery": 0.006978620309382677,
+    "jump_delta": 0.9391113626770675,
+    "pair_index": 0,
+    "contact_pair": [
+      23,
+      222
+    ],
+    "sequence_length": 250,
+    "segment_radius": 5
+  },
+  "2H8GA": {
+    "clean_flank_length": 35,
+    "clean_recovery": 0.6251273155212402,
+    "corrupted_flank_length": 34,
+    "corrupted_recovery": 0.010171196423470974,
+    "jump_delta": 0.6149561190977693,
+    "pair_index": 0,
+    "contact_pair": [
+      98,
+      207
+    ],
+    "sequence_length": 267,
+    "segment_radius": 5
+  },
+  "2HFSA": {
+    "clean_flank_length": 31,
+    "clean_recovery": 0.9035102128982544,
+    "corrupted_flank_length": 30,
+    "corrupted_recovery": 0.007447967771440744,
+    "jump_delta": 0.8960622451268137,
+    "pair_index": 0,
+    "contact_pair": [
+      190,
+      293
+    ],
+    "sequence_length": 332,
+    "segment_radius": 5
+  },
+  "2I0ZA": {
+    "clean_flank_length": 39,
+    "clean_recovery": 0.9356730580329895,
+    "corrupted_flank_length": 38,
+    "corrupted_recovery": 0.008965463377535343,
+    "jump_delta": 0.9267075946554542,
+    "pair_index": 0,
+    "contact_pair": [
+      30,
+      178
+    ],
+    "sequence_length": 447,
+    "segment_radius": 5
+  },
+  "2JBVA": {
+    "clean_flank_length": 44,
+    "clean_recovery": 0.9586494565010071,
+    "corrupted_flank_length": 43,
+    "corrupted_recovery": 0.007124003022909164,
+    "jump_delta": 0.9515254534780979,
+    "pair_index": 0,
+    "contact_pair": [
+      41,
+      225
+    ],
+    "sequence_length": 546,
+    "segment_radius": 5
+  },
+  "2PEFA": {
+    "clean_flank_length": 58,
+    "clean_recovery": 1.024670124053955,
+    "corrupted_flank_length": 57,
+    "corrupted_recovery": 0.006517910398542881,
+    "jump_delta": 1.0181522136554122,
+    "pair_index": 0,
+    "contact_pair": [
+      224,
+      353
+    ],
+    "sequence_length": 373,
+    "segment_radius": 5
+  },
+  "2PKEA": {
+    "clean_flank_length": 49,
+    "clean_recovery": 0.8509032726287842,
+    "corrupted_flank_length": 48,
+    "corrupted_recovery": 0.0077302525751292706,
+    "jump_delta": 0.8431730200536549,
+    "pair_index": 0,
+    "contact_pair": [
+      16,
+      131
+    ],
+    "sequence_length": 251,
+    "segment_radius": 5
+  },
+  "2POKA": {
+    "clean_flank_length": 50,
+    "clean_recovery": 0.95573490858078,
+    "corrupted_flank_length": 49,
+    "corrupted_recovery": 0.005860594101250172,
+    "jump_delta": 0.9498743144795299,
+    "pair_index": 0,
+    "contact_pair": [
+      228,
+      354
+    ],
+    "sequence_length": 481,
+    "segment_radius": 5
+  },
+  "2QJ8A": {
+    "clean_flank_length": 54,
+    "clean_recovery": 0.5139450430870056,
+    "corrupted_flank_length": 53,
+    "corrupted_recovery": 0.01300757098942995,
+    "jump_delta": 0.5009374720975757,
+    "pair_index": 0,
+    "contact_pair": [
+      66,
+      221
+    ],
+    "sequence_length": 332,
+    "segment_radius": 5
+  },
+  "2QM0A": {
+    "clean_flank_length": 16,
+    "clean_recovery": 1.259179711341858,
+    "corrupted_flank_length": 15,
+    "corrupted_recovery": 0.010512032546103,
+    "jump_delta": 1.248667678795755,
+    "pair_index": 0,
+    "contact_pair": [
+      50,
+      156
+    ],
+    "sequence_length": 275,
+    "segment_radius": 5
+  },
+  "2QQ5A": {
+    "clean_flank_length": 13,
+    "clean_recovery": 0.8384813070297241,
+    "corrupted_flank_length": 12,
+    "corrupted_recovery": 0.005588063038885593,
+    "jump_delta": 0.8328932439908385,
+    "pair_index": 0,
+    "contact_pair": [
+      21,
+      232
+    ],
+    "sequence_length": 260,
+    "segment_radius": 5
+  },
+  "2QSXA": {
+    "clean_flank_length": 21,
+    "clean_recovery": 0.7868272662162781,
+    "corrupted_flank_length": 20,
+    "corrupted_recovery": 0.02352791838347912,
+    "jump_delta": 0.763299347832799,
+    "pair_index": 0,
+    "contact_pair": [
+      70,
+      189
+    ],
+    "sequence_length": 218,
+    "segment_radius": 5
+  },
+  "2QY6A": {
+    "clean_flank_length": 29,
+    "clean_recovery": 0.582524836063385,
+    "corrupted_flank_length": 28,
+    "corrupted_recovery": 0.04156682267785072,
+    "jump_delta": 0.5409580133855343,
+    "pair_index": 0,
+    "contact_pair": [
+      63,
+      177
+    ],
+    "sequence_length": 257,
+    "segment_radius": 5
+  },
+  "2R6JA": {
+    "clean_flank_length": 19,
+    "clean_recovery": 0.8969656229019165,
+    "corrupted_flank_length": 18,
+    "corrupted_recovery": 0.006544504780322313,
+    "jump_delta": 0.8904211181215942,
+    "pair_index": 0,
+    "contact_pair": [
+      28,
+      196
+    ],
+    "sequence_length": 318,
+    "segment_radius": 5
+  },
+  "2UUQA": {
+    "clean_flank_length": 38,
+    "clean_recovery": 0.9710707068443298,
+    "corrupted_flank_length": 37,
+    "corrupted_recovery": 0.1746833771467209,
+    "jump_delta": 0.796387329697609,
+    "pair_index": 0,
+    "contact_pair": [
+      128,
+      372
+    ],
+    "sequence_length": 414,
+    "segment_radius": 5
+  },
+  "2UYTA": {
+    "clean_flank_length": 54,
+    "clean_recovery": 0.952068567276001,
+    "corrupted_flank_length": 53,
+    "corrupted_recovery": 0.0060021961107850075,
+    "jump_delta": 0.946066371165216,
+    "pair_index": 0,
+    "contact_pair": [
+      254,
+      397
+    ],
+    "sequence_length": 489,
+    "segment_radius": 5
+  },
+  "2WZVA": {
+    "clean_flank_length": 16,
+    "clean_recovery": 0.662632405757904,
+    "corrupted_flank_length": 15,
+    "corrupted_recovery": 0.008815404027700424,
+    "jump_delta": 0.6538170017302036,
+    "pair_index": 0,
+    "contact_pair": [
+      75,
+      188
+    ],
+    "sequence_length": 235,
+    "segment_radius": 5
+  },
+  "2XD3A": {
+    "clean_flank_length": 38,
+    "clean_recovery": 1.0705419778823853,
+    "corrupted_flank_length": 37,
+    "corrupted_recovery": 0.006565507967025042,
+    "jump_delta": 1.0639764699153602,
+    "pair_index": 0,
+    "contact_pair": [
+      145,
+      280
+    ],
+    "sequence_length": 416,
+    "segment_radius": 5
+  },
+  "2YXZA": {
+    "clean_flank_length": 29,
+    "clean_recovery": 1.0804126262664795,
+    "corrupted_flank_length": 28,
+    "corrupted_recovery": 0.00664933118969202,
+    "jump_delta": 1.0737632950767875,
+    "pair_index": 0,
+    "contact_pair": [
+      154,
+      262
+    ],
+    "sequence_length": 311,
+    "segment_radius": 5
+  },
+  "3AXBA": {
+    "clean_flank_length": 41,
+    "clean_recovery": 0.5414737462997437,
+    "corrupted_flank_length": 40,
+    "corrupted_recovery": 0.007621713448315859,
+    "jump_delta": 0.5338520328514278,
+    "pair_index": 0,
+    "contact_pair": [
+      27,
+      246
+    ],
+    "sequence_length": 448,
+    "segment_radius": 5
+  },
+  "3BWXA": {
+    "clean_flank_length": 22,
+    "clean_recovery": 0.8024591207504272,
+    "corrupted_flank_length": 21,
+    "corrupted_recovery": 0.007136847823858261,
+    "jump_delta": 0.795322272926569,
+    "pair_index": 0,
+    "contact_pair": [
+      125,
+      231
+    ],
+    "sequence_length": 285,
+    "segment_radius": 5
+  },
+  "3C96A": {
+    "clean_flank_length": 49,
+    "clean_recovery": 0.8065921664237976,
+    "corrupted_flank_length": 48,
+    "corrupted_recovery": 0.005276613403111696,
+    "jump_delta": 0.8013155530206859,
+    "pair_index": 0,
+    "contact_pair": [
+      19,
+      330
+    ],
+    "sequence_length": 410,
+    "segment_radius": 5
+  },
+  "3C9UA": {
+    "clean_flank_length": 27,
+    "clean_recovery": 1.1868208646774292,
+    "corrupted_flank_length": 26,
+    "corrupted_recovery": 0.009475399740040302,
+    "jump_delta": 1.177345464937389,
+    "pair_index": 0,
+    "contact_pair": [
+      187,
+      301
+    ],
+    "sequence_length": 342,
+    "segment_radius": 5
+  },
+  "3CJMA": {
+    "clean_flank_length": 17,
+    "clean_recovery": 0.9338842034339905,
+    "corrupted_flank_length": 16,
+    "corrupted_recovery": 0.0062228115275502205,
+    "jump_delta": 0.9276613919064403,
+    "pair_index": 0,
+    "contact_pair": [
+      53,
+      249
+    ],
+    "sequence_length": 282,
+    "segment_radius": 5
+  },
+  "3CKCA": {
+    "clean_flank_length": 53,
+    "clean_recovery": 1.0627946853637695,
+    "corrupted_flank_length": 52,
+    "corrupted_recovery": 0.0065500205382704735,
+    "jump_delta": 1.056244664825499,
+    "pair_index": 0,
+    "contact_pair": [
+      224,
+      420
+    ],
+    "sequence_length": 527,
+    "segment_radius": 5
+  },
+  "3CRVA": {
+    "clean_flank_length": 49,
+    "clean_recovery": 0.8339076638221741,
+    "corrupted_flank_length": 48,
+    "corrupted_recovery": 0.007427344098687172,
+    "jump_delta": 0.8264803197234869,
+    "pair_index": 0,
+    "contact_pair": [
+      176,
+      319
+    ],
+    "sequence_length": 551,
+    "segment_radius": 5
+  },
+  "3CSSA": {
+    "clean_flank_length": 15,
+    "clean_recovery": 0.7347849607467651,
+    "corrupted_flank_length": 14,
+    "corrupted_recovery": 0.005712321028113365,
+    "jump_delta": 0.7290726397186518,
+    "pair_index": 0,
+    "contact_pair": [
+      41,
+      159
+    ],
+    "sequence_length": 267,
+    "segment_radius": 5
+  },
+  "3DGTA": {
+    "clean_flank_length": 23,
+    "clean_recovery": 1.1904878616333008,
+    "corrupted_flank_length": 22,
+    "corrupted_recovery": 0.008521737530827522,
+    "jump_delta": 1.1819661241024733,
+    "pair_index": 0,
+    "contact_pair": [
+      122,
+      240
+    ],
+    "sequence_length": 280,
+    "segment_radius": 5
+  },
+  "3DJEA": {
+    "clean_flank_length": 32,
+    "clean_recovery": 0.8615468144416809,
+    "corrupted_flank_length": 31,
+    "corrupted_recovery": 0.007955603301525116,
+    "jump_delta": 0.8535912111401558,
+    "pair_index": 0,
+    "contact_pair": [
+      34,
+      178
+    ],
+    "sequence_length": 438,
+    "segment_radius": 5
+  },
+  "3E48A": {
+    "clean_flank_length": 25,
+    "clean_recovery": 0.876258373260498,
+    "corrupted_flank_length": 24,
+    "corrupted_recovery": 0.005088226869702339,
+    "jump_delta": 0.8711701463907957,
+    "pair_index": 0,
+    "contact_pair": [
+      16,
+      179
+    ],
+    "sequence_length": 289,
+    "segment_radius": 5
+  },
+  "3FXQA": {
+    "clean_flank_length": 34,
+    "clean_recovery": 0.954849123954773,
+    "corrupted_flank_length": 33,
+    "corrupted_recovery": 0.01426699385046959,
+    "jump_delta": 0.9405821301043034,
+    "pair_index": 0,
+    "contact_pair": [
+      159,
+      271
+    ],
+    "sequence_length": 305,
+    "segment_radius": 5
+  },
+  "3GO6A": {
+    "clean_flank_length": 40,
+    "clean_recovery": 0.8767911195755005,
+    "corrupted_flank_length": 39,
+    "corrupted_recovery": 0.22625528275966644,
+    "jump_delta": 0.650535836815834,
+    "pair_index": 0,
+    "contact_pair": [
+      22,
+      147
+    ],
+    "sequence_length": 310,
+    "segment_radius": 5
+  },
+  "3GYBA": {
+    "clean_flank_length": 33,
+    "clean_recovery": 0.8425459265708923,
+    "corrupted_flank_length": 32,
+    "corrupted_recovery": 0.03028581477701664,
+    "jump_delta": 0.8122601117938757,
+    "pair_index": 0,
+    "contact_pair": [
+      26,
+      238
+    ],
+    "sequence_length": 280,
+    "segment_radius": 5
+  },
+  "3H14A": {
+    "clean_flank_length": 38,
+    "clean_recovery": 0.8867850303649902,
+    "corrupted_flank_length": 37,
+    "corrupted_recovery": 0.15315234661102295,
+    "jump_delta": 0.7336326837539673,
+    "pair_index": 0,
+    "contact_pair": [
+      52,
+      269
+    ],
+    "sequence_length": 391,
+    "segment_radius": 5
+  },
+  "3HDXA": {
+    "clean_flank_length": 49,
+    "clean_recovery": 0.9518852233886719,
+    "corrupted_flank_length": 48,
+    "corrupted_recovery": 0.005449103657156229,
+    "jump_delta": 0.9464361197315156,
+    "pair_index": 0,
+    "contact_pair": [
+      218,
+      369
+    ],
+    "sequence_length": 478,
+    "segment_radius": 5
+  },
+  "3HZ6A": {
+    "clean_flank_length": 55,
+    "clean_recovery": 1.0549393892288208,
+    "corrupted_flank_length": 54,
+    "corrupted_recovery": 0.006885170470923185,
+    "jump_delta": 1.0480542187578976,
+    "pair_index": 0,
+    "contact_pair": [
+      260,
+      406
+    ],
+    "sequence_length": 511,
+    "segment_radius": 5
+  },
+  "3I4GA": {
+    "clean_flank_length": 54,
+    "clean_recovery": 1.0462218523025513,
+    "corrupted_flank_length": 53,
+    "corrupted_recovery": 0.006544201634824276,
+    "jump_delta": 1.039677650667727,
+    "pair_index": 0,
+    "contact_pair": [
+      220,
+      393
+    ],
+    "sequence_length": 528,
+    "segment_radius": 5
+  },
+  "3IHVA": {
+    "clean_flank_length": 58,
+    "clean_recovery": 1.000070571899414,
+    "corrupted_flank_length": 57,
+    "corrupted_recovery": 0.006233980879187584,
+    "jump_delta": 0.9938365910202265,
+    "pair_index": 0,
+    "contact_pair": [
+      224,
+      404
+    ],
+    "sequence_length": 535,
+    "segment_radius": 5
+  },
+  "3IRVA": {
+    "clean_flank_length": 9,
+    "clean_recovery": 0.9431495070457458,
+    "corrupted_flank_length": 8,
+    "corrupted_recovery": 0.01482284627854824,
+    "jump_delta": 0.9283266607671976,
+    "pair_index": 0,
+    "contact_pair": [
+      25,
+      143
+    ],
+    "sequence_length": 233,
+    "segment_radius": 5
+  },
+  "3JQ1A": {
+    "clean_flank_length": 50,
+    "clean_recovery": 0.9381257891654968,
+    "corrupted_flank_length": 49,
+    "corrupted_recovery": 0.006262798793613911,
+    "jump_delta": 0.9318629903718829,
+    "pair_index": 0,
+    "contact_pair": [
+      201,
+      366
+    ],
+    "sequence_length": 481,
+    "segment_radius": 5
+  },
+  "3JS8A": {
+    "clean_flank_length": 50,
+    "clean_recovery": 1.012816071510315,
+    "corrupted_flank_length": 49,
+    "corrupted_recovery": 0.06529837846755981,
+    "jump_delta": 0.9475176930427551,
+    "pair_index": 0,
+    "contact_pair": [
+      102,
+      210
+    ],
+    "sequence_length": 540,
+    "segment_radius": 5
+  },
+  "3JTXA": {
+    "clean_flank_length": 52,
+    "clean_recovery": 0.9417299628257751,
+    "corrupted_flank_length": 51,
+    "corrupted_recovery": 0.2897763252258301,
+    "jump_delta": 0.6519536375999451,
+    "pair_index": 0,
+    "contact_pair": [
+      49,
+      285
+    ],
+    "sequence_length": 396,
+    "segment_radius": 5
+  },
+  "3LEWA": {
+    "clean_flank_length": 53,
+    "clean_recovery": 1.0119359493255615,
+    "corrupted_flank_length": 52,
+    "corrupted_recovery": 0.005810241214931011,
+    "jump_delta": 1.0061257081106305,
+    "pair_index": 0,
+    "contact_pair": [
+      225,
+      352
+    ],
+    "sequence_length": 495,
+    "segment_radius": 5
+  },
+  "3LHQA": {
+    "clean_flank_length": 37,
+    "clean_recovery": 0.6876809000968933,
+    "corrupted_flank_length": 36,
+    "corrupted_recovery": 0.025164062157273293,
+    "jump_delta": 0.66251683793962,
+    "pair_index": 0,
+    "contact_pair": [
+      96,
+      198
+    ],
+    "sequence_length": 220,
+    "segment_radius": 5
+  },
+  "3LL3A": {
+    "clean_flank_length": 54,
+    "clean_recovery": 0.887208104133606,
+    "corrupted_flank_length": 53,
+    "corrupted_recovery": 0.00597842363640666,
+    "jump_delta": 0.8812296804971993,
+    "pair_index": 0,
+    "contact_pair": [
+      256,
+      397
+    ],
+    "sequence_length": 504,
+    "segment_radius": 5
+  },
+  "3NX3A": {
+    "clean_flank_length": 35,
+    "clean_recovery": 0.8013879656791687,
+    "corrupted_flank_length": 34,
+    "corrupted_recovery": 0.006032193079590797,
+    "jump_delta": 0.7953557725995779,
+    "pair_index": 0,
+    "contact_pair": [
+      96,
+      258
+    ],
+    "sequence_length": 395,
+    "segment_radius": 5
+  },
+  "3OHGA": {
+    "clean_flank_length": 17,
+    "clean_recovery": 0.6887867450714111,
+    "corrupted_flank_length": 16,
+    "corrupted_recovery": 0.005448373034596443,
+    "jump_delta": 0.6833383720368147,
+    "pair_index": 0,
+    "contact_pair": [
+      48,
+      202
+    ],
+    "sequence_length": 285,
+    "segment_radius": 5
+  },
+  "3OHRA": {
+    "clean_flank_length": 24,
+    "clean_recovery": 0.8711180686950684,
+    "corrupted_flank_length": 23,
+    "corrupted_recovery": 0.006608638446778059,
+    "jump_delta": 0.8645094302482903,
+    "pair_index": 0,
+    "contact_pair": [
+      128,
+      230
+    ],
+    "sequence_length": 303,
+    "segment_radius": 5
+  },
+  "3OKPA": {
+    "clean_flank_length": 39,
+    "clean_recovery": 1.008330225944519,
+    "corrupted_flank_length": 38,
+    "corrupted_recovery": 0.006936784368008375,
+    "jump_delta": 1.0013934415765107,
+    "pair_index": 0,
+    "contact_pair": [
+      219,
+      336
+    ],
+    "sequence_length": 394,
+    "segment_radius": 5
+  },
+  "3OQPA": {
+    "clean_flank_length": 21,
+    "clean_recovery": 0.7305266857147217,
+    "corrupted_flank_length": 20,
+    "corrupted_recovery": 0.008232065476477146,
+    "jump_delta": 0.7222946202382445,
+    "pair_index": 0,
+    "contact_pair": [
+      38,
+      183
+    ],
+    "sequence_length": 211,
+    "segment_radius": 5
+  },
+  "3PBTA": {
+    "clean_flank_length": 60,
+    "clean_recovery": 1.0557254552841187,
+    "corrupted_flank_length": 59,
+    "corrupted_recovery": 0.005104662850499153,
+    "jump_delta": 1.0506207924336195,
+    "pair_index": 0,
+    "contact_pair": [
+      208,
+      480
+    ],
+    "sequence_length": 538,
+    "segment_radius": 5
+  },
+  "3QDLA": {
+    "clean_flank_length": 27,
+    "clean_recovery": 0.7888331413269043,
+    "corrupted_flank_length": 26,
+    "corrupted_recovery": 0.01894805207848549,
+    "jump_delta": 0.7698850892484188,
+    "pair_index": 0,
+    "contact_pair": [
+      84,
+      186
+    ],
+    "sequence_length": 210,
+    "segment_radius": 5
+  },
+  "3QSJA": {
+    "clean_flank_length": 13,
+    "clean_recovery": 0.8524022698402405,
+    "corrupted_flank_length": 12,
+    "corrupted_recovery": 0.014888946898281574,
+    "jump_delta": 0.8375133229419589,
+    "pair_index": 0,
+    "contact_pair": [
+      27,
+      178
+    ],
+    "sequence_length": 232,
+    "segment_radius": 5
+  },
+  "3QUFA": {
+    "clean_flank_length": 38,
+    "clean_recovery": 0.9694975018501282,
+    "corrupted_flank_length": 37,
+    "corrupted_recovery": 0.005351147148758173,
+    "jump_delta": 0.96414635470137,
+    "pair_index": 0,
+    "contact_pair": [
+      139,
+      280
+    ],
+    "sequence_length": 414,
+    "segment_radius": 5
+  },
+  "3SD7A": {
+    "clean_flank_length": 14,
+    "clean_recovery": 1.0394519567489624,
+    "corrupted_flank_length": 13,
+    "corrupted_recovery": 0.004706983920186758,
+    "jump_delta": 1.0347449728287756,
+    "pair_index": 0,
+    "contact_pair": [
+      32,
+      188
+    ],
+    "sequence_length": 240,
+    "segment_radius": 5
+  },
+  "3T4LA": {
+    "clean_flank_length": 21,
+    "clean_recovery": 0.8482150435447693,
+    "corrupted_flank_length": 20,
+    "corrupted_recovery": 0.017198072746396065,
+    "jump_delta": 0.8310169707983732,
+    "pair_index": 0,
+    "contact_pair": [
+      78,
+      195
+    ],
+    "sequence_length": 270,
+    "segment_radius": 5
+  },
+  "3UCEA": {
+    "clean_flank_length": 10,
+    "clean_recovery": 0.8845633268356323,
+    "corrupted_flank_length": 9,
+    "corrupted_recovery": 0.006923694163560867,
+    "jump_delta": 0.8776396326720715,
+    "pair_index": 0,
+    "contact_pair": [
+      21,
+      198
+    ],
+    "sequence_length": 223,
+    "segment_radius": 5
+  },
+  "3UCXA": {
+    "clean_flank_length": 14,
+    "clean_recovery": 0.9543253183364868,
+    "corrupted_flank_length": 13,
+    "corrupted_recovery": 0.007500823587179184,
+    "jump_delta": 0.9468244947493076,
+    "pair_index": 0,
+    "contact_pair": [
+      27,
+      237
+    ],
+    "sequence_length": 264,
+    "segment_radius": 5
+  },
+  "3UGFA": {
+    "clean_flank_length": 59,
+    "clean_recovery": 0.9905410408973694,
+    "corrupted_flank_length": 58,
+    "corrupted_recovery": 0.0071443528868258,
+    "jump_delta": 0.9833966880105436,
+    "pair_index": 0,
+    "contact_pair": [
+      379,
+      481
+    ],
+    "sequence_length": 546,
+    "segment_radius": 5
+  },
+  "3VQJA": {
+    "clean_flank_length": 13,
+    "clean_recovery": 0.9955022931098938,
+    "corrupted_flank_length": 12,
+    "corrupted_recovery": 0.0057581448927521706,
+    "jump_delta": 0.9897441482171416,
+    "pair_index": 0,
+    "contact_pair": [
+      93,
+      196
+    ],
+    "sequence_length": 219,
+    "segment_radius": 5
+  },
+  "3WJPA": {
+    "clean_flank_length": 29,
+    "clean_recovery": 0.5607761740684509,
+    "corrupted_flank_length": 28,
+    "corrupted_recovery": 0.006573818624019623,
+    "jump_delta": 0.5542023554444313,
+    "pair_index": 0,
+    "contact_pair": [
+      167,
+      277
+    ],
+    "sequence_length": 338,
+    "segment_radius": 5
+  },
+  "3WMRA": {
+    "clean_flank_length": 27,
+    "clean_recovery": 1.0164684057235718,
+    "corrupted_flank_length": 26,
+    "corrupted_recovery": 0.0084649957716465,
+    "jump_delta": 1.0080034099519253,
+    "pair_index": 0,
+    "contact_pair": [
+      146,
+      260
+    ],
+    "sequence_length": 315,
+    "segment_radius": 5
+  },
+  "4A2BA": {
+    "clean_flank_length": 41,
+    "clean_recovery": 0.6499244570732117,
+    "corrupted_flank_length": 40,
+    "corrupted_recovery": 0.005848629400134087,
+    "jump_delta": 0.6440758276730776,
+    "pair_index": 0,
+    "contact_pair": [
+      210,
+      333
+    ],
+    "sequence_length": 419,
+    "segment_radius": 5
+  },
+  "4A6RA": {
+    "clean_flank_length": 35,
+    "clean_recovery": 0.8311235308647156,
+    "corrupted_flank_length": 34,
+    "corrupted_recovery": 0.006496801506727934,
+    "jump_delta": 0.8246267293579876,
+    "pair_index": 0,
+    "contact_pair": [
+      74,
+      333
+    ],
+    "sequence_length": 459,
+    "segment_radius": 5
+  },
+  "4DM7A": {
+    "clean_flank_length": 27,
+    "clean_recovery": 0.7464680075645447,
+    "corrupted_flank_length": 26,
+    "corrupted_recovery": 0.030344894155859947,
+    "jump_delta": 0.7161231134086847,
+    "pair_index": 0,
+    "contact_pair": [
+      126,
+      239
+    ],
+    "sequence_length": 301,
+    "segment_radius": 5
+  },
+  "4E1BA": {
+    "clean_flank_length": 30,
+    "clean_recovery": 0.8334978222846985,
+    "corrupted_flank_length": 29,
+    "corrupted_recovery": 0.006524721626192331,
+    "jump_delta": 0.8269731006585062,
+    "pair_index": 0,
+    "contact_pair": [
+      19,
+      131
+    ],
+    "sequence_length": 352,
+    "segment_radius": 5
+  },
+  "4EHUA": {
+    "clean_flank_length": 19,
+    "clean_recovery": 0.9417186379432678,
+    "corrupted_flank_length": 18,
+    "corrupted_recovery": 0.0068762823939323425,
+    "jump_delta": 0.9348423555493355,
+    "pair_index": 0,
+    "contact_pair": [
+      97,
+      211
+    ],
+    "sequence_length": 276,
+    "segment_radius": 5
+  },
+  "4EX6A": {
+    "clean_flank_length": 32,
+    "clean_recovery": 0.5758844017982483,
+    "corrupted_flank_length": 31,
+    "corrupted_recovery": 0.008524290286004543,
+    "jump_delta": 0.5673601115122437,
+    "pair_index": 0,
+    "contact_pair": [
+      22,
+      123
+    ],
+    "sequence_length": 237,
+    "segment_radius": 5
+  },
+  "4EZIA": {
+    "clean_flank_length": 36,
+    "clean_recovery": 0.9165395498275757,
+    "corrupted_flank_length": 35,
+    "corrupted_recovery": 0.006884253583848476,
+    "jump_delta": 0.9096552962437272,
+    "pair_index": 0,
+    "contact_pair": [
+      194,
+      311
+    ],
+    "sequence_length": 377,
+    "segment_radius": 5
+  },
+  "4FB2A": {
+    "clean_flank_length": 35,
+    "clean_recovery": 0.7933464050292969,
+    "corrupted_flank_length": 34,
+    "corrupted_recovery": 0.0055140545591712,
+    "jump_delta": 0.7878323504701257,
+    "pair_index": 0,
+    "contact_pair": [
+      114,
+      352
+    ],
+    "sequence_length": 398,
+    "segment_radius": 5
+  },
+  "4G41A": {
+    "clean_flank_length": 18,
+    "clean_recovery": 0.6896675825119019,
+    "corrupted_flank_length": 17,
+    "corrupted_recovery": 0.01406627893447876,
+    "jump_delta": 0.6756013035774231,
+    "pair_index": 0,
+    "contact_pair": [
+      62,
+      184
+    ],
+    "sequence_length": 236,
+    "segment_radius": 5
+  },
+  "4H3VA": {
+    "clean_flank_length": 36,
+    "clean_recovery": 1.174955129623413,
+    "corrupted_flank_length": 35,
+    "corrupted_recovery": 0.00704496493563056,
+    "jump_delta": 1.1679101646877825,
+    "pair_index": 0,
+    "contact_pair": [
+      163,
+      264
+    ],
+    "sequence_length": 390,
+    "segment_radius": 5
+  },
+  "4HACA": {
+    "clean_flank_length": 28,
+    "clean_recovery": 0.7986992597579956,
+    "corrupted_flank_length": 27,
+    "corrupted_recovery": 0.00782936904579401,
+    "jump_delta": 0.7908698907122016,
+    "pair_index": 0,
+    "contact_pair": [
+      184,
+      286
+    ],
+    "sequence_length": 321,
+    "segment_radius": 5
+  },
+  "4HZIA": {
+    "clean_flank_length": 19,
+    "clean_recovery": 0.8543102741241455,
+    "corrupted_flank_length": 18,
+    "corrupted_recovery": 0.0055777630768716335,
+    "jump_delta": 0.8487325110472739,
+    "pair_index": 0,
+    "contact_pair": [
+      63,
+      228
+    ],
+    "sequence_length": 294,
+    "segment_radius": 5
+  },
+  "4MFIA": {
+    "clean_flank_length": 41,
+    "clean_recovery": 0.9987501502037048,
+    "corrupted_flank_length": 40,
+    "corrupted_recovery": 0.006346725393086672,
+    "jump_delta": 0.9924034248106182,
+    "pair_index": 0,
+    "contact_pair": [
+      157,
+      288
+    ],
+    "sequence_length": 436,
+    "segment_radius": 5
+  },
+  "4MNRA": {
+    "clean_flank_length": 59,
+    "clean_recovery": 1.0395488739013672,
+    "corrupted_flank_length": 58,
+    "corrupted_recovery": 0.00530466390773654,
+    "jump_delta": 1.0342442099936306,
+    "pair_index": 0,
+    "contact_pair": [
+      132,
+      427
+    ],
+    "sequence_length": 457,
+    "segment_radius": 5
+  },
+  "4N91A": {
+    "clean_flank_length": 32,
+    "clean_recovery": 0.7802600860595703,
+    "corrupted_flank_length": 31,
+    "corrupted_recovery": 0.006457451265305281,
+    "jump_delta": 0.773802634794265,
+    "pair_index": 0,
+    "contact_pair": [
+      183,
+      308
+    ],
+    "sequence_length": 347,
+    "segment_radius": 5
+  },
+  "4N9WA": {
+    "clean_flank_length": 38,
+    "clean_recovery": 0.923696756362915,
+    "corrupted_flank_length": 37,
+    "corrupted_recovery": 0.006285917013883591,
+    "jump_delta": 0.9174108393490314,
+    "pair_index": 0,
+    "contact_pair": [
+      214,
+      325
+    ],
+    "sequence_length": 390,
+    "segment_radius": 5
+  },
+  "4NTDA": {
+    "clean_flank_length": 21,
+    "clean_recovery": 0.9408831000328064,
+    "corrupted_flank_length": 20,
+    "corrupted_recovery": 0.008333772420883179,
+    "jump_delta": 0.9325493276119232,
+    "pair_index": 0,
+    "contact_pair": [
+      34,
+      135
+    ],
+    "sequence_length": 340,
+    "segment_radius": 5
+  },
+  "4O5FA": {
+    "clean_flank_length": 24,
+    "clean_recovery": 1.0395724773406982,
+    "corrupted_flank_length": 23,
+    "corrupted_recovery": 0.007222214713692665,
+    "jump_delta": 1.0323502626270056,
+    "pair_index": 0,
+    "contact_pair": [
+      142,
+      245
+    ],
+    "sequence_length": 280,
+    "segment_radius": 5
+  },
+  "4O5OA": {
+    "clean_flank_length": 15,
+    "clean_recovery": 0.9098536372184753,
+    "corrupted_flank_length": 14,
+    "corrupted_recovery": 0.006172152701765299,
+    "jump_delta": 0.90368148451671,
+    "pair_index": 0,
+    "contact_pair": [
+      29,
+      236
+    ],
+    "sequence_length": 263,
+    "segment_radius": 5
+  },
+  "4O6VA": {
+    "clean_flank_length": 14,
+    "clean_recovery": 1.0142778158187866,
+    "corrupted_flank_length": 13,
+    "corrupted_recovery": 0.00632496876642108,
+    "jump_delta": 1.0079528470523655,
+    "pair_index": 0,
+    "contact_pair": [
+      28,
+      214
+    ],
+    "sequence_length": 242,
+    "segment_radius": 5
+  },
+  "4OPCA": {
+    "clean_flank_length": 55,
+    "clean_recovery": 0.8307636976242065,
+    "corrupted_flank_length": 54,
+    "corrupted_recovery": 0.00725614232942462,
+    "jump_delta": 0.8235075552947819,
+    "pair_index": 0,
+    "contact_pair": [
+      20,
+      311
+    ],
+    "sequence_length": 453,
+    "segment_radius": 5
+  },
+  "4OY3A": {
+    "clean_flank_length": 21,
+    "clean_recovery": 0.7689245343208313,
+    "corrupted_flank_length": 20,
+    "corrupted_recovery": 0.007253929506987333,
+    "jump_delta": 0.761670604813844,
+    "pair_index": 0,
+    "contact_pair": [
+      61,
+      181
+    ],
+    "sequence_length": 231,
+    "segment_radius": 5
+  },
+  "4Q6BA": {
+    "clean_flank_length": 22,
+    "clean_recovery": 1.0532655715942383,
+    "corrupted_flank_length": 21,
+    "corrupted_recovery": 0.006086076609790325,
+    "jump_delta": 1.047179494984448,
+    "pair_index": 0,
+    "contact_pair": [
+      32,
+      292
+    ],
+    "sequence_length": 356,
+    "segment_radius": 5
+  },
+  "4QRHA": {
+    "clean_flank_length": 14,
+    "clean_recovery": 0.6382406949996948,
+    "corrupted_flank_length": 13,
+    "corrupted_recovery": 0.013074908405542374,
+    "jump_delta": 0.6251657865941525,
+    "pair_index": 0,
+    "contact_pair": [
+      26,
+      183
+    ],
+    "sequence_length": 210,
+    "segment_radius": 5
+  },
+  "4R6HA": {
+    "clean_flank_length": 40,
+    "clean_recovery": 1.001100778579712,
+    "corrupted_flank_length": 39,
+    "corrupted_recovery": 0.005878452677279711,
+    "jump_delta": 0.9952223259024322,
+    "pair_index": 0,
+    "contact_pair": [
+      146,
+      288
+    ],
+    "sequence_length": 428,
+    "segment_radius": 5
+  },
+  "4R75A": {
+    "clean_flank_length": 27,
+    "clean_recovery": 0.7988762855529785,
+    "corrupted_flank_length": 26,
+    "corrupted_recovery": 0.004912877455353737,
+    "jump_delta": 0.7939634080976248,
+    "pair_index": 0,
+    "contact_pair": [
+      109,
+      220
+    ],
+    "sequence_length": 321,
+    "segment_radius": 5
+  },
+  "4R9FA": {
+    "clean_flank_length": 40,
+    "clean_recovery": 0.897840142250061,
+    "corrupted_flank_length": 39,
+    "corrupted_recovery": 0.008793673478066921,
+    "jump_delta": 0.8890464687719941,
+    "pair_index": 0,
+    "contact_pair": [
+      109,
+      334
+    ],
+    "sequence_length": 447,
+    "segment_radius": 5
+  },
+  "4RJ2A": {
+    "clean_flank_length": 17,
+    "clean_recovery": 0.7556024789810181,
+    "corrupted_flank_length": 16,
+    "corrupted_recovery": 0.009771585464477539,
+    "jump_delta": 0.7458308935165405,
+    "pair_index": 0,
+    "contact_pair": [
+      72,
+      186
+    ],
+    "sequence_length": 237,
+    "segment_radius": 5
+  },
+  "4RVCA": {
+    "clean_flank_length": 12,
+    "clean_recovery": 0.7061107754707336,
+    "corrupted_flank_length": 11,
+    "corrupted_recovery": 0.005618065595626831,
+    "jump_delta": 0.7004927098751068,
+    "pair_index": 0,
+    "contact_pair": [
+      32,
+      188
+    ],
+    "sequence_length": 245,
+    "segment_radius": 5
+  },
+  "4UA6A": {
+    "clean_flank_length": 19,
+    "clean_recovery": 0.6906648278236389,
+    "corrupted_flank_length": 18,
+    "corrupted_recovery": 0.041517224162817,
+    "jump_delta": 0.6491476036608219,
+    "pair_index": 0,
+    "contact_pair": [
+      21,
+      235
+    ],
+    "sequence_length": 263,
+    "segment_radius": 5
+  },
+  "4UA8A": {
+    "clean_flank_length": 37,
+    "clean_recovery": 0.958964467048645,
+    "corrupted_flank_length": 36,
+    "corrupted_recovery": 0.008393817581236362,
+    "jump_delta": 0.9505706494674087,
+    "pair_index": 0,
+    "contact_pair": [
+      139,
+      260
+    ],
+    "sequence_length": 400,
+    "segment_radius": 5
+  },
+  "4UDQA": {
+    "clean_flank_length": 51,
+    "clean_recovery": 0.9168110489845276,
+    "corrupted_flank_length": 50,
+    "corrupted_recovery": 0.007668446283787489,
+    "jump_delta": 0.9091426027007401,
+    "pair_index": 0,
+    "contact_pair": [
+      33,
+      226
+    ],
+    "sequence_length": 531,
+    "segment_radius": 5
+  },
+  "4WY2A": {
+    "clean_flank_length": 27,
+    "clean_recovery": 0.9313880205154419,
+    "corrupted_flank_length": 26,
+    "corrupted_recovery": 0.0069097173400223255,
+    "jump_delta": 0.9244783031754196,
+    "pair_index": 0,
+    "contact_pair": [
+      159,
+      271
+    ],
+    "sequence_length": 319,
+    "segment_radius": 5
+  },
+  "4Y1BA": {
+    "clean_flank_length": 33,
+    "clean_recovery": 1.1160131692886353,
+    "corrupted_flank_length": 32,
+    "corrupted_recovery": 0.007658102083951235,
+    "jump_delta": 1.108355067204684,
+    "pair_index": 0,
+    "contact_pair": [
+      74,
+      178
+    ],
+    "sequence_length": 425,
+    "segment_radius": 5
+  },
+  "4YHBA": {
+    "clean_flank_length": 21,
+    "clean_recovery": 0.8722558617591858,
+    "corrupted_flank_length": 20,
+    "corrupted_recovery": 0.012324417941272259,
+    "jump_delta": 0.8599314438179135,
+    "pair_index": 0,
+    "contact_pair": [
+      19,
+      126
+    ],
+    "sequence_length": 273,
+    "segment_radius": 5
+  },
+  "4YJ6A": {
+    "clean_flank_length": 57,
+    "clean_recovery": 0.8023126125335693,
+    "corrupted_flank_length": 56,
+    "corrupted_recovery": 0.006971401162445545,
+    "jump_delta": 0.7953412113711238,
+    "pair_index": 0,
+    "contact_pair": [
+      271,
+      395
+    ],
+    "sequence_length": 501,
+    "segment_radius": 5
+  },
+  "4ZJUA": {
+    "clean_flank_length": 16,
+    "clean_recovery": 0.8013272285461426,
+    "corrupted_flank_length": 15,
+    "corrupted_recovery": 0.0056127505376935005,
+    "jump_delta": 0.7957144780084491,
+    "pair_index": 0,
+    "contact_pair": [
+      34,
+      238
+    ],
+    "sequence_length": 275,
+    "segment_radius": 5
+  },
+  "5AJGA": {
+    "clean_flank_length": 28,
+    "clean_recovery": 1.256420373916626,
+    "corrupted_flank_length": 27,
+    "corrupted_recovery": 0.009123802185058594,
+    "jump_delta": 1.2472965717315674,
+    "pair_index": 0,
+    "contact_pair": [
+      174,
+      287
+    ],
+    "sequence_length": 329,
+    "segment_radius": 5
+  },
+  "5BRLA": {
+    "clean_flank_length": 14,
+    "clean_recovery": 0.8945601582527161,
+    "corrupted_flank_length": 13,
+    "corrupted_recovery": 0.01761055737733841,
+    "jump_delta": 0.8769496008753777,
+    "pair_index": 0,
+    "contact_pair": [
+      58,
+      173
+    ],
+    "sequence_length": 210,
+    "segment_radius": 5
+  },
+  "5FS8A": {
+    "clean_flank_length": 52,
+    "clean_recovery": 1.0946543216705322,
+    "corrupted_flank_length": 51,
+    "corrupted_recovery": 0.009668847545981407,
+    "jump_delta": 1.0849854741245508,
+    "pair_index": 0,
+    "contact_pair": [
+      33,
+      149
+    ],
+    "sequence_length": 515,
+    "segment_radius": 5
+  },
+  "5G0AA": {
+    "clean_flank_length": 41,
+    "clean_recovery": 0.7240094542503357,
+    "corrupted_flank_length": 40,
+    "corrupted_recovery": 0.006246938370168209,
+    "jump_delta": 0.7177625158801675,
+    "pair_index": 0,
+    "contact_pair": [
+      97,
+      342
+    ],
+    "sequence_length": 483,
+    "segment_radius": 5
+  },
+  "5I45A": {
+    "clean_flank_length": 13,
+    "clean_recovery": 1.0345699787139893,
+    "corrupted_flank_length": 12,
+    "corrupted_recovery": 0.01680500991642475,
+    "jump_delta": 1.0177649687975645,
+    "pair_index": 0,
+    "contact_pair": [
+      49,
+      169
+    ],
+    "sequence_length": 218,
+    "segment_radius": 5
+  },
+  "5IDVA": {
+    "clean_flank_length": 20,
+    "clean_recovery": 0.875080943107605,
+    "corrupted_flank_length": 19,
+    "corrupted_recovery": 0.004671668633818626,
+    "jump_delta": 0.8704092744737864,
+    "pair_index": 0,
+    "contact_pair": [
+      69,
+      245
+    ],
+    "sequence_length": 279,
+    "segment_radius": 5
+  },
+  "5IDYA": {
+    "clean_flank_length": 15,
+    "clean_recovery": 1.0533726215362549,
+    "corrupted_flank_length": 14,
+    "corrupted_recovery": 0.005850753281265497,
+    "jump_delta": 1.0475218682549894,
+    "pair_index": 0,
+    "contact_pair": [
+      31,
+      237
+    ],
+    "sequence_length": 267,
+    "segment_radius": 5
+  }
+}

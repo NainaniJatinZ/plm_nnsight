@@ -1,0 +1,120 @@
+protein,pfam_acc,pfam_name,seq_pos,aa,hmm_state,ss,rsa
+1IKTA,PF02036,SCP-2 sterol transfer family,99,A,86,?,
+1OOEA,PF13561,Enoyl-(Acyl carrier protein) reductase,125,Q,126,E,0.010734473031465923
+1OOEA,PF00106,short chain dehydrogenase,125,Q,132,E,0.010734473031465923
+3H7AA,PF13561,Enoyl-(Acyl carrier protein) reductase,137,F,126,E,0.0
+3H7AA,PF00106,short chain dehydrogenase,137,F,132,E,0.0
+1ZMTA,PF13561,Enoyl-(Acyl carrier protein) reductase,127,I,126,E,0.0
+1ZMTA,PF00106,short chain dehydrogenase,127,I,132,E,0.0
+3GEMA,PF13561,Enoyl-(Acyl carrier protein) reductase,152,V,126,E,0.0
+3GEMA,PF00106,short chain dehydrogenase,152,V,132,E,0.0
+3UCEA,PF13561,Enoyl-(Acyl carrier protein) reductase,112,T,126,E,0.0
+3UCEA,PF00106,short chain dehydrogenase,112,T,132,E,0.0
+4O6VA,PF13561,Enoyl-(Acyl carrier protein) reductase,137,I,126,E,0.0
+4O6VA,PF00106,short chain dehydrogenase,137,I,132,E,0.0
+5IDYA,PF13561,Enoyl-(Acyl carrier protein) reductase,143,V,126,E,0.0
+5IDYA,PF00106,short chain dehydrogenase,143,V,132,E,0.0
+3KZVA,PF13561,Enoyl-(Acyl carrier protein) reductase,132,V,126,E,
+3KZVA,PF00106,short chain dehydrogenase,132,V,132,E,
+1SBYA,PF13561,Enoyl-(Acyl carrier protein) reductase,133,A,126,E,0.0
+1SBYA,PF00106,short chain dehydrogenase,133,A,132,E,0.0
+2FWMX,PF13561,Enoyl-(Acyl carrier protein) reductase,128,V,126,E,0.0069403920462064155
+2FWMX,PF00106,short chain dehydrogenase,128,V,132,E,0.0069403920462064155
+1XG5A,PF13561,Enoyl-(Acyl carrier protein) reductase,167,I,126,E,
+1XG5A,PF00106,short chain dehydrogenase,167,I,132,E,
+4O5OA,PF13561,Enoyl-(Acyl carrier protein) reductase,151,I,126,E,0.0
+4O5OA,PF00106,short chain dehydrogenase,151,I,132,E,0.0
+1OPCA,PF00486,"Transcriptional regulatory protein, C terminal",55,L,30,?,0.0
+4UHTA,PF00486,"Transcriptional regulatory protein, C terminal",50,L,30,?,0.0
+3HV2A,PF00072,Response regulator receiver domain,61,V,46,?,
+4ZYLA,PF00072,Response regulator receiver domain,66,V,46,?,
+3KYJB,PF00072,Response regulator receiver domain,63,I,46,?,
+1DZ3A,PF00072,Response regulator receiver domain,51,L,46,?,
+2GKGA,PF00072,Response regulator receiver domain,52,V,46,?,
+3CG4A,PF00072,Response regulator receiver domain,54,V,46,?,
+2RDMA,PF00072,Response regulator receiver domain,53,V,46,?,
+3H5IA,PF00072,Response regulator receiver domain,53,I,46,?,
+2QR3A,PF00072,Response regulator receiver domain,50,V,46,?,
+3RQIA,PF00072,Response regulator receiver domain,54,I,46,?,
+2OB0A,PF13302,Acetyltransferase (GNAT) domain,111,L,119,?,0.0
+2OB0A,PF13673,Acetyltransferase (GNAT) domain,111,L,89,?,0.0
+2OB0A,PF13508,Acetyltransferase (GNAT) domain,111,L,67,?,0.0
+2OB0A,PF00583,Acetyltransferase (GNAT) family,111,L,98,?,0.0
+3TCVA,PF13302,Acetyltransferase (GNAT) domain,165,W,119,E,0.016949167944419877
+3TCVA,PF00583,Acetyltransferase (GNAT) family,165,W,98,E,0.016949167944419877
+5ICVA,PF13302,Acetyltransferase (GNAT) domain,132,L,119,?,
+5ICVA,PF13673,Acetyltransferase (GNAT) domain,132,L,89,?,
+5ICVA,PF13508,Acetyltransferase (GNAT) domain,132,L,67,?,
+5ICVA,PF00583,Acetyltransferase (GNAT) family,132,L,98,?,
+1TIQA,PF13302,Acetyltransferase (GNAT) domain,128,L,119,?,
+1TIQA,PF13673,Acetyltransferase (GNAT) domain,128,L,89,?,
+1TIQA,PF13508,Acetyltransferase (GNAT) domain,128,L,67,?,
+1TIQA,PF00583,Acetyltransferase (GNAT) family,128,L,98,?,
+5ISVA,PF13302,Acetyltransferase (GNAT) domain,101,L,119,?,
+5ISVA,PF13673,Acetyltransferase (GNAT) domain,101,L,89,?,
+5ISVA,PF00583,Acetyltransferase (GNAT) family,101,L,98,?,
+1VKCA,PF13302,Acetyltransferase (GNAT) domain,129,L,119,?,
+1VKCA,PF13673,Acetyltransferase (GNAT) domain,129,L,89,?,
+1VKCA,PF00583,Acetyltransferase (GNAT) family,129,L,98,?,
+4E0AA,PF13302,Acetyltransferase (GNAT) domain,126,L,119,?,
+4E0AA,PF13673,Acetyltransferase (GNAT) domain,126,L,89,?,
+4E0AA,PF13508,Acetyltransferase (GNAT) domain,126,L,67,?,
+4E0AA,PF00583,Acetyltransferase (GNAT) family,126,L,98,?,
+2FL4A,PF13302,Acetyltransferase (GNAT) domain,109,L,119,?,
+2FL4A,PF13673,Acetyltransferase (GNAT) domain,109,L,89,?,
+2FL4A,PF13508,Acetyltransferase (GNAT) domain,109,L,67,?,
+2FL4A,PF00583,Acetyltransferase (GNAT) family,109,L,98,?,
+1Z4EA,PF13302,Acetyltransferase (GNAT) domain,123,L,119,?,
+1Z4EA,PF13673,Acetyltransferase (GNAT) domain,123,L,89,?,
+1Z4EA,PF13508,Acetyltransferase (GNAT) domain,123,L,67,?,
+1Z4EA,PF00583,Acetyltransferase (GNAT) family,123,L,98,?,
+2PC1A,PF13302,Acetyltransferase (GNAT) domain,146,C,119,E,
+2PC1A,PF13508,Acetyltransferase (GNAT) domain,146,C,64,E,
+2PC1A,PF00583,Acetyltransferase (GNAT) family,146,C,98,E,
+4M85A,PF13302,Acetyltransferase (GNAT) domain,148,L,119,?,
+4M85A,PF13673,Acetyltransferase (GNAT) domain,148,L,89,?,
+4M85A,PF13508,Acetyltransferase (GNAT) domain,148,L,67,?,
+4M85A,PF00583,Acetyltransferase (GNAT) family,148,L,98,?,
+2DSCA,PF00293,NUDIX domain,114,L,52,H,
+3QSJA,PF00293,NUDIX domain,82,T,52,H,
+5C7QA,PF00293,NUDIX domain,92,L,52,?,
+5BONA,PF00293,NUDIX domain,63,T,52,?,
+2B06A,PF00293,NUDIX domain,58,I,52,?,
+3I7UA,PF00293,NUDIX domain,47,V,52,?,
+2B0VA,PF00293,NUDIX domain,55,V,52,?,
+3GWYA,PF00293,NUDIX domain,56,I,52,?,
+3N77A,PF00293,NUDIX domain,56,I,52,?,
+2YYHA,PF00293,NUDIX domain,59,M,52,?,
+3G0TA,PF00155,Aminotransferase class I and II,218,I,183,E,0.006130092467207697
+2Q7WA,PF00155,Aminotransferase class I and II,208,L,183,E,0.012016201154626033
+4DQ6A,PF00155,Aminotransferase class I and II,200,I,183,E,0.0
+3G7QA,PF00155,Aminotransferase class I and II,216,V,183,E,0.0
+3LY1A,PF00155,Aminotransferase class I and II,176,I,183,E,0.0054388782947346215
+1BS0A,PF00155,Aminotransferase class I and II,201,M,183,E,0.011135823959599537
+4WBTA,PF00155,Aminotransferase class I and II,194,V,183,E,0.0
+2W8TA,PF00155,Aminotransferase class I and II,227,L,183,E,
+3HDOA,PF00155,Aminotransferase class I and II,182,V,183,E,0.0
+4KEMA,PF13378,Enolase C-terminal domain-like,236,Y,75,E,0.0
+3V5CA,PF13378,Enolase C-terminal domain-like,231,L,75,E,0.0060081005773130166
+2OZTA,PF13378,Enolase C-terminal domain-like,194,V,75,E,0.0
+2PGEA,PF13378,Enolase C-terminal domain-like,238,I,75,E,0.0
+3EKGA,PF13378,Enolase C-terminal domain-like,240,I,75,E,0.006130092467207697
+3I6EA,PF13378,Enolase C-terminal domain-like,222,I,75,E,0.006130092467207697
+2HXTA,PF13378,Enolase C-terminal domain-like,272,I,75,E,0.0
+2PGWA,PF13378,Enolase C-terminal domain-like,220,I,75,E,0.0
+3BM1A,PF00881,Nitroreductase family,117,M,126,?,
+2WZVA,PF00881,Nitroreductase family,166,L,126,H,
+1F5VA,PF00881,Nitroreductase family,114,A,126,H,0.0
+4QLXA,PF00881,Nitroreductase family,154,L,126,H,0.0
+2R01A,PF00881,Nitroreductase family,120,I,126,H,0.0
+1YKIA,PF00881,Nitroreductase family,149,F,126,H,0.0
+1NOXA,PF00881,Nitroreductase family,142,L,126,H,0.060081005773130164
+3HOIA,PF00881,Nitroreductase family,148,I,126,?,
+3H75A,PF13407,Periplasmic binding protein domain,208,V,187,E,0.0069403920462064155
+1JX6A,PF13407,Periplasmic binding protein domain,237,I,187,E,0.006130092467207697
+5HKOA,PF13407,Periplasmic binding protein domain,218,V,187,E,0.0
+2FVYA,PF13407,Periplasmic binding protein domain,206,V,187,E,0.0
+4RY0A,PF13407,Periplasmic binding protein domain,189,V,187,E,0.0
+4WT7A,PF13407,Periplasmic binding protein domain,221,I,187,E,0.0
+4PE6A,PF13407,Periplasmic binding protein domain,209,V,187,E,0.0
+3D02A,PF13407,Periplasmic binding protein domain,192,V,187,E,0.020038594575531917

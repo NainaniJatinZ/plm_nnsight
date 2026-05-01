@@ -1,0 +1,8 @@
+cluster,n_chains,L_Pfam_dom,L_Pfam_purity,L_Pfam_n_unique,L_HSF_dom,L_HSF_purity,L_HSF_n_unique,L_fold_dom,L_fold_purity,L_fold_n_unique,L_foldseek_cluster_dom,L_foldseek_cluster_purity,L_foldseek_cluster_n_unique
+-1,6,PF00756,0.3333333333333333,5,3.40.50.1820,0.5,3,alpha_beta,0.6666666666666666,2,2hrz_A,0.16666666666666666,6
+0,22,PF07686,0.45454545454545453,3,2.60.40.10,1.0,1,all_beta,1.0,1,1oaq_L,0.7727272727272727,2
+1,36,PF12697,0.2777777777777778,4,3.40.50.1820,1.0,1,alpha_beta,1.0,1,6brt_B,0.7777777777777778,2
+2,10,PF01408,1.0,1,3.40.50.720,1.0,1,alpha_beta,1.0,1,3ezy_A,0.6,3
+3,10,PF01370,1.0,1,3.40.50.720,1.0,1,alpha_beta,1.0,1,2hrz_A,1.0,1
+4,19,PF13561,0.5263157894736842,2,3.40.50.720,1.0,1,alpha_beta,1.0,1,2hrz_A,1.0,1
+5,20,PF00107,0.5,2,3.40.50.720,1.0,1,alpha_beta,1.0,1,4gi2_B,1.0,1
